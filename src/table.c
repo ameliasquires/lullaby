@@ -10,7 +10,7 @@ int l_len(lua_State* L) {
 int l_reverse(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -27,6 +27,7 @@ int l_reverse(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
@@ -81,7 +82,7 @@ void i_shuffle(double* arr, size_t len){
 int l_shuffle(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(int i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -100,6 +101,7 @@ int l_shuffle(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
@@ -130,7 +132,7 @@ void i_quicksort(double* arr, int low, int high){
 int l_quicksort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1); 
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -149,6 +151,7 @@ int l_quicksort(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
@@ -156,8 +159,8 @@ void i_merge(double* arr, int b, int m, int e){
     int n1 = m - b + 1;
     int n2 = e - m;
 
-    double left[n1];
-    double right[n2];
+    double* left = malloc(sizeof * left * n1);
+    double* right = malloc(sizeof * right * n2);
 
     for(int i = 0; i < n1; i++) left[i] = arr[b + i];
     for(int i = 0; i < n2; i++) right[i] = arr[m + 1 + i];
@@ -184,6 +187,9 @@ void i_merge(double* arr, int b, int m, int e){
       arr[k] = right[r_ind];
       r_ind++;
     }
+
+    free(left);
+    free(right);
 }
 
 void i_mergesort(double* arr, int b, int e){
@@ -198,7 +204,7 @@ void i_mergesort(double* arr, int b, int e){
 int l_mergesort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1); 
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -217,6 +223,7 @@ int l_mergesort(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
@@ -240,7 +247,7 @@ void i_heapify(double* arr, int n, int i){
 int l_heapsort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1); 
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -262,14 +269,14 @@ int l_heapsort(lua_State* L) {
       lua_pushnumber(L,nums[i]);
       lua_settable(L, -3);
     }
-
+    free(nums);
     return 1;
 }
 
 int l_shellsort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -297,13 +304,14 @@ int l_shellsort(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
 int l_bubblesort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -336,14 +344,16 @@ int l_bubblesort(lua_State* L) {
       lua_pushnumber(L,nums[i]);
       lua_settable(L, -3);
     }
-
+    
+    free(nums);
     return 1;
 }
 
 int l_countingsort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    int nums[len], out[len];
+    int* nums = malloc(sizeof * nums * len);
+    int* out = malloc(sizeof * nums * len);
     int max = 0;
     for(int i = 0; i <= len-1; i++){
 
@@ -359,11 +369,9 @@ int l_countingsort(lua_State* L) {
       lua_pop(L,1);
     }
    
-    //required because max can be too big for the stack :c
-    int* count = malloc(sizeof *count * (max + 1));
-    //int count[max + 1];
-
-    for(size_t i = 0; i <= max; i++) count[i] = 0;
+    //int* count = malloc(sizeof *count * (max + 1));
+    int* count = calloc(max + 1, sizeof * count);
+    //for(size_t i = 0; i <= max; i++) count[i] = 0;
 
     for(size_t i = 0; i < len; i++){
       count[nums[i]]++;
@@ -386,6 +394,8 @@ int l_countingsort(lua_State* L) {
     }
     
     free(count);
+    free(nums);
+    free(out);
     return 1;
 }
 
@@ -398,7 +408,7 @@ int i_sorted(double* arr, size_t len){
 int l_miraclesort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -416,7 +426,8 @@ int l_miraclesort(lua_State* L) {
       lua_pushnumber(L,nums[i]);
       lua_settable(L, -3);
     }
-
+    
+    free(nums);
     return 1;
 }
 
@@ -424,7 +435,7 @@ int l_stalinsort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
     size_t rlen = 0;
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -447,6 +458,7 @@ int l_stalinsort(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
@@ -468,7 +480,7 @@ void i_slowsort(double* arr, int i, int j){
 int l_slowsort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(int i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -487,13 +499,14 @@ int l_slowsort(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
 
 int l_bogosort(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
-    double nums[len];
+    double* nums = malloc(sizeof * nums * len);
     for(size_t i = 0; i <= len-1; i++){
 
       lua_pushinteger(L,i+1);
@@ -514,5 +527,6 @@ int l_bogosort(lua_State* L) {
       lua_settable(L, -3);
     }
 
+    free(nums);
     return 1;
 }
