@@ -18,7 +18,7 @@ int l_heapsort(lua_State*);     //[double+int] -> arr[N] (greatest -> least)
 
 //non-comparison sorts
   //good for large arrays filled with small values
-int l_countingsort(lua_State*); //[int], arr[N] >= 0 -> arr[N] (greatest -> least)
+int l_countingsort(lua_State*); //[int], arr[N] >= 0 -> arr[N] (least -> greatest)
 
 //esoteric sorts
 int l_miraclesort(lua_State*);  //[double+int] -> arr[-∞<=N<=∞] (greatest -> least)
