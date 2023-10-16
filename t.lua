@@ -3,7 +3,7 @@ local a = llib.array
 
 local tab = {}
 math.randomseed(os.time())
-for i=1,19 do
+for i=1,9999 do
   table.insert(tab,math.random(1,999));-- + math.random(1,999));
 end
 
@@ -28,7 +28,7 @@ local l6 = a.countingsort(tab)
 print("counting sort took "..os.clock()-time.."s")
 
 for l,i in pairs(llib.array.reverse(l1)) do
-  print(l1[l].." "..l2[l].." "..l3[l].." "..l4[l].." "..l5[l])
+  --print(l1[l].." "..l2[l].." "..l3[l].." "..l4[l].." "..l5[l])
 end
 --print(llib.array.greatest(l1))
 --local l2 = llib.array.reverse(llib.array.bubblesort(tab))

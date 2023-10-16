@@ -358,8 +358,11 @@ int l_countingsort(lua_State* L) {
 
       lua_pop(L,1);
     }
+   
+    //required because max can be too big for the stack :c
+    int* count = malloc(sizeof *count * (max + 1));
+    //int count[max + 1];
 
-    int count[max + 1];
     for(size_t i = 0; i <= max; i++) count[i] = 0;
 
     for(size_t i = 0; i < len; i++){
@@ -381,7 +384,8 @@ int l_countingsort(lua_State* L) {
       lua_pushnumber(L,out[i]);
       lua_settable(L, -3);
     }
-
+    
+    free(count);
     return 1;
 }
 
