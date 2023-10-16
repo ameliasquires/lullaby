@@ -16,4 +16,5 @@
 #define color_white "\e[97m"
 #define color_reset "\e[0m"
 
-void p_fatal(const char* m);
+void p_fatal(const char*);
+void p_error(const char*);
