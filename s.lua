@@ -3,13 +3,14 @@ local a = llib.array
 
 local tab = {}
 math.randomseed(os.time())
-for i=1,5 do
-  table.insert(tab,math.random(1,999));-- + math.random(1,999));
+for i=1,9999999 do
+  table.insert(tab,i);--math.random(1,10));-- + math.random(1,999));
 end
 
-local l1 = a.bogosort(tab)
-
-for l,i in pairs(llib.array.reverse(l1)) do
-  print(i)
+local l1 = a.shellsort(tab)
+print(a.sindex(l1,999));
+--print(a.index(l1,1))
+for l,i in pairs(l1) do
+  --print(i)
 end
 
