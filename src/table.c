@@ -105,6 +105,80 @@ int l_shuffle(lua_State* L) {
     return 1;
 }
 
+int l_sum(lua_State* L) {
+    luaL_checktype(L, 1, LUA_TTABLE);
+    size_t len = lua_objlen(L,1);
+    double s = 0;
+    for(int i = 0; i <= len-1; i++){
+
+      lua_pushinteger(L,i+1);
+      lua_gettable(L,1);
+       
+      s += luaL_checknumber(L, -1);
+      lua_pop(L,1);
+    }
+  
+    lua_pushnumber(L, s);
+    return 1;
+}
+
+int l_indexof(lua_State* L) {
+    int argc = lua_gettop(L);
+    double target = luaL_checknumber(L, 2);
+    luaL_checktype(L, 1, LUA_TTABLE);
+    size_t len = lua_objlen(L,1);
+   
+    //get optional 3rd argument, if its >0 set it to 0
+    size_t start = argc == 3 ? luaL_checknumber(L,3) : 0;
+    start = start > 0 ? start : start;
+
+    double cur = 0;
+
+    for(size_t i = 0; i <= len-1; i++){
+      lua_pushinteger(L,i+1);
+      lua_gettable(L,1);
+       
+      double t = luaL_checknumber(L, -1);
+      if(t==target){
+          lua_pushnumber(L, i);
+          return 1;
+      }
+      lua_pop(L,1);
+    }
+   
+    lua_pushnumber(L, -1);
+    return 1;
+}
+
+int l_sindexof(lua_State* L) {
+    int argc = lua_gettop(L);
+    double target = luaL_checknumber(L, 2);
+    luaL_checktype(L, 1, LUA_TTABLE);
+    size_t len = lua_objlen(L,1);
+    int l = 0;
+    int r = len - 1;
+
+    size_t cid = len/2;
+    for(size_t i = 0; l<=r; i++){
+      int m = l + (r - l) /2;
+      lua_pushinteger(L,m+1);
+      lua_gettable(L,1);
+       
+      double t = luaL_checknumber(L, -1);
+      if(t==target){
+          lua_pushnumber(L, m);
+          return 1;
+      }
+      if(t > target) l = m + 1;
+      else r = m - 1;
+      
+      lua_pop(L,1);
+    }
+   
+    lua_pushnumber(L, -1);
+    return 1;
+}
+
 int i_hoarepartition(double* arr, int low, int high){
     double pivot = arr[((int)((high - low) / 2)) + low];
     int i = low - 1;
@@ -369,9 +443,7 @@ int l_countingsort(lua_State* L) {
       lua_pop(L,1);
     }
    
-    //int* count = malloc(sizeof *count * (max + 1));
     int* count = calloc(max + 1, sizeof * count);
-    //for(size_t i = 0; i <= max; i++) count[i] = 0;
 
     for(size_t i = 0; i < len; i++){
       count[nums[i]]++;
