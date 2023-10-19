@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-///*
+
 static const uint32_t K[] = {0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf,
         0x4787c62a, 0xa8304613, 0xfd469501, 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
         0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821, 0xf61e2562, 0xc040b340, 0x265e5a51,
@@ -32,12 +32,14 @@ int l_md5(lua_State* L){
   int tlen = ((((len + 8) /64) + 1) * 64) - 8;
 
   uint8_t* b = NULL;
+  //set the rest to 0x00 for padding
   b = calloc(tlen + 64, 1);
-
+  
+  //add padding (0x80 to the end)
   memcpy(b, a, len);
   b[len] = 0x80;
 
-  //add padding
+  //add length to end
   uint32_t lhhh = 8*len;
   memcpy(b + tlen, &lhhh, 1); 
 
