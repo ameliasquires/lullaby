@@ -29,7 +29,7 @@ void i_sha01(unsigned version, char* out_stream, const char* input){
     uint32_t hat = 0;
     for(int z = 0; z < tlen; z+=(512/8)){
         uint32_t W[80];
-        memset (W, 0, 80 * sizeof (uint32_t));
+        memset(W, 0, 80 * sizeof (uint32_t));
         
         for(int i = 0; i != 16; i++){
             int t = 24;
@@ -83,7 +83,7 @@ void i_sha01(unsigned version, char* out_stream, const char* input){
         
     }
     sprintf(out_stream,"%02x%02x%02x%02x%02x",h0,h1,h2,h3,h4);
-    return;
+    free(by);
 }
 
 int l_sha1(lua_State* L){
