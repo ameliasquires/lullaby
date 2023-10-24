@@ -20,16 +20,14 @@ static const uint32_t s[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12,
             4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
             6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21};
 
-int l_md5(lua_State* L){
+void i_md5(char* input, char out_stream[64]){
   uint32_t a0 = 0x67452301;
   uint32_t b0 = 0xefcdab89;
   uint32_t c0 = 0x98badcfe;
   uint32_t d0 = 0x10325476;
 
   int len = 0;
-  uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, NULL);
-  for(int i = 0; a[i]!='\0'; i++) len++;
-  
+  for(int i = 0; input[i] != '\0'; i++) len++;
   int tlen = ((((len + 8) /64) + 1) * 64) - 8;
 
   uint8_t* b = NULL;
@@ -37,7 +35,7 @@ int l_md5(lua_State* L){
   b = calloc(tlen + 64, 1);
   
   //add padding (0x80 to the end)
-  memcpy(b, a, len);
+  memcpy(b, input, len);
   b[len] = 0x80;
 
   //add length to end
@@ -86,16 +84,24 @@ int l_md5(lua_State* L){
     d0 += D;
 
   }
-  char ou[64];
-  sprintf(ou,"%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x", 
+
+  sprintf(out_stream,"%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x", 
       ((uint8_t*)&a0)[0], ((uint8_t*)&a0)[1], ((uint8_t*)&a0)[2], ((uint8_t*)&a0)[3],
       ((uint8_t*)&b0)[0], ((uint8_t*)&b0)[1], ((uint8_t*)&b0)[2], ((uint8_t*)&b0)[3],
       ((uint8_t*)&c0)[0], ((uint8_t*)&c0)[1], ((uint8_t*)&c0)[2], ((uint8_t*)&c0)[3],
       ((uint8_t*)&d0)[0], ((uint8_t*)&d0)[1], ((uint8_t*)&d0)[2], ((uint8_t*)&d0)[3]);
  
-  lua_pushstring(L, ou);
-
   free(b);
+}
+
+int l_md5(lua_State* L){
+  
+
+  char* a = (char*)luaL_checklstring(L, 1, NULL);
+
+  char digest[64];
+  i_md5(a, digest);
+  lua_pushstring(L, digest);
 
   return 1;
 };
