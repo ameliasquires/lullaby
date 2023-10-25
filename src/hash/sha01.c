@@ -1,5 +1,4 @@
 #include "../crypto.h"
-#include "sha01.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
