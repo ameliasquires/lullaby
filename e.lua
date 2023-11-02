@@ -1,0 +1,5 @@
+require "llib"
+local wow = llib.crypto.uuencode("wowa wowa wowa WQHOIDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+print(wow)
+print(llib.crypto.uudecode(wow))
+
