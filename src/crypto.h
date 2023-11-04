@@ -3,6 +3,8 @@
 #include "hash/md5.h"
 #include "hash/sha01.h"
 #include "hash/sha2xx.h"
+#include "hash/pearson.h"
+#include "hash/xxh.h"
 
 #include "encode/uuencode.h"
 #include "encode/base64.h"
@@ -16,6 +18,10 @@ static const luaL_Reg crypto_function_list [] = {
       {"sha1",l_sha1},
       {"sha256",l_sha256},
       {"sha224",l_sha224},
+      {"setpearson",l_setpearson},
+      {"pearson",l_pearson},
+      {"xxh64",l_xxh64},
+      {"xxh32",l_xxh32},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},
