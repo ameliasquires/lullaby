@@ -23,7 +23,7 @@ int l_bsdchecksum(lua_State* L){
   char digest[16];
 
   uint16_t u = i_bsdchecksum(a, len);
-  sprintf(digest,"%x",u);
+  sprintf(digest,"%i",u);
   lua_pushstring(L, digest);
 
   return 1;

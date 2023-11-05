@@ -19,7 +19,7 @@ int l_xor8(lua_State* L){
   char digest[8];
 
   uint8_t u = i_xor8(a, len);
-  sprintf(digest,"%x",u);
+  sprintf(digest,"%02x",u);
   lua_pushstring(L, digest);
 
   return 1;
