@@ -21,7 +21,7 @@ int l_adler32(lua_State* L){
   char digest[32];
 
   uint32_t u = i_adler32(a, len);
-  sprintf(digest,"%x",u);
+  sprintf(digest,"%08x",u);
   lua_pushstring(L, digest);
 
   return 1;

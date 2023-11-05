@@ -40,7 +40,7 @@ int l_fletcher32(lua_State* L){
   char digest[32];
 
   uint32_t u = i_fletcher32(a, len);
-  sprintf(digest,"%x",u);
+  sprintf(digest,"%08x",u);
   lua_pushstring(L, digest);
 
   return 1;
@@ -54,7 +54,7 @@ int l_fletcher16(lua_State* L){
   char digest[16];
 
   uint16_t u = i_fletcher16(a, len);
-  sprintf(digest,"%x",u);
+  sprintf(digest,"%04x",u);
   lua_pushstring(L, digest);
 
   return 1;
@@ -68,7 +68,7 @@ int l_fletcher8(lua_State* L){
   char digest[8];
 
   uint8_t u = i_fletcher8(a, len);
-  sprintf(digest,"%x",u);
+  sprintf(digest,"%02x",u);
   lua_pushstring(L, digest);
 
   return 1;
