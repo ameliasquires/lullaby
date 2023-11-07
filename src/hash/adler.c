@@ -14,7 +14,6 @@ uint32_t i_adler32(uint8_t *aa, size_t len){
 }
 
 int l_adler32(lua_State* L){
-  
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
   
