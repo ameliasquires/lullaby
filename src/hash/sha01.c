@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 
-void i_sha01(unsigned version, char* out_stream, const char* input){
+void i_sha01(uint8_t version, char* out_stream, const char* input){
     if(!out_stream||version > 2) return;
     uint32_t h0 = 0x67452301;
     uint32_t h1 = 0xEFCDAB89;

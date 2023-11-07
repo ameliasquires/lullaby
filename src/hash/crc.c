@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <inttypes.h>
 
 uint32_t i_crc32(uint8_t *data, size_t len){
     uint32_t crc = 0xFFFFFFFF;

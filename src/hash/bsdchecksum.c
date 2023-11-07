@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdint.h>
 
-
 uint16_t i_bsdchecksum(uint8_t *aa, size_t len){
     uint16_t check = 0x0;
     
