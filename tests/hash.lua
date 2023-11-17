@@ -3,7 +3,9 @@ require "llib"
 function test(name,b,exp)
   local hash = llib.crypto[name](b)
   if not (hash == exp) then
-    print(name.." not working, got "..hash)
+    print(name.." not working, got "..hash.." wanted "..exp)
+  else
+    --print(name.." was correct, "..hash)
   end
 end
 
@@ -26,5 +28,29 @@ test("sysvchecksum","meow","1b8")
 test("xor8","meow","48")
 test("xxh32","meow","6ba6f6f0")
 test("xxh64","meow","bc11093a30a6315f")
-
-
+test("buzhash8","meow","57")
+test("buzhash16","meow","0255")
+test("cityhash32","meow","c41a03e9")
+test("cityhash64","meow","e99b592ae1ff868b")
+test("cityhash128","meow","d73f2b9c5501a6524097c5d815f2152")
+test("djb2","meow","17c9a913d")
+test("farmhash32","meow","c41a03e9");
+test("farmhash64","meow","e99b592ae1ff868b")
+--maybe test fasthash, metrohash, sha512_t and murmur blehh
+test("fnv_0","meow","b0850402171532ac")
+test("fnv_1","meow","c60a427ebfe83be5")
+test("fnv_a","meow","42faffa2e30e025d")
+test("oaat","meow","8532510")
+test("loselose","meow","000001b8")
+test("pjw","meow","00073c67")
+test("sdbm","meow","006d50f201921b00")
+test("sha512","meow","e88348269bad036160f0d9558b7c5de68163b50e1a6ce46e85ee64692eba074529a4a2b48db4d5c36496e845001e13e6d07c585eacd564defcbf719ec9033e17");
+test("sha384","meow","f0bb848a382b5ed5e2f49a46252f6b738c933dc20bb29dc4a5d312e310b395c4fa07f30a8a7380b4a5d367445e0ea8cb")
+test("fasthash64","meow","7b9e494cf11ee113")
+test("fasthash32","meow","758097c7")
+test("metrohash64_v1", "meow", "7435945e80261ed1")
+test("metrohash64_v2","meow","f951647d250e36f0")
+test("metrohash128_v1","meow","bfd8835cbcc06d2be6fc2c8e5ecbcc26")
+test("metrohash128_v2","meow","6d8634ccf529269297704cba8bf8707a")
+test("murmur1_32","meow","743df82f")
+test("murmur2_32","meow","05d01b88")
