@@ -5,7 +5,7 @@ function test(name,b,exp)
   if not (hash == exp) then
     print(name.." not working, got "..hash.." wanted "..exp)
   else
-    --print(name.." was correct, "..hash)
+    print(name.." was correct, "..hash)
   end
 end
 

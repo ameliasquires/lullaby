@@ -1,6 +1,7 @@
 #include "lua.h"
 #include "table.h"
 #include "crypto.h"
+#include "io.h"
 
 int luaopen_llib(lua_State* L) { 
     lua_newtable(L);
@@ -13,6 +14,10 @@ int luaopen_llib(lua_State* L) {
     lua_newtable(L);
     luaL_register(L, NULL, crypto_function_list);
     lua_setfield(L, 2, "crypto");
+    
+    lua_newtable(L);
+    luaL_register(L, NULL, io_function_list);
+    lua_setfield(L, 2, "io");
     //make llib global
     lua_setglobal(L, "llib");
     return 1;
