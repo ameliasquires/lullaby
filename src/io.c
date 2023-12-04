@@ -28,6 +28,7 @@ int l_readfile(lua_State* L){
     out[count] = ch;
     count++;
   }
+  out[count] = '\0';
   lua_pushstring(L, out);
 
   free(out);

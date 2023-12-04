@@ -1,2 +1,2 @@
 require "llib"
-print(llib.io.readfile("../personal-site/src/window-utils.js"))
+print(llib.io.readfile("../aoc2023/src/1.input"))
