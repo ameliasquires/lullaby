@@ -1,6 +1,9 @@
 #include "lua.h"
 #include "i_util.h"
 #include "i_common.h"
+#include "sort.h"
+
+void i_shuffle(double*, size_t);
 
 int l_len(lua_State*);          //[double+int] -> i
 int l_reverse(lua_State*);      //[double+int] -> arr[N]
@@ -11,24 +14,8 @@ int l_sum(lua_State*);      //[double+int] -> i
 
 int l_indexof(lua_State*); //[double+int], item -> i
 int l_sindexof(lua_State*);//[double+int] (greatest -> least), item -> i
-
-//comparison sorts
-int l_quicksort(lua_State*);    //[double+int] -> arr[N] (greatest -> least)
-int l_mergesort(lua_State*);    //[double+int] -> arr[N] (greatest -> least) 
-int l_shellsort(lua_State*);    //[double+int] -> arr[N] (greatest -> least)
-int l_bubblesort(lua_State*);   //[double+int] -> arr[N] (greatest -> least)
-int l_heapsort(lua_State*);     //[double+int] -> arr[N] (greatest -> least)
-
-//non-comparison sorts
-  //good for large arrays filled with small values
-int l_countingsort(lua_State*); //[int] (arr[N] >= 0) -> arr[N] (least -> greatest)
-
-//esoteric sorts
-int l_miraclesort(lua_State*);  //[double+int] -> arr[-∞<=N<=∞] (greatest -> least)
-int l_stalinsort(lua_State*);   //[double+int] -> arr[?<=N] (greatest -> least)
-int l_slowsort(lua_State*);     //[double+int] -> arr[N] (greatest -> least)
-int l_bogosort(lua_State*);     //[double+int] -> arr[N] (greatest -> least)
-
+int l_split(lua_State*);
+int l_to_char_array(lua_State*);
 
 static const luaL_Reg array_function_list [] = {
       {"len",l_len},
@@ -37,6 +24,8 @@ static const luaL_Reg array_function_list [] = {
       {"least",l_least},
       {"shuffle",l_shuffle},
       {"sum",l_sum},
+      {"split",l_split},
+      {"to_char_array", l_to_char_array},
 
       {"index",l_indexof},
       {"sindex",l_sindexof},

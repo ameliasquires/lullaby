@@ -30,7 +30,48 @@ int l_readfile(lua_State* L){
   }
   out[count] = '\0';
   lua_pushstring(L, out);
-
+  
+  fclose(fp);
   free(out);
   return 1; 
 };
+
+lua_Debug i_get_debug(lua_State* L){
+  lua_Debug ar;
+  lua_getstack(L, 1, &ar);
+  lua_getinfo(L, "nSl", &ar);
+  return ar;
+}
+
+int l_debug(lua_State* L){
+  size_t input_len = 0;
+  char* input = (char*)luaL_checklstring(L, 1, &input_len);
+  lua_Debug debug = i_get_debug(L);
+  printf(color_gray"[ debug ] (%s:%i) %s\n"color_reset, debug.source, debug.currentline, input);
+  return 0;
+}
+
+int l_log(lua_State* L){
+  size_t input_len = 0;
+  char* input = (char*)luaL_checklstring(L, 1, &input_len);
+  lua_Debug debug = i_get_debug(L);
+  printf(color_green"[ log ] (%s:%i)"color_gray" %s\n"color_reset, debug.source, debug.currentline, input);
+  return 0;
+}
+
+int l_warn(lua_State* L){
+  size_t input_len = 0;
+  char* input = (char*)luaL_checklstring(L, 1, &input_len);
+  lua_Debug debug = i_get_debug(L);
+  printf(color_yellow"[ warn ] (%s:%i) %s\n"color_reset, debug.source, debug.currentline, input);
+  return 0;
+}
+
+int l_error(lua_State* L){
+  size_t input_len = 0;
+  char* input = (char*)luaL_checklstring(L, 1, &input_len);
+  lua_Debug debug = i_get_debug(L);
+  printf(color_red"[ error ] (%s:%i) %s\n"color_reset, debug.source, debug.currentline, input);
+  return 0;
+}
+
