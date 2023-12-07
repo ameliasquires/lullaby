@@ -9,25 +9,20 @@ int l_len(lua_State* L) {
 
 int l_reverse(lua_State* L) {
     luaL_checktype(L, 1, LUA_TTABLE);
+    
     size_t len = lua_objlen(L,1);
-    double* nums = malloc(sizeof * nums * len);
-    for(size_t i = 0; i <= len-1; i++){
-
-      lua_pushinteger(L,i+1);
-      lua_gettable(L,1);
-       
-      nums[len - i - 1] = luaL_checknumber(L, -1);
-      lua_pop(L,1);
-    }
-   
     lua_newtable(L);
-    for(size_t i = 0; i != len; i++){
-      lua_pushnumber(L,i+1);
-      lua_pushnumber(L,nums[i]);
-      lua_settable(L, -3);
+    for(size_t i = 0; i <= len - 1; i++){
+      lua_pushnumber(L,len - i - 1);
+      lua_gettable(L,1);
+
+      lua_pushnumber(L, i+1);
+      lua_pushvalue(L, -2);
+
+      lua_settable(L,2); 
     }
 
-    free(nums);
+    lua_pushvalue(L, 2);
     return 1;
 }
 
@@ -124,7 +119,6 @@ int l_sum(lua_State* L) {
 
 int l_indexof(lua_State* L) {
     int argc = lua_gettop(L);
-    double target = luaL_checknumber(L, 2);
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
    
@@ -137,9 +131,8 @@ int l_indexof(lua_State* L) {
     for(size_t i = 0; i <= len-1; i++){
       lua_pushinteger(L,i+1);
       lua_gettable(L,1);
-       
-      double t = luaL_checknumber(L, -1);
-      if(t==target){
+      
+      if(lua_rawequal(L, -1, 2)){
           lua_pushnumber(L, i);
           return 1;
       }
