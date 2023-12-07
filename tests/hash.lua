@@ -3,9 +3,9 @@ require "llib"
 function test(name,b,exp)
   local hash = llib.crypto[name](b)
   if not (hash == exp) then
-    print(name.." not working, got "..hash.." wanted "..exp)
+    llib.io.error(name.." not working, got "..hash.." wanted "..exp)
   else
-    print(name.." was correct, "..hash)
+    llib.io.log(name.." was correct, "..hash)
   end
 end
 
