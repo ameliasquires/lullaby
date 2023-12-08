@@ -2,6 +2,7 @@
 #include "table.h"
 #include "crypto.h"
 #include "io.h"
+#include "math.h"
 
 int luaopen_llib(lua_State* L) { 
     lua_newtable(L);
@@ -18,6 +19,10 @@ int luaopen_llib(lua_State* L) {
     lua_newtable(L);
     luaL_register(L, NULL, io_function_list);
     lua_setfield(L, 2, "io");
+
+    lua_newtable(L);
+    luaL_register(L, NULL, math_function_list);
+    lua_setfield(L, 2, "math");
     //make llib global
     lua_setglobal(L, "llib");
     return 1;
