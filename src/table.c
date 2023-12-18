@@ -1,10 +1,20 @@
 #include "table.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
+uint64_t i_len(lua_State* L, int pos){
+  uint64_t i = 0;
+  lua_pushnil(L);
+  for(;lua_next(L,pos) != 0;){
+    i += 1;
+    lua_pop(L,1);
+  }
+  return i;
+}
 int l_len(lua_State* L) {
-    luaL_checktype(L, 1, LUA_TTABLE);
-    lua_pushnumber(L,lua_objlen(L,1));
+    luaL_checktype(L, 1, LUA_TTABLE);    
+    lua_pushnumber(L,i_len(L,1));
     return 1;
 }
 
@@ -178,7 +188,7 @@ int l_split(lua_State* L){
   size_t split_len = 0;
   char* input = (char*)luaL_checklstring(L, 1, &input_len);
   char* split = (char*)luaL_checklstring(L, 2, &split_len);
-  size_t table_len = 0;
+  size_t table_len = 1;
   lua_newtable(L);
 
   size_t current_len = 0;

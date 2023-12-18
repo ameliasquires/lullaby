@@ -2,8 +2,10 @@
 #include "i_util.h"
 #include "i_common.h"
 #include "sort.h"
+#include <stdint.h>
 
 void i_shuffle(double*, size_t);
+uint64_t i_len(lua_State*,int);
 
 int l_len(lua_State*);          //[double+int] -> i
 int l_reverse(lua_State*);      //[double+int] -> arr[N]
