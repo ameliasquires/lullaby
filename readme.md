@@ -1,5 +1,5 @@
 
-build with `clang -shared src/*.c src/*/*.c -o llib.so`
+build with `clang -shared src/{*.c,*/*.c} -o llib.so -fPIC`
 
 useage and docs coming soon:3
 

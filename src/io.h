@@ -23,6 +23,7 @@ int l_debug(lua_State*);
 int l_log(lua_State*);
 int l_warn(lua_State*);
 int l_error(lua_State*);
+int l_pprint(lua_State*);
 
 static const luaL_Reg io_function_list [] = {
   {"readfile",l_readfile},
@@ -30,6 +31,6 @@ static const luaL_Reg io_function_list [] = {
   {"log",l_log},
   {"warn",l_warn},
   {"error",l_error},
-
+  {"pprint",l_pprint},
   {NULL,NULL}
 };
