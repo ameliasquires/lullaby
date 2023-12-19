@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "io.h"
 #include "stdlib.h"
 #include "stdio.h"
@@ -10,18 +11,25 @@ int l_readfile(lua_State* L){
   char* a = (char*)luaL_checklstring(L, 1, &len);
 
   FILE *fp;
-  const uint64_t chunk_iter = 512;
-  uint64_t chunk = 512;
+  const uint64_t chunk_iter = _file_malloc_chunk;
+  uint64_t chunk = chunk_iter;
   uint64_t count = 0;
-  char* out = malloc(chunk);
-  
+
+  if(access(a, F_OK)) {
+    p_fatal("file not found");
+  }
+  if(access(a, R_OK)){
+    p_fatal("missing permissions");
+  }
+
   fp = fopen(a, "r");
-  
+  char* out = malloc(chunk);
+    
   for(;;){
-    char ch = fgetc(fp);   
+    char ch = fgetc(fp);
     if(ch==EOF) break;
     
-    if(count > chunk){
+    if(count >= chunk){
       chunk += chunk_iter;
       out = realloc(out, chunk);
     }

@@ -4,6 +4,7 @@
 int _print_type = 0;
 int _max_depth = 2;
 int _start_nl_at = 3;
+int _file_malloc_chunk = 512;
 
 int get_config_map(const char* key){
   for(int i = 0; config_map[i].key != NULL; i++){
