@@ -77,3 +77,14 @@ all functions have 1 argument which is a string, unless noted otherwise
 llib.crypto.base64encode("purr") -- cHVycg==
 llib.crypto.base64decode("cHVycg==") -- purr
 ```
+
+## baseconvert 
+
+'accepts an array of integers
+
+converts an array from base N to base T (in reversed order)
+
+```lua
+--                      input                           N  T
+llib.crypto.baseconvert({1, 1, 0, 1, 0, 1, 0, 0, 0, 1}, 2, 10) -- {9, 4, 8} (which is 849)
+```
