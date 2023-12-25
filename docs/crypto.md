@@ -51,9 +51,9 @@
 | spookyhash128_v1 | 128 | *seed | |
 | spookyhash128_v2 | 128 | *seed | |
 | spookyhash64_v1 | 64 | *seed | |
-| spookyhash64_v1 | 64 | *seed | |
+| spookyhash64_v2 | 64 | *seed | |
 | spookyhash32_v1 | 32 | *seed | |
-| spookyhash32_v1 | 32 | *seed | |
+| spookyhash32_v2 | 32 | *seed | |
 
 ### usage
 
