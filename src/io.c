@@ -95,7 +95,7 @@ void i_pprint(lua_State* L, int indent){
     case LUA_TTABLE:
       print_indentation(indent);
       if(indent >= _max_depth && _max_depth >= 0) {printf("{"color_gray"..."color_reset"}"); break;}
-      int skip = i_len(L,last_idx) < _start_nl_at;
+      int skip = i_len(L,last_idx) < _start_nl_at || _collapse_all;
       printf("{");
       if(!skip) printf("\n");
       lua_pushnil(L);
