@@ -28,6 +28,7 @@
 
 #include "encode/uuencode.h"
 #include "encode/base64.h"
+#include "encode/baseN.h"
 
 unsigned i_lr(unsigned, unsigned);
 unsigned i_rr(unsigned, unsigned);
@@ -63,6 +64,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"base64encode",l_base64encode},
       {"base64decode",l_base64decode},
 
+      {"baseconvert",l_baseconvert},
 
       {NULL,NULL}
 };
