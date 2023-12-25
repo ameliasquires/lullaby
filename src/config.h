@@ -4,6 +4,8 @@
 extern int _print_type;
 extern int _max_depth;
 extern int _start_nl_at;
+extern int _collapse_all;
+
 extern int _file_malloc_chunk;
 
 struct str_to_int {
@@ -15,6 +17,7 @@ static struct str_to_int config_map[] = {
   {"file_chunksize", &_file_malloc_chunk},
   {"print_type", &_print_type},
   {"max_depth", &_max_depth},
+  {"collapse_all", &_collapse_all},
   {"start_nl_at", &_start_nl_at},
   {NULL,NULL}
 };
