@@ -87,39 +87,49 @@ void print_indentation(int i){
   for(int z = 0; z < i; z++) printf(" ");
 }
 
-void i_pprint(lua_State* L, int indent){
+void i_pprint(lua_State* L, int indent, int skip_indent){
   int last_idx = lua_gettop(L);
   const char* type = lua_typename(L,lua_type(L,-1));
   int t = lua_type(L,-1);
   switch(lua_type(L,-1)){
     case LUA_TTABLE:
-      print_indentation(indent);
-      if(indent >= _max_depth && _max_depth >= 0) {printf("{"color_gray"..."color_reset"}"); break;}
+      printf(" ");
+      if(indent >= _max_depth && _max_depth >= 0) {
+        printf("{"color_gray);
+        if(_collapse_to_memory) printf(" %p ",lua_topointer(L, -1));
+        else printf(" ... ");
+        printf(color_reset"}");
+        break;
+      }
+
       int skip = i_len(L,last_idx) < _start_nl_at || _collapse_all;
       printf("{");
       if(!skip) printf("\n");
       lua_pushnil(L);
       for(;lua_next(L,last_idx) != 0;){
         if(lua_type(L,-2) == LUA_TSTRING){
-          print_indentation(indent);
-          printf(" %s"color_gray":"color_reset, lua_tostring(L,-2)); 
+          if(!skip) print_indentation(indent);
+          printf(" %s"color_gray": "color_reset, lua_tostring(L,-2)); 
         }
-        i_pprint(L,indent+1);
+        i_pprint(L,indent+1,1);
         printf(",");
         if(!skip) printf("\n");
 
         lua_pop(L,1);
       }
-      
       print_indentation(indent);
       printf("}");
       break;
     case LUA_TSTRING:
-      print_indentation(indent);
+      if(!skip_indent) print_indentation(indent);
       printf("\"%s\"", lua_tostring(L,-1));
       break;
+    case LUA_TFUNCTION:
+      if(!skip_indent) print_indentation(indent);
+      printf(color_yellow"(fn)"color_reset);
+      break;
     default:
-      print_indentation(indent);
+      if(!skip_indent) print_indentation(indent);
       printf(color_yellow"%s"color_reset, lua_tostring(L,-1));
   }
 
@@ -130,7 +140,7 @@ void i_pprint(lua_State* L, int indent){
 
 }
 int l_pprint(lua_State* L){
-  i_pprint(L,0); 
+  i_pprint(L,0,0); 
   printf("\n");
   return 0;
 }

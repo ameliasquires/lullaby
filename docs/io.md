@@ -18,7 +18,7 @@ llib.io.pprint({a = 5, b = {9, 9, 22}})
 - max_depth (2) - maximum depth that will not be collapsed
 - start_nl_at (3) - maximum depth that will be kept in-line
 - collapse_all (0 | false) - skip all newlines
-
+- collapse_to_memory (1 | true) - print memory address instead of ...
 ### error/warn/log/debug 
 
 'accepts a string 
