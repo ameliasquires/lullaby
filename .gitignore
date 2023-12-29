@@ -1,2 +1,4 @@
 *.so
 *.lua
+a.out
+*.json

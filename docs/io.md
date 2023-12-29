@@ -42,3 +42,12 @@ llib.io.readfile("./docs/io.md") -- (this file)
 
 - file_chunksize (512) - size of chunk to be allocated
 
+### json_parse 
+
+'accepts a json string 
+
+returns a table represented by the string 
+
+```lua
+llib.io.json_parse('{"test":[5,4,3]}') -- {"test" : {5, 4, 3}}
+```
