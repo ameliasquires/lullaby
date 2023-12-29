@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include "i_str.h"
 #include "io.h"
 #include "stdlib.h"
 #include "stdio.h"
@@ -139,8 +140,109 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
   }
 
 }
+
 int l_pprint(lua_State* L){
   i_pprint(L,0,0); 
   printf("\n");
   return 0;
+}
+
+enum json_state {
+  normal, reading
+};
+
+#define push() \
+  if(is_array){\
+    lua_pushinteger(L, i);\
+  } else {\
+    char kbuf[key->len];\
+    memset(kbuf, 0, key->len);\
+    strncpy(kbuf, key->c + 1, key->len - 2);\
+    lua_pushstring(L, kbuf);\
+  }\
+  char buf[value->len];\
+  memset(buf, 0, value->len);\
+  switch(value->c[0]){\
+    case '{': case '[':\
+      json_parse(L, value);\
+      break;\
+    case '"':\
+      strncpy(buf, value->c + 1, value->len - 2);\
+      lua_pushstring(L, buf);\
+      break;\
+    default:\
+      lua_pushnumber(L, atof(value->c));\
+      break;\
+    }\
+    lua_settable(L, last_idx);
+
+void json_parse(lua_State* L, str* raw){
+  enum json_state state = normal;
+  char topush[2] = {0,0};
+  int count = 0;
+  char last = '\0';
+  int token_depth = 0;
+
+  str* key = str_init("");
+  str* value = str_init("");
+
+  lua_newtable(L);
+  int last_idx = lua_gettop(L);
+  int is_array = raw->c[0] == '[';
+  int i = 1;
+  for(i = 1; i != raw->len - 1; i++){  
+    topush[0] = *(raw->c + i);
+    if(state == normal && (topush[0] == ' ' || topush[0] == '\n')) continue;
+
+    switch(topush[0]){
+      case '"':
+      case '{': case '}':
+      case '[': case ']':
+        if(last == '{' && topush[0] == '}' || last == '[' && topush[0] == ']') token_depth--;
+
+        if((last == '\0' || last == '"' && topush[0] == '"'
+            || last == '{' && topush[0] == '}' || last == '[' && topush[0] == ']')){
+          if(token_depth == 0){
+            if(last == '\0'){
+              last = topush[0];
+            } else {
+              last = '\0';
+            }
+
+            if(state==reading) state = normal;
+            else state = reading;
+          }
+        }
+        break;
+      case ',':
+        if(state == normal){
+          push()
+          str_clear(key);
+          str_clear(value);
+          count = 0;
+          continue;
+        }
+        break;
+      case ':':
+        if(state == normal){
+          count++;
+          continue;
+        }
+        break;
+    }
+    if(last == '{' && topush[0] == '{' || last == '[' && topush[0] == '[') token_depth++;
+
+    if(count == 0 && !is_array) str_push(key, topush);
+    else str_push(value, topush);
+  }
+  push()
+  str_free(key);
+  str_free(value);
+  //printf("key: %s, value : %s\n",key.c,value.c);
+}
+
+int l_json_parse(lua_State* L){
+  str* raw_json = str_init((char*)luaL_checklstring(L, 1, NULL));
+  json_parse(L, raw_json);
+  return 1;
 }
