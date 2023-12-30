@@ -110,7 +110,7 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
       for(;lua_next(L,last_idx) != 0;){
         if(lua_type(L,-2) == LUA_TSTRING){
           if(!skip) print_indentation(indent);
-          printf(" %s"color_gray": "color_reset, lua_tostring(L,-2)); 
+          printf(" '%s'"color_gray": "color_reset, lua_tostring(L,-2)); 
         }
         i_pprint(L,indent+1,1);
         printf(",");
@@ -192,7 +192,7 @@ void json_parse(lua_State* L, str* raw){
   int i = 1;
   for(i = 1; i != raw->len - 1; i++){  
     topush[0] = *(raw->c + i);
-    if(state == normal && (topush[0] == ' ' || topush[0] == '\n')) continue;
+    if(state == normal && (topush[0] == ' ' || topush[0] == '\n' || topush[0] <= 10)) continue;
 
     switch(topush[0]){
       case '"':
