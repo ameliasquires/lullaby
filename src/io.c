@@ -111,6 +111,8 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
         if(lua_type(L,-2) == LUA_TSTRING){
           if(!skip) print_indentation(indent);
           printf(" '%s'"color_gray": "color_reset, lua_tostring(L,-2)); 
+        } else {
+          if(!skip) print_indentation(indent + 1);
         }
         i_pprint(L,indent+1,1);
         printf(",");

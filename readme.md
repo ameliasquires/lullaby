@@ -8,5 +8,3 @@ todo:
     - (working on seperatley) gui for graphs
 
     - fix -O3 breaking some hashes (not sure if i care)
-
-    - fix pprint (make it look better)
