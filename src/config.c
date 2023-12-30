@@ -32,8 +32,8 @@ int l_set(lua_State* L) {
           key = lua_tonumber(L, -1);
         }
         *config_map[ind].value = key;
-        lua_pushnumber(L, 1);
-        return 1;
+        //lua_pushnumber(L, 1);
+        //return 1;
       }
       lua_pop(L,1);
     }
