@@ -246,5 +246,49 @@ void json_parse(lua_State* L, str* raw){
 int l_json_parse(lua_State* L){
   str* raw_json = str_init((char*)luaL_checklstring(L, 1, NULL));
   json_parse(L, raw_json);
+  str_free(raw_json);
   return 1;
+}
+
+int l_arg_handle(lua_State* L){
+  luaL_checktype(L, 1, LUA_TTABLE);
+  luaL_checktype(L, 2, LUA_TTABLE);
+   
+  size_t len = lua_objlen(L,1);
+  for(size_t i = 0; i <= len - 1; i++){
+    lua_pushnumber(L,i + 1);
+    lua_gettable(L,1);
+    
+    lua_pushnumber(L,1);
+    lua_gettable(L,-2);
+    size_t inner_len = lua_objlen(L,-1);
+    size_t inner_idx = lua_gettop(L);
+
+    lua_pushnumber(L, 2);
+    lua_gettable(L, -3);
+
+    size_t function_idx = lua_gettop(L);
+
+    for(int ii = 1; ii <= inner_len; ii++){
+      lua_pushnumber(L, ii);
+      lua_gettable(L, inner_idx);
+      
+      const char* key = lua_tostring(L, -1);
+
+      size_t input_len = lua_objlen(L, 2);
+
+      for(int iii = 1; iii <= input_len; iii++){
+        lua_pushnumber(L, iii);
+        lua_gettable(L, 2);
+        if(strcmp(lua_tostring(L, -1), key) == 0){
+          lua_pushvalue(L, function_idx);
+          lua_pcall(L, 0, 0, 0);
+          ii = inner_len + 1;
+          break;
+        }
+      }
+    
+    }
+  }
+  return 0;
 }

@@ -52,3 +52,31 @@ returns a table represented by the string
 ```lua
 llib.io.json_parse('{"test":[5,4,3]}') -- {"test" : {5, 4, 3}}
 ```
+
+### arg_handle
+
+'accepts two tables
+    1 = table mapped with names and function
+    2 = args, or the list of strings to test
+
+the first table accepts this layout
+
+{ { list_of_keys, function_to_execute }, ... }
+
+returns nothing, executes marked functions
+
+```lua
+llib.io.arg_handle({
+    {
+        {"test"},
+        function()
+            print("test")
+        end,
+    }, {
+        {"test2","t"},
+        function()
+            print("test2")
+        end,
+    }
+}, arg)
+```
