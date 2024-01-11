@@ -33,7 +33,7 @@ test("buzhash16","meow","0255")
 test("cityhash32","meow","c41a03e9")
 test("cityhash64","meow","e99b592ae1ff868b")
 test("cityhash128","meow","d73f2b9c5501a6524097c5d815f2152")
-test("djb2","meow","17c9a913d")
+test("djb2","meow","7c9a913d")
 test("farmhash32","meow","c41a03e9");
 test("farmhash64","meow","e99b592ae1ff868b")
 --maybe test fasthash, metrohash, sha512_t and murmur blehh
