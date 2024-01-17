@@ -26,12 +26,14 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
     len += BUFFER_SIZE;
     buffer = realloc(buffer, len + BUFFER_SIZE);
   }
+  buffer[n] = 0;
 
   *_buffer = buffer;
   return len + BUFFER_SIZE;
 }
 
-void parse_header(char* buffer, int header_eof, str*** _table, int* _len){
+int parse_header(char* buffer, int header_eof, str*** _table, int* _len){
+  if(header_eof == -1) return -1;
   char add[] = {0,0};
   int lines = 3;
   for(int i = 0; i != header_eof; i++) lines += buffer[i] == '\n';
@@ -60,8 +62,8 @@ void parse_header(char* buffer, int header_eof, str*** _table, int* _len){
       table[tlen] = str_init(current->c);
       str_clear(current);
       tlen++;
+      i+=key;
       key = !key;
-      i++;
       continue;
     }
     add[0] = buffer[i];
@@ -72,6 +74,7 @@ void parse_header(char* buffer, int header_eof, str*** _table, int* _len){
   str_free(current);
   *_len = tlen / 2;
   *_table = table; 
+  return 0;
 }
 
 void* handle_client(void *arg){
@@ -79,17 +82,17 @@ void* handle_client(void *arg){
   char* buffer;
   int header_eof;
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-  
+  //printf("%lu %i %s\n",bytes_received, header_eof, buffer); 
   if(bytes_received > 0){
-    /*str** table;
-    int len;
-    parse_header(buffer, header_eof, &table, &len);
+    str** table;
+    int len = 0;
+    if(parse_header(buffer, header_eof, &table, &len) != -1){
 
-    printf("%i\n",len); 
-    for(int i = 0; i != len * 2; i+=2){
-      printf("%s :: %s\n",table[i]->c, table[i+1]->c);
-    }*/
-
+      printf("%i\n",len); 
+      for(int i = 0; i != len * 2; i+=2){
+        printf("%s :: %s\n",table[i]->c, table[i+1]->c);
+      }
+    }
   }
   free(buffer);
   return NULL;
@@ -106,7 +109,7 @@ int main(){
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
-  server_addr.sin_port = htons(3041);
+  server_addr.sin_port = htons(3042);
 
   if(bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
     printf("failed to bind\n");
