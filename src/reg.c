@@ -4,7 +4,7 @@
 #include "config.h"
 #include "io.h"
 #include "math.h"
-
+#include "net.h"
 int luaopen_llib(lua_State* L) { 
     lua_newtable(L);
     
@@ -28,6 +28,10 @@ int luaopen_llib(lua_State* L) {
     lua_newtable(L);
     luaL_register(L, NULL, config_function_list);
     lua_setfield(L, 2, "config");
+
+    lua_newtable(L);
+    luaL_register(L, NULL, net_function_list);
+    lua_setfield(L, 2, "net");
     //make llib global
     lua_setglobal(L, "llib");
     return 1;

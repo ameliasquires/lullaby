@@ -1,4 +1,7 @@
 *.so
+*.dll
+*.gpg
 *.lua
+a.exe
 a.out
 *.json
