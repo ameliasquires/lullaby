@@ -17,6 +17,8 @@
 #include "net.h"
 #include "lua.h"
 
+#include "io.h"
+#include "table.h"
 #include "i_str.h"
 
 #define max_con 10
@@ -201,17 +203,17 @@ void http_code(int code, char* code_det){
 
 int l_send(lua_State* L){
   int res_idx = 1;
-
+  
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-
+  
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "Content");
   lua_gettable(L, res_idx);
-  char* content = (char*)luaL_checkstring(L, 2);
-
+  char* content = (char*)luaL_checkstring(L, -1);
+  
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "Content-Type");
   lua_gettable(L, res_idx);
@@ -222,7 +224,7 @@ int l_send(lua_State* L){
   lua_gettable(L, res_idx);
   int code = luaL_checkinteger(L, -1);
   str* resp;
-
+  
   char code_det[50] = {0};
   http_code(code, code_det);
   http_build(&resp, code,  code_det,content_type, content);
@@ -235,7 +237,7 @@ void* handle_client(void *_arg){
   //int client_fd = *((int*)_arg);
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
-  printf("%i\n",args->port);
+  //printf("%i\n",args->port);
   
   char* buffer;
   char dummy[2] = {0, 0};
@@ -255,7 +257,7 @@ void* handle_client(void *_arg){
       //str* resp;
       //http_build(&resp, 200, "OK","text/html", "<h1>hello world!</h1>");
 
-      lua_State* L= args->L;
+      lua_State* L = args->L;
 
       lua_rawgeti(L, LUA_REGISTRYINDEX, ports[args->port]);
       int k = stable_key(table, "Path", len);
@@ -312,7 +314,7 @@ void* handle_client(void *_arg){
         int res_idx = lua_gettop(L);
 
         lua_pushvalue(L, func);
-        lua_pushvalue(L, -2);
+        lua_pushvalue(L, res_idx);
         lua_pushvalue(L, req_idx);
 
         lua_call(L, 2, 0);
@@ -328,6 +330,42 @@ void* handle_client(void *_arg){
   free(args);
   free(buffer);
   return NULL;
+}
+
+void dcopy_lua(lua_State* dest, lua_State* src, int port){
+  lua_newtable(dest); int ot = lua_gettop(dest);
+  int tab_idx = luaL_ref(dest, LUA_REGISTRYINDEX);
+  lua_rawgeti(dest,LUA_REGISTRYINDEX,tab_idx);
+  
+  lua_rawgeti(src, LUA_REGISTRYINDEX, ports[port]);
+  int t = lua_gettop(src);
+  lua_pushnil(src);
+  for(;lua_next(src,t) != 0;){
+    char* key = (char*)luaL_checkstring(src, -2);
+    //lua_pushstring(dest, key);
+    //printf("%s\n",key);
+    lua_newtable(dest); int bt = lua_gettop(dest);
+
+    int tt = lua_gettop(src);
+    lua_pushnil(src);
+    for(;lua_next(src,tt) != 0;){
+      char* key2 = (char*)luaL_checkstring(src, -2);
+      
+      //copy function
+      lua_pushstring(dest, key2);
+      lua_xmove(src, dest, 1);
+      lua_settable(dest, bt);
+      //lua_pop(src,1); //not required as xmove pops
+    }
+
+    lua_pushstring(dest, key);
+    lua_pushvalue(dest, bt);
+    lua_settable(dest, ot);
+
+    lua_pushvalue(dest,ot);
+     l_pprint(dest);
+    lua_pop(src, 1);
+  }
 }
 
 int start_serv(lua_State* L, int port){
@@ -371,10 +409,16 @@ int start_serv(lua_State* L, int port){
       abort();
     }
 
+    lua_State* oL = luaL_newstate();
+
+    dcopy_lua(oL, L, port);
+    //lua_rawgeti(oL, LUA_REGISTRYINDEX, ports[port]);
+  
+     
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
-    args->L = L;
+    args->L = oL;
     //send request to handle_client()
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, handle_client, (void*)args);
