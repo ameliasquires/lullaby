@@ -6,6 +6,7 @@
 #else
   #include <sys/socket.h>
   #include <arpa/inet.h>
+#define closesocket close
 #endif
 
 #include <sys/types.h>
@@ -208,11 +209,12 @@ int l_send(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  
+ 
+  /*
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "Content");
-  lua_gettable(L, res_idx);
-  char* content = (char*)luaL_checkstring(L, -1);
+  lua_gettable(L, res_idx);*/
+  char* content = (char*)luaL_checkstring(L, 2);
   
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "Content-Type");
