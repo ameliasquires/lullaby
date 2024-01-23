@@ -36,29 +36,13 @@ int luaopen_llib(lua_State* L) {
     lua_newtable(L);
 
     //lua_newtable(L);
-    lua_pushstring(L, "array");
-    luaL_register(L, NULL, array_function_list);
-    lua_settable(L, -3);
 
-    lua_pushstring(L, "crypto");
-    luaL_register(L, NULL, crypto_function_list);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "io");
-    luaL_register(L, NULL, io_function_list);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "math");
-    luaL_register(L, NULL, math_function_list);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "config");
-    luaL_register(L, NULL, config_function_list);
-    lua_settable(L, -3);
-
-    lua_pushstring(L, "net");
-    luaL_register(L, NULL, net_function_list);
-    lua_settable(L, -3);
+    lreg("array", array_function_list);
+    lreg("crypto", crypto_function_list);
+    lreg("io", io_function_list);
+    lreg("math", math_function_list);
+    lreg("config", config_function_list);
+    lreg("net", net_function_list);
 
     //make llib global
     lua_setglobal(L, "llib");

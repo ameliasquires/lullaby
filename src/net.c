@@ -22,7 +22,7 @@
 #include "table.h"
 #include "i_str.h"
 
-#define max_con 10
+#define max_con 200
 #define BUFFER_SIZE 2048
 
 static int ports[65535] = { 0 };
@@ -258,15 +258,15 @@ void* handle_client(void *_arg){
       
       //str* resp;
       //http_build(&resp, 200, "OK","text/html", "<h1>hello world!</h1>");
-
+      
       lua_State* L = args->L;
-
+      
       lua_rawgeti(L, LUA_REGISTRYINDEX, ports[args->port]);
       int k = stable_key(table, "Path", len);
       lua_pushstring(L, table[k]->c);
       lua_gettable(L, -2);
 
-      if(lua_type(L, -1) == LUA_TNIL){
+      if(1 || lua_type(L, -1) == LUA_TNIL){
         str* resp;
         http_build(&resp, 404, "Not Found","text/html", "<h1>404</h1>");
         send(client_fd, resp->c, resp->len, 0);
@@ -327,6 +327,11 @@ void* handle_client(void *_arg){
       //str_free(resp);
       
     }
+
+    for(int i = 0; i != len; i++){
+      str_free(table[i]);
+    }
+    free(table);
   }
   closesocket(client_fd);
   free(args);
@@ -352,7 +357,7 @@ void dcopy_lua(lua_State* dest, lua_State* src, int port){
     lua_pushnil(src);
     for(;lua_next(src,tt) != 0;){
       char* key2 = (char*)luaL_checkstring(src, -2);
-      
+
       //copy function
       lua_pushstring(dest, key2);
       lua_xmove(src, dest, 1);
@@ -411,12 +416,9 @@ int start_serv(lua_State* L, int port){
       abort();
     }
 
-    lua_State* oL = luaL_newstate();
-
-    dcopy_lua(oL, L, port);
-    //lua_rawgeti(oL, LUA_REGISTRYINDEX, ports[port]);
-  
-     
+    //open a state to call shit, should be somewhat thread safe
+    lua_State* oL = lua_newthread(L);
+    printf("%i\n",lua_gettop(L));
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
