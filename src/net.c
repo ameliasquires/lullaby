@@ -21,11 +21,13 @@
 #include "io.h"
 #include "table.h"
 #include "i_str.h"
+#include "parray.h"
 
 #define max_con 200
 #define BUFFER_SIZE 2048
 
 static int ports[65535] = { 0 };
+static parray_t* paths = NULL;
 
 size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   char* buffer = malloc(BUFFER_SIZE * sizeof * buffer);
@@ -240,7 +242,7 @@ void* handle_client(void *_arg){
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
   //printf("%i\n",args->port);
-  
+  lua_State* L = args->L;
   char* buffer;
   char dummy[2] = {0, 0};
   int header_eof;
@@ -248,6 +250,7 @@ void* handle_client(void *_arg){
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
 
   //printf("%i\n",recv(client_fd, dummy, 1, 0 ));
+  
   //if the buffer, yknow exists
   if(bytes_received > 0){
     str** table;
@@ -259,37 +262,38 @@ void* handle_client(void *_arg){
       //str* resp;
       //http_build(&resp, 200, "OK","text/html", "<h1>hello world!</h1>");
       
-      lua_State* L = args->L;
-      
-      lua_rawgeti(L, LUA_REGISTRYINDEX, ports[args->port]);
+      //lua_pushvalue(L, 1);
       int k = stable_key(table, "Path", len);
-      lua_pushstring(L, table[k]->c);
-      lua_gettable(L, -2);
 
-      if(1 || lua_type(L, -1) == LUA_TNIL){
+      char portc[10] = {0};
+      sprintf(portc, "%i", args->port);
+
+      str* aa = str_init(portc);
+      str_push(aa, table[k]->c);
+
+      void* v = parray_get(paths, aa->c);
+
+      if(v == NULL){
         str* resp;
         http_build(&resp, 404, "Not Found","text/html", "<h1>404</h1>");
         send(client_fd, resp->c, resp->len, 0);
         str_free(resp);
       } else {
-        lua_pushstring(L, "fn");
-        lua_gettable(L, -2);
-        int func = lua_gettop(L); 
+        lua_rawgeti(L, LUA_REGISTRYINDEX, *(int*)v);
 
+        int func = lua_gettop(L); 
+        
         lua_newtable(L);
         lua_newtable(L);
+        
         //printf("%s\n",buffer);
         for(int i = 0; i != len * 2; i+=2){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
           lua_pushstring(L, table[i]->c);
           lua_pushstring(L, table[i+1]->c);
           lua_settable(L, -3);
-
-          str_free(table[i]);
-          str_free(table[i+1]);
         }
-        free(table);
-
+        
         int req_idx = lua_gettop(L);
         lua_newtable(L);
         //functions
@@ -320,6 +324,7 @@ void* handle_client(void *_arg){
         lua_pushvalue(L, req_idx);
 
         lua_call(L, 2, 0);
+        //*/
 
       }
       //send(client_fd, resp->c, resp->len, 0);
@@ -405,7 +410,13 @@ int start_serv(lua_State* L, int port){
     printf("failed to listen\n");
     abort();
   }
-
+  /*
+  lua_rawgeti(L, LUA_REGISTRYINDEX, ports[port]);
+  lua_pushstring(L, "/");
+  lua_gettable(L, -2);
+  lua_pushstring(L, "fn");
+  lua_gettable(L, -2);
+  int aa = lua_gettop(L);*/
   for(;;){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
@@ -418,7 +429,19 @@ int start_serv(lua_State* L, int port){
 
     //open a state to call shit, should be somewhat thread safe
     lua_State* oL = lua_newthread(L);
-    printf("%i\n",lua_gettop(L));
+    
+    //lua_rawseti(L,LUA_REGISTRYINDEX,tab_idx);
+    //lua_rawgeti(oL, LUA_REGISTRYINDEX, ports[port]);
+
+    //printf("%p %p\n",lua_topointer(L, -1),lua_topointer(oL, -1));
+    //l_pprint(oL);
+
+    //lua_pushvalue(L, aa);
+    //l_pprint(L);
+    //printf("%i\n",lua_gettop(L));
+    //lua_pop(oL, 1);
+    //printf("%i %i\n",ports[port], port);
+
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
@@ -427,6 +450,10 @@ int start_serv(lua_State* L, int port){
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, handle_client, (void*)args);
     pthread_detach(thread_id);
+    lua_remove(L, -1);
+    
+    //handle_client((void*)args);
+    
   }
 
 }
@@ -435,6 +462,17 @@ int l_GET(lua_State* L){
   lua_pushstring(L, "port");
   lua_gettable(L, 1);
   int port = luaL_checkinteger(L, -1);
+
+  char portc[10] = {0};
+  sprintf(portc, "%i%s", port, lua_tostring(L, 2));
+  lua_pushvalue(L, 3);
+  int* idx = malloc(sizeof * idx);
+  *idx = luaL_ref(L, LUA_REGISTRYINDEX);
+
+  if(paths == NULL)
+    paths = parray_init();
+  parray_set(paths, portc, (void*)idx);
+  /*
   int tab_idx = ports[port];
   int ot;
   if(tab_idx == 0){
@@ -456,7 +494,9 @@ int l_GET(lua_State* L){
   lua_pushvalue(L, 2);
   lua_pushvalue(L, -3);
   lua_settable(L, -3);
-
+  */
+  //printf("%i%s",port, lua_tostring(L, 2));
+  
   return 1;
 }
 
@@ -483,7 +523,7 @@ int l_listen(lua_State* L){
   lua_pushvalue(L, 1); //the function
   lua_pushvalue(L, -2); //the server table
 
-  lua_call(L, 1, 0);
+  lua_pcall(L, 1, 0, 0);
 
   start_serv(L, port);
   return 0;
