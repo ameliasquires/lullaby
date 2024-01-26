@@ -29,6 +29,8 @@
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
 
+pthread_mutex_t mutex;
+
 size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   char* buffer = malloc(BUFFER_SIZE * sizeof * buffer);
   memset(buffer, 0, BUFFER_SIZE);
@@ -238,6 +240,8 @@ int l_send(lua_State* L){
 }
 
 void* handle_client(void *_arg){
+  //pthread_mutex_lock(&mutex);
+  printf("start\n");
   //int client_fd = *((int*)_arg);
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
@@ -248,7 +252,7 @@ void* handle_client(void *_arg){
   int header_eof;
   //read full request
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-
+  printf("buffer made\n");
   //printf("%i\n",recv(client_fd, dummy, 1, 0 ));
   
   //if the buffer, yknow exists
@@ -257,6 +261,7 @@ void* handle_client(void *_arg){
     int len = 0;
     //checks for a valid header
     if(parse_header(buffer, header_eof, &table, &len) != -1){
+      printf("parsed\n");
       //printf("%s\n",buffer);
       
       //str* resp;
@@ -279,13 +284,15 @@ void* handle_client(void *_arg){
         send(client_fd, resp->c, resp->len, 0);
         str_free(resp);
       } else {
+        printf("starting\n");
         lua_rawgeti(L, LUA_REGISTRYINDEX, *(int*)v);
+        printf("read table\n");
 
         int func = lua_gettop(L); 
         
         lua_newtable(L);
         lua_newtable(L);
-        
+        printf("after tables\n");
         //printf("%s\n",buffer);
         for(int i = 0; i != len * 2; i+=2){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
@@ -322,8 +329,10 @@ void* handle_client(void *_arg){
         lua_pushvalue(L, func);
         lua_pushvalue(L, res_idx);
         lua_pushvalue(L, req_idx);
-
+        printf("calling\n");
+        pthread_mutex_lock(&mutex);
         lua_call(L, 2, 0);
+        pthread_mutex_unlock(&mutex);
         //*/
 
       }
@@ -338,9 +347,12 @@ void* handle_client(void *_arg){
     }
     free(table);
   }
+  printf("close\n");
   closesocket(client_fd);
   free(args);
   free(buffer);
+  printf("end\n");
+  //pthread_mutex_unlock(&mutex);
   return NULL;
 }
 
@@ -417,6 +429,9 @@ int start_serv(lua_State* L, int port){
   lua_pushstring(L, "fn");
   lua_gettable(L, -2);
   int aa = lua_gettop(L);*/
+  if (pthread_mutex_init(&mutex, NULL) != 0)
+    printf("mutex init failed\n");
+
   for(;;){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
@@ -441,7 +456,7 @@ int start_serv(lua_State* L, int port){
     //printf("%i\n",lua_gettop(L));
     //lua_pop(oL, 1);
     //printf("%i %i\n",ports[port], port);
-
+    lua_remove(L, -1);
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
@@ -450,7 +465,8 @@ int start_serv(lua_State* L, int port){
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, handle_client, (void*)args);
     pthread_detach(thread_id);
-    lua_remove(L, -1);
+    //pthread_join(thread_id, NULL);
+    
     
     //handle_client((void*)args);
     
@@ -526,5 +542,30 @@ int l_listen(lua_State* L){
   lua_pcall(L, 1, 0, 0);
 
   start_serv(L, port);
+  return 0;
+}
+
+void* hh(void* args){
+  pthread_mutex_lock(&mutex);
+  lua_State* L = ((thread_arg_struct*)args)->L;
+  lua_pcall(L, 0, 0, 0);
+  pthread_mutex_unlock(&mutex);
+  return NULL;
+}
+
+int l_spawn(lua_State* L){
+  if(pthread_mutex_init(&mutex, NULL) != 0)abort();
+
+  lua_State* sL = luaL_newstate();
+  luaL_openlibs(sL);
+  lua_xmove(L, sL, 1);
+  thread_arg_struct* args = malloc(sizeof * args);
+  args->L = sL;
+    //send request to handle_client()
+  pthread_t thread_id;
+  pthread_create(&thread_id, NULL, hh, (void*)args);
+  pthread_detach(thread_id);
+  
+
   return 0;
 }
