@@ -544,7 +544,15 @@ int l_listen(lua_State* L){
   start_serv(L, port);
   return 0;
 }
+#define dump( L, writer, data, strip )     lua_dump( L, writer, data, strip )
 
+static int luaproc_buff_writer( lua_State *L, const void *buff, size_t size, 
+                                void *ud ) {
+  (void)L;
+  luaL_addlstring((luaL_Buffer *)ud, (const char *)buff, size );
+  return 0;
+}
+typedef struct stluaproc luaproc;
 void* hh(void* args){
   pthread_mutex_lock(&mutex);
   lua_State* L = ((thread_arg_struct*)args)->L;
@@ -554,17 +562,20 @@ void* hh(void* args){
 }
 
 int l_spawn(lua_State* L){
-  if(pthread_mutex_init(&mutex, NULL) != 0)abort();
+  luaL_Buffer buff;
+  luaproc *lp;
+  
+  lua_settop(L, 1);
+  luaL_buffinit(L, &buff);
 
-  lua_State* sL = luaL_newstate();
-  luaL_openlibs(sL);
-  lua_xmove(L, sL, 1);
-  thread_arg_struct* args = malloc(sizeof * args);
-  args->L = sL;
-    //send request to handle_client()
-  pthread_t thread_id;
-  pthread_create(&thread_id, NULL, hh, (void*)args);
-  pthread_detach(thread_id);
+  printf("%i\n",dump(L, luaproc_buff_writer, &buff, 0));
+  luaL_pushresult( &buff );
+
+  printf("%s\n",lua_tolstring(L, 1, NULL));
+
+  //pthread_t thread_id;
+  //pthread_create(&thread_id, NULL, hh, (void*)args);
+  //pthread_detach(thread_id);
   
 
   return 0;
