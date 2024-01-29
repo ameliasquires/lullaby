@@ -29,7 +29,12 @@
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
 
-pthread_mutex_t mutex;
+struct lchar {
+  char* c;
+  int len;
+};
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   char* buffer = malloc(BUFFER_SIZE * sizeof * buffer);
@@ -239,9 +244,11 @@ int l_send(lua_State* L){
   return 0;
 }
 
+volatile size_t threads = 0;
 void* handle_client(void *_arg){
+  threads++;
   //pthread_mutex_lock(&mutex);
-  printf("start\n");
+  //printf("start\n");
   //int client_fd = *((int*)_arg);
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
@@ -252,7 +259,7 @@ void* handle_client(void *_arg){
   int header_eof;
   //read full request
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-  printf("buffer made\n");
+  //printf("buffer made\n");
   //printf("%i\n",recv(client_fd, dummy, 1, 0 ));
   
   //if the buffer, yknow exists
@@ -261,7 +268,7 @@ void* handle_client(void *_arg){
     int len = 0;
     //checks for a valid header
     if(parse_header(buffer, header_eof, &table, &len) != -1){
-      printf("parsed\n");
+      //printf("parsed\n");
       //printf("%s\n",buffer);
       
       //str* resp;
@@ -284,15 +291,17 @@ void* handle_client(void *_arg){
         send(client_fd, resp->c, resp->len, 0);
         str_free(resp);
       } else {
-        printf("starting\n");
-        lua_rawgeti(L, LUA_REGISTRYINDEX, *(int*)v);
-        printf("read table\n");
+        //printf("starting\n");
+        struct lchar* awa = (struct lchar*)v;
+        luaL_loadbuffer(L, awa->c, awa->len, awa->c);
+        //lua_rawgeti(L, LUA_REGISTRYINDEX, *(int*)v);
+        //printf("read table\n");
 
         int func = lua_gettop(L); 
         
         lua_newtable(L);
         lua_newtable(L);
-        printf("after tables\n");
+        //printf("after tables\n");
         //printf("%s\n",buffer);
         for(int i = 0; i != len * 2; i+=2){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
@@ -329,10 +338,10 @@ void* handle_client(void *_arg){
         lua_pushvalue(L, func);
         lua_pushvalue(L, res_idx);
         lua_pushvalue(L, req_idx);
-        printf("calling\n");
-        pthread_mutex_lock(&mutex);
+        //printf("calling\n");
+        //pthread_mutex_lock(&mutex);
         lua_call(L, 2, 0);
-        pthread_mutex_unlock(&mutex);
+        //pthread_mutex_unlock(&mutex);
         //*/
 
       }
@@ -347,12 +356,14 @@ void* handle_client(void *_arg){
     }
     free(table);
   }
-  printf("close\n");
+  //printf("close\n");
   closesocket(client_fd);
   free(args);
   free(buffer);
-  printf("end\n");
+  //printf("end\n");
+  lua_close(L);
   //pthread_mutex_unlock(&mutex);
+  threads--;
   return NULL;
 }
 
@@ -441,10 +452,11 @@ int start_serv(lua_State* L, int port){
       printf("failed to accept\n");
       abort();
     }
-
+    printf("%i\n",threads);
     //open a state to call shit, should be somewhat thread safe
-    lua_State* oL = lua_newthread(L);
-    
+    lua_State* oL = luaL_newstate();
+    luaL_openlibs(oL);
+    //printf("made\n");
     //lua_rawseti(L,LUA_REGISTRYINDEX,tab_idx);
     //lua_rawgeti(oL, LUA_REGISTRYINDEX, ports[port]);
 
@@ -456,7 +468,7 @@ int start_serv(lua_State* L, int port){
     //printf("%i\n",lua_gettop(L));
     //lua_pop(oL, 1);
     //printf("%i %i\n",ports[port], port);
-    lua_remove(L, -1);
+    //lua_remove(L, -1);
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
@@ -474,6 +486,9 @@ int start_serv(lua_State* L, int port){
 
 }
 
+#define requiref( L, modname, f, glob ) \
+  { luaL_requiref( L, modname, f, glob ); lua_pop( L, 1 ); }
+
 int l_GET(lua_State* L){
   lua_pushstring(L, "port");
   lua_gettable(L, 1);
@@ -481,13 +496,23 @@ int l_GET(lua_State* L){
 
   char portc[10] = {0};
   sprintf(portc, "%i%s", port, lua_tostring(L, 2));
+
+  
+  lua_getglobal(L, "string");
+  lua_pushstring(L, "dump");
+  lua_gettable(L, -2);
   lua_pushvalue(L, 3);
-  int* idx = malloc(sizeof * idx);
-  *idx = luaL_ref(L, LUA_REGISTRYINDEX);
+  lua_call(L, 1, 1);
+
+  size_t len;
+  char* a = (char*)luaL_tolstring(L, -1, &len);
+  struct lchar* awa = malloc(len + 1);
+  awa->c = a;
+  awa->len = len;
 
   if(paths == NULL)
     paths = parray_init();
-  parray_set(paths, portc, (void*)idx);
+  parray_set(paths, portc, (void*)awa);
   /*
   int tab_idx = ports[port];
   int ot;
@@ -515,6 +540,7 @@ int l_GET(lua_State* L){
   
   return 1;
 }
+
 
 int l_listen(lua_State* L){
   if(lua_gettop(L) != 2) {
@@ -544,38 +570,40 @@ int l_listen(lua_State* L){
   start_serv(L, port);
   return 0;
 }
-#define dump( L, writer, data, strip )     lua_dump( L, writer, data, strip )
 
-static int luaproc_buff_writer( lua_State *L, const void *buff, size_t size, 
-                                void *ud ) {
-  (void)L;
-  luaL_addlstring((luaL_Buffer *)ud, (const char *)buff, size );
-  return 0;
-}
-typedef struct stluaproc luaproc;
-void* hh(void* args){
-  pthread_mutex_lock(&mutex);
-  lua_State* L = ((thread_arg_struct*)args)->L;
-  lua_pcall(L, 0, 0, 0);
-  pthread_mutex_unlock(&mutex);
+void* hh(void* _L){
+
+  lua_State* L = (lua_State*)_L;
+  lua_call(L, 0, 0);
+
   return NULL;
 }
 
 int l_spawn(lua_State* L){
-  luaL_Buffer buff;
-  luaproc *lp;
+  lua_getglobal(L, "string");
+  lua_pushstring(L, "dump");
+  lua_gettable(L, -2);
+  lua_pushvalue(L, 1);
+  lua_call(L, 1, 1);
+
+  size_t len;
+  char* a = (char*)luaL_tolstring(L, -1, &len);
+  //luaL_loadbuffer(L, a, len, a);
+  //lua_call(L,0,0);
+
+  lua_State* sL = luaL_newstate();
+  luaL_openlibs(sL);
+  requiref(sL, "_G", luaopen_base, 0);
+  requiref(sL, "package", luaopen_package, 1);
+
+  lua_pushlstring(sL, a, len);
+  char* b = (char*)luaL_tolstring(sL, -1, &len);
+  luaL_loadbuffer(sL, b, len, b);
   
-  lua_settop(L, 1);
-  luaL_buffinit(L, &buff);
-
-  printf("%i\n",dump(L, luaproc_buff_writer, &buff, 0));
-  luaL_pushresult( &buff );
-
-  printf("%s\n",lua_tolstring(L, 1, NULL));
-
-  //pthread_t thread_id;
-  //pthread_create(&thread_id, NULL, hh, (void*)args);
-  //pthread_detach(thread_id);
+  //l_pprint(L);
+  pthread_t thread_id;
+  pthread_create(&thread_id, NULL, hh, (void*)sL);
+  pthread_detach(thread_id);
   
 
   return 0;
