@@ -1,13 +1,15 @@
 require "llib"
-function sleep (a) 
+function _G.sleep (a) 
     local sec = tonumber(os.clock() + a); 
     while (os.clock() < sec) do 
     end 
 end
 
-for i=1,500 do
+for i=1,50 do
     llib.net.spawn(function()
-        --sleep(1)
+        local sec = tonumber(os.clock() + 1); 
+    while (os.clock() < sec) do 
+    end 
         print("hi")
     end)
 end
