@@ -117,7 +117,7 @@ int stable_key(str** table, char* target, int flen){
   return -1;
 }
 
-void http_build(str** _dest, int code, char* code_det, char* type, char* content){
+void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content){
   /**dest = str_init(
     "HTTP/1.1 404 Not Found\r\n"
     "Content-Type: text/plain\r\n"
@@ -128,9 +128,9 @@ void http_build(str** _dest, int code, char* code_det, char* type, char* content
   memset(dest, 0, BUFFER_SIZE);
   sprintf(dest, 
     "HTTP/1.1 %i %s\r\n"
-    "Content-Type: %s\r\n"
+    "%s"
     "\r\n"
-    , code, code_det, type);
+    , code, code_det, header_vs);
 
   *_dest = str_init(dest);
   str_push(*_dest, content);
@@ -226,27 +226,41 @@ int l_send(lua_State* L){
   char* content = (char*)luaL_checkstring(L, 2);
   
   lua_pushvalue(L, res_idx);
-  lua_pushstring(L, "Content-Type");
-  lua_gettable(L, res_idx);
-  char* content_type = (char*)luaL_checkstring(L, -1);
+  lua_pushstring(L, "header");
+  lua_gettable(L, -2);
+  int header = lua_gettop(L);
 
-  lua_pushvalue(L, res_idx);
+  str* header_vs = str_init("");
+  lua_pushnil(L);
+  for(;lua_next(L, header) != 0;){
+      char* key = (char)luaL_tolstring(L, -2, NULL);
+      if(strcmp(key, "Code") != 0){
+        str_push(header_vs, key);
+        str_push(header_vs, ": ");
+        str_push(header_vs, (char)luaL_tolstring(L, -2, NULL));
+        str_push(header_vs, "\r\n");
+        lua_pop(L, 1);
+      }
+      lua_pop(L, 2);
+  }
+
+  lua_pushvalue(L, header);
   lua_pushstring(L, "Code");
-  lua_gettable(L, res_idx);
+  lua_gettable(L, header);
   int code = luaL_checkinteger(L, -1);
   str* resp;
   
   char code_det[50] = {0};
   http_code(code, code_det);
-  http_build(&resp, code,  code_det,content_type, content);
+  http_build(&resp, code,  code_det, header_vs->c, content);
   send(client_fd, resp->c, resp->len, 0);
   str_free(resp);
+  str_free(header_vs);
   return 0;
 }
 
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
-  threads++;
   //pthread_mutex_lock(&mutex);
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
@@ -299,6 +313,7 @@ void* handle_client(void *_arg){
         
         int req_idx = lua_gettop(L);
         lua_newtable(L);
+        int res_idx = lua_gettop(L);
         //functions
         lua_pushstring(L, "send");
         lua_pushcfunction(L, l_send);
@@ -308,7 +323,9 @@ void* handle_client(void *_arg){
         lua_pushstring(L, "client_fd");
         lua_pushinteger(L, client_fd);
         lua_settable(L, -3);
-
+  
+        //header table
+        lua_newtable(L);
         lua_pushstring(L, "Code");
         lua_pushinteger(L, 200);
         lua_settable(L, -3);
@@ -316,8 +333,10 @@ void* handle_client(void *_arg){
         lua_pushstring(L, "Content-Type");
         lua_pushstring(L, "text/html");
         lua_settable(L, -3);
-
-        int res_idx = lua_gettop(L);
+        
+        lua_pushstring(L, "header");
+        lua_pushvalue(L, -2);
+        lua_settable(L, res_idx);
 
         lua_pushvalue(L, func); // push function call
         lua_pushvalue(L, res_idx); //push methods related to dealing with the request
@@ -339,7 +358,10 @@ void* handle_client(void *_arg){
   free(args);
   free(buffer);
   lua_close(L);
+
+  pthread_mutex_lock(&mutex);
   threads--;
+  pthread_mutex_unlock(&mutex);
   return NULL;
 }
 
@@ -399,6 +421,10 @@ int start_serv(lua_State* L, int port){
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
+
+    pthread_mutex_lock(&mutex);
+    threads++;
+    pthread_mutex_unlock(&mutex);
 
     //send request to handle_client()
     pthread_t thread_id;

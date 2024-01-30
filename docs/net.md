@@ -32,7 +32,7 @@ closes server
 
 'takes a function with 3 paramaters
 
-first and second are res and req as described in server:GET, the third is a function to move to the next point 
+first and second are res and req as described in server:GET, the third is a function to move to the next point, executes in the order given and can be chained
 
 ```lua
 server:use(function(res, req, next) 
@@ -75,7 +75,7 @@ res:send("<h1>hello world</h1>")
 
 #### res:set **
 
-'takes 2 strings, key and value
+'takes an even number of strings, key and value pairs
 
 set the key to value in the response header, certain keys will affect other values or have other side effects on res:send, listed below
 
@@ -83,16 +83,30 @@ set the key to value in the response header, certain keys will affect other valu
 |--|--|
 |Code|Changes response note, ie: (200: OK)|
 
-
-```lua
-...
-res:set("Content-Type", "text/html") -- Content-Type: text/html
-...
-```
-
 #### res:close **
 
 closes connection
+
+#### res.header
+
+table containing all head information, anything added to it will be used, certain keys will affect other values or have other side effects on res:send, listed below
+
+|key|side effect|
+|--|--|
+|Code|Changes response note, ie: (200: OK)|
+
+```lua
+...
+res.header["Code"] = 404
+res.header["test"] = "wowa"
+-- new header will have a code of 404 (at the top duh)
+-- and a new field "test"
+--
+-- HTTP/1.1 404 Not Found
+-- ...
+-- test: wowa
+...
+```
 
 ### server:static_serve **
 
