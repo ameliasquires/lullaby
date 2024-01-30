@@ -12,6 +12,40 @@ llib.net.listen(function(server)
 end, 80)
 ```
 
+### server:lock server:unlock **
+
+continues on the current thread, but pauses all other threads at that point
+
+```lua
+...
+server:lock()
+--do something with a global
+server:unlock()
+...
+```
+
+### server:close **
+
+closes server
+
+### server:use
+
+'takes a function with 3 paramaters
+
+first and second are res and req as described in server:GET, the third is a function to move to the next point 
+
+```lua
+server:use(function(res, req, next) 
+   if(req['Version'] == "HTTP/1.1") then 
+    next()
+   end
+end)
+
+server:GET("/", function(res, req)
+    --version will always be 1.1, as per the middleware
+end)
+```
+
 ### server:GET
 
 'takes a string (the path) and a function to be ran in the background on request
@@ -56,7 +90,17 @@ res:set("Content-Type", "text/html") -- Content-Type: text/html
 ...
 ```
 
-#### res:close()
+#### res:close **
 
 closes connection
+
+### server:static_serve **
+
+'takes two strings, first is server serve path, second is local path, being a file or directory
+
+```lua
+...
+server:static_serve("/public", "./html/")
+...
+```
 
