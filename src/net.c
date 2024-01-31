@@ -35,6 +35,7 @@ struct lchar {
 };
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   char* buffer = malloc(BUFFER_SIZE * sizeof * buffer);
@@ -233,15 +234,14 @@ int l_send(lua_State* L){
   str* header_vs = str_init("");
   lua_pushnil(L);
   for(;lua_next(L, header) != 0;){
-      char* key = (char)luaL_tolstring(L, -2, NULL);
+      char* key = (char*)luaL_checklstring(L, -2, NULL);
       if(strcmp(key, "Code") != 0){
         str_push(header_vs, key);
         str_push(header_vs, ": ");
-        str_push(header_vs, (char)luaL_tolstring(L, -2, NULL));
+        str_push(header_vs, (char*)luaL_checklstring(L, -2, NULL));
         str_push(header_vs, "\r\n");
-        lua_pop(L, 1);
       }
-      lua_pop(L, 2);
+      lua_pop(L, 1);
   }
 
   lua_pushvalue(L, header);
@@ -414,7 +414,7 @@ int start_serv(lua_State* L, int port){
       printf("failed to accept\n");
       abort();
     }
-    printf("%i\n",threads);
+    //printf("%i\n",threads);
     //open a state to call shit, should be somewhat thread safe
     
     
@@ -435,9 +435,6 @@ int start_serv(lua_State* L, int port){
 
 }
 
-#define requiref( L, modname, f, glob ) \
-  { luaL_requiref( L, modname, f, glob ); lua_pop( L, 1 ); }
-
 int l_GET(lua_State* L){
   lua_pushstring(L, "port");
   lua_gettable(L, 1);
@@ -454,7 +451,7 @@ int l_GET(lua_State* L){
   lua_call(L, 1, 1);
 
   size_t len;
-  char* a = (char*)luaL_tolstring(L, -1, &len);
+  char* a = (char*)luaL_checklstring(L, -1, &len);
   struct lchar* awa = malloc(len + 1);
   awa->c = a;
   awa->len = len;
@@ -462,34 +459,18 @@ int l_GET(lua_State* L){
   if(paths == NULL)
     paths = parray_init();
   parray_set(paths, portc, (void*)awa);
-  /*
-  int tab_idx = ports[port];
-  int ot;
-  if(tab_idx == 0){
-    lua_newtable(L);
-    ports[port] = tab_idx = luaL_ref(L, LUA_REGISTRYINDEX);
-    lua_rawgeti(L,LUA_REGISTRYINDEX,tab_idx);
-    
-  } else {
-    lua_rawgeti(L,LUA_REGISTRYINDEX,tab_idx);
-  }
-  int o = lua_gettop(L);
-
-  lua_newtable(L);
-  lua_pushstring(L, "fn");
-  lua_pushvalue(L, 3);
-  lua_settable(L, -3);
-
-  lua_pushvalue(L, o);
-  lua_pushvalue(L, 2);
-  lua_pushvalue(L, -3);
-  lua_settable(L, -3);
-  */
-  //printf("%i%s",port, lua_tostring(L, 2));
-  
   return 1;
 }
 
+int l_lock(lua_State* L){
+  pthread_mutex_lock(&lua_mutex);
+  return 0;
+}
+
+int l_unlock(lua_State* L){
+  pthread_mutex_unlock(&lua_mutex);
+  return 0;
+}
 
 int l_listen(lua_State* L){
   if(lua_gettop(L) != 2) {
@@ -507,6 +488,14 @@ int l_listen(lua_State* L){
   lua_pushcfunction(L, l_GET);
   lua_settable(L, -3);
 
+  lua_pushstring(L, "lock");
+  lua_pushcfunction(L, l_lock);
+  lua_settable(L, -3);
+  
+  lua_pushstring(L, "unlock");
+  lua_pushcfunction(L, l_unlock);
+  lua_settable(L, -3);
+  
   lua_pushstring(L, "port");
   lua_pushvalue(L, 2);
   lua_settable(L, -3);
@@ -536,7 +525,7 @@ int l_spawn(lua_State* L){
   lua_call(L, 1, 1);
 
   size_t len;
-  char* a = (char*)luaL_tolstring(L, -1, &len);
+  char* a = (char*)luaL_checklstring(L, -1, &len);
   //luaL_loadbuffer(L, a, len, a);
   //lua_call(L,0,0);
 
@@ -546,7 +535,7 @@ int l_spawn(lua_State* L){
   requiref(sL, "package", luaopen_package, 1);
 
   lua_pushlstring(sL, a, len);
-  char* b = (char*)luaL_tolstring(sL, -1, &len);
+  char* b = (char*)luaL_checklstring(sL, -1, &len);
   luaL_loadbuffer(sL, b, len, b);
   
   //l_pprint(L);

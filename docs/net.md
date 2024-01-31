@@ -6,6 +6,12 @@
 
 the function will be ran on initilization, the argument has info on the server and functions to set it up
 
+**
+right now everything within a server:GET function is completley local, cannot access the global context at all,
+i am planning on copying the global state to each thread (optionally ofc) to make the global state read only, and maybe
+and option to sync the global state (push and pull seperately)
+**
+
 ```lua
 llib.net.listen(function(server)
     ...
@@ -61,6 +67,16 @@ end)
 ...
 ```
 
+#### res:deny **
+
+denies request as if there was no server 
+
+```lua
+...
+res:deny() --make the client timeout, lol
+...
+```
+
 #### res:send
 
 'takes a string 
@@ -72,16 +88,6 @@ sends the string to the client
 res:send("<h1>hello world</h1>")
 ...
 ```
-
-#### res:set **
-
-'takes an even number of strings, key and value pairs
-
-set the key to value in the response header, certain keys will affect other values or have other side effects on res:send, listed below
-
-|key|side effect|
-|--|--|
-|Code|Changes response note, ie: (200: OK)|
 
 #### res:close **
 
