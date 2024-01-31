@@ -17,6 +17,11 @@ llib.io.pprint(llib.net.listen(
             --res:send("hi");
             --res.Code = 201
             --sleep(1)
+            require "llib"
+            llib.io.pprint(_G)
+            local sec = tonumber(os.clock() + 5); 
+            while (os.clock() < sec) do 
+            end 
             res:send("<h2>hello world</h2>")
         end))
 
