@@ -243,7 +243,7 @@ int l_send(lua_State* L){
       if(strcmp(key, "Code") != 0){
         str_push(header_vs, key);
         str_push(header_vs, ": ");
-        str_push(header_vs, (char*)luaL_checklstring(L, -2, NULL));
+        str_push(header_vs, (char*)luaL_checklstring(L, -1, NULL));
         str_push(header_vs, "\r\n");
       }
       lua_pop(L, 1);
@@ -467,7 +467,7 @@ int l_GET(lua_State* L){
 
   if(paths == NULL)
     paths = parray_init();
-    
+
   //please free this
   void* v_old_paths = parray_get(paths, portc);
   struct sarray_t* old_paths;
