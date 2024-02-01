@@ -34,6 +34,11 @@ struct lchar {
   int len;
 };
 
+struct sarray_t {
+  struct lchar** cs;
+  int len;
+};
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -297,11 +302,6 @@ void* handle_client(void *_arg){
         send(client_fd, resp->c, resp->len, 0);
         str_free(resp);
       } else {
-        struct lchar* awa = (struct lchar*)v;
-        luaL_loadbuffer(L, awa->c, awa->len, awa->c);
-
-        int func = lua_gettop(L); 
-        
         lua_newtable(L);
         lua_newtable(L);
         for(int i = 0; i != len * 2; i+=2){
@@ -338,12 +338,21 @@ void* handle_client(void *_arg){
         lua_pushvalue(L, -2);
         lua_settable(L, res_idx);
 
-        lua_pushvalue(L, func); // push function call
-        lua_pushvalue(L, res_idx); //push methods related to dealing with the request
-        lua_pushvalue(L, req_idx); //push info about the request
+        //the function(s)
+        struct sarray_t* awa = (struct sarray_t*)v;
+        for(int i = 0; i != awa->len; i++){
+          struct lchar* wowa = awa->cs[i];
+          luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
 
-        //call the function
-        lua_call(L, 2, 0);
+          int func = lua_gettop(L);
+
+          lua_pushvalue(L, func); // push function call
+          lua_pushvalue(L, res_idx); //push methods related to dealing with the request
+          lua_pushvalue(L, req_idx); //push info about the request
+
+          //call the function
+          lua_call(L, 2, 0);
+        }
       }
       
     }
@@ -416,11 +425,11 @@ int start_serv(lua_State* L, int port){
     }
     //printf("%i\n",threads);
     //open a state to call shit, should be somewhat thread safe
-    
-    
+
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
+    //args->L = oL;
 
     pthread_mutex_lock(&mutex);
     threads++;
@@ -458,7 +467,21 @@ int l_GET(lua_State* L){
 
   if(paths == NULL)
     paths = parray_init();
-  parray_set(paths, portc, (void*)awa);
+    
+  //please free this
+  void* v_old_paths = parray_get(paths, portc);
+  struct sarray_t* old_paths;
+  if(v_old_paths == NULL){
+    old_paths = malloc(sizeof * old_paths);
+    old_paths->len = 0;
+    old_paths->cs = malloc(sizeof * old_paths->cs);
+  } else old_paths = (struct sarray_t*)v_old_paths;
+
+  old_paths->len++;
+  old_paths->cs = realloc(old_paths->cs, sizeof * old_paths->cs * old_paths->len);
+  old_paths->cs[old_paths->len - 1] = awa;
+
+  parray_set(paths, portc, (void*)old_paths);
   return 1;
 }
 
@@ -473,6 +496,10 @@ int l_unlock(lua_State* L){
 }
 
 int l_listen(lua_State* L){
+  lua_State* src = luaL_newstate();
+  lua_State* dest = luaL_newstate();
+
+
   if(lua_gettop(L) != 2) {
     printf("not enough args");
     abort();

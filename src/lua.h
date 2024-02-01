@@ -1,7 +1,8 @@
-#include <lua5.1/lua.h>
-#include <lua5.1/lualib.h>
-#include <lua5.1/lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 
+void i_dcopy(lua_State* src, lua_State* dest, void*);
 
 #if LUA_VERSION_NUM == 504
     #define lreg(N, FN)\
