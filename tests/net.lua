@@ -1,34 +1,43 @@
 require "llib"
 llib.config.set({max_depth=5})
 --local print = llib.io.pprint
-function sleep (a) 
+sleep = function(a) 
     local sec = tonumber(os.clock() + a); 
     while (os.clock() < sec) do 
     end 
 end
+aea = 5
+
+--llib.io.pprint(_G.sleep)
 llib.io.pprint(llib.net.listen(
     function(server)
-        print("wowa")
-
-        llib.io.pprint(server:GET("/", function(res, req)
+        --print("wowa")
+        server:GET("/", function(res, req)
             --llib.io.pprint(res)
             --llib.io.pprint(res)
             --print(res.send)
             --res:send("hi");
             --res.Code = 201
-            --sleep(1)
-            require "llib"
-            llib.io.pprint(_G)
-            local sec = tonumber(os.clock() + 5); 
-            while (os.clock() < sec) do 
-            end 
-            res:send("<h2>hello world</h2>")
-        end))
+            --wwo.sleep(1)
+            --wwo.llib.io.pprint(wwo.sleep)
+            print("hi from first")
+        end)
 
-        llib.io.pprint(server:GET("/test", function(res, req)
+        server:GET("/", function(res, req)
+            --llib.io.pprint(res)
+            --llib.io.pprint(res)
+            --print(res.send)
+            --res:send("hi");
+            --res.Code = 201
+            --wwo.sleep(1)
+            --wwo.llib.io.pprint(wwo.sleep)
+            res:send("<h2>hello world</h2>")
+        end)
+
+        server:GET("/test", function(res, req)
             res.Code = 403
             res:send("<h2>you would never</h2>")
-        end))
+        end)
 
         
     end,

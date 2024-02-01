@@ -125,7 +125,11 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
       break;
     case LUA_TSTRING:
       if(!skip_indent) print_indentation(indent);
-      printf("\"%s\"", lua_tostring(L,-1));
+      size_t len;
+      char* wowa = (char*)luaL_tolstring(L, -1, &len);
+      printf("\"");
+      for(int i = 0; i != len; i++) printf("%c",wowa[i]);
+      printf("\"");
       break;
     case LUA_TFUNCTION:
       if(!skip_indent) print_indentation(indent);
