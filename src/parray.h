@@ -16,3 +16,7 @@ void parray_set(parray_t*, char*, void*);
 void* parray_get(parray_t* , char*);
 
 void parray_clear(parray_t*, int);
+
+void parray_lclear(parray_t*);
+
+parray_t* parray_find(parray_t*, char*);
