@@ -35,11 +35,51 @@ void* parray_get(parray_t* p, char* key){
     return NULL;
 }
 
+void parray_lclear(parray_t* p){
+    free(p->P);
+    free(p);
+}
+
 void parray_clear(parray_t* p, int clear_val){
     for(int i = 0; i != p->len; i++){
         str_free(p[i].P->key);
         if(clear_val) free(p[i].P->value);
     }
-    free(p->P);
-    free(p);
+    parray_lclear(p);
+}
+
+int fmatch(char* s, char* p) {
+    int slen = strlen(s);
+    int plen = strlen(p);
+    int sidx = 0, pidx = 0, lastWildcardIdx = -1, sBacktrackIdx = -1, nextToWildcardIdx = -1;
+    for(;sidx < slen;) {
+        if (pidx < plen && (p[pidx] == '?' || p[pidx] == s[sidx])) { 
+            sidx++;
+            pidx++;
+        } else if (pidx < plen && p[pidx] == '*') { 
+            lastWildcardIdx = pidx;
+            nextToWildcardIdx = ++pidx;
+            sBacktrackIdx = sidx;
+        } else if (lastWildcardIdx == -1) { 
+            return 0;
+        } else { 
+            pidx = nextToWildcardIdx;
+            sidx = sBacktrackIdx++;
+        }
+    }
+    for(int i = pidx; i < plen; i++) if(p[i] != '*') return 0;
+    return 1;
+}
+
+parray_t* parray_find(parray_t* p, char* match){
+    parray_t* ret = malloc(sizeof * ret);
+    ret->P = malloc(sizeof * ret->P * p->len);
+    ret->len = 0;
+    for(int i = 0; i != p->len; i++){
+        if(fmatch(match, p->P[i].key->c)){
+            ret->P[ret->len] = p->P[i];
+            ret->len++;
+        }
+    }
+    return ret;
 }

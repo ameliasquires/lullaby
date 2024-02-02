@@ -294,7 +294,7 @@ void* handle_client(void *_arg){
       str* aa = str_init(portc);
       str_push(aa, table[k]->c);
 
-      void* v = parray_get(paths, aa->c);
+      void* v = parray_find(paths, aa->c);
 
       if(v == NULL){
         str* resp;
@@ -339,9 +339,31 @@ void* handle_client(void *_arg){
         lua_settable(L, res_idx);
 
         //the function(s)
-        struct sarray_t* awa = (struct sarray_t*)v;
+        //get all function that kinda match
+        parray_t* owo = (parray_t*)v;
+        for(int i = 0; i != owo->len; i++){
+          //though these are arrays of arrays we have to iterate *again*
+          struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
+
+          for(int z = 0; z != awa->len; z++){
+            struct lchar* wowa = awa->cs[z];
+            
+            luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
+
+            int func = lua_gettop(L);
+
+            lua_pushvalue(L, func); // push function call
+            lua_pushvalue(L, res_idx); //push methods related to dealing with the request
+            lua_pushvalue(L, req_idx); //push info about the request
+
+            //call the function
+            lua_call(L, 2, 0);
+          }
+        }
+        /*
         for(int i = 0; i != awa->len; i++){
-          struct lchar* wowa = awa->cs[i];
+          //struct lchar* wowa = awa->cs[i];
+          
           luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
 
           int func = lua_gettop(L);
@@ -352,7 +374,8 @@ void* handle_client(void *_arg){
 
           //call the function
           lua_call(L, 2, 0);
-        }
+        }*/
+
       }
       
     }
