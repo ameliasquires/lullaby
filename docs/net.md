@@ -31,7 +31,7 @@ server:unlock()
 ...
 ```
 
-### server:close **
+### server:close
 
 closes server
 
@@ -43,11 +43,9 @@ the function has 2 arguments, the first (res) contains functions and info about 
 the second (req) contains info on the request, the path allows for wildcards, multiple get requests per path is allowed
 
 ```lua
-
-
 server:GET("*", function(res, req, next) 
    if(req['Version'] ~= "HTTP/1.1") then 
-      res:deny()
+      res:close()
    end
 end)
 
@@ -56,16 +54,6 @@ server:GET("/", function(res, req) do
     --version will always be 1.1, as per the middleware
     ...
 end)
-...
-```
-
-#### res:deny **
-
-denies request as if there was no server 
-
-```lua
-...
-res:deny() --make the client timeout, lol
 ...
 ```
 
@@ -95,7 +83,7 @@ res:send("<h1>hello world</h1>")
 ...
 ```
 
-#### res:end
+#### res:close
 
 closes connection, sets res.client_fd to -1, any calls that use this value will fail
 

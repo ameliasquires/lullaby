@@ -114,10 +114,12 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
         } else {
           if(!skip) print_indentation(indent + 1);
         }
+        int tuwu = lua_gettop(L);
         i_pprint(L,indent+1,1);
         printf(",");
         if(!skip) printf("\n");
-
+        
+        lua_settop(L, tuwu);
         lua_pop(L,1);
       }
       print_indentation(indent);

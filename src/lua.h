@@ -4,6 +4,23 @@
 
 void i_dcopy(lua_State* src, lua_State* dest, void*);
 
+//generic macro that takes other macros (see below)
+#define _tset_b(L, Tidx, K, V, F)\
+    lua_pushvalue(L, Tidx);\
+    lua_pushstring(L, K);\
+    F(L, V);\
+    lua_settable(L, Tidx);
+
+//some macros to make batch adding easier (may switch to arrays for this later)
+#define luaI_tseti(L, Tidx, K, V)\
+    _tset_b(L, Tidx, K, V, lua_pushinteger)
+#define luaI_tsets(L, Tidx, K, V)\
+    _tset_b(L, Tidx, K, V, lua_pushstring)
+#define luaI_tsetv(L, Tidx, K, V)\
+    _tset_b(L, Tidx, K, V, lua_pushvalue)
+#define luaI_tsetcf(L, Tidx, K, V)\
+    _tset_b(L, Tidx, K, V, lua_pushcfunction)
+
 #if LUA_VERSION_NUM == 504
     #define lreg(N, FN)\
         lua_pushstring(L, N);\
