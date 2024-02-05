@@ -4,6 +4,7 @@
 
 'takes a function with 1 argument and a integer for a port
 
+(intentionally styled after expressjs:3)
 the function will be ran on initilization, the argument has info on the server and functions to set it up
 
 **
@@ -34,34 +35,25 @@ server:unlock()
 
 closes server
 
-### server:use
-
-'takes a function with 3 paramaters
-
-first and second are res and req as described in server:GET, the third is a function to move to the next point, executes in the order given and can be chained
-
-```lua
-server:use(function(res, req, next) 
-   if(req['Version'] == "HTTP/1.1") then 
-    next()
-   end
-end)
-
-server:GET("/", function(res, req)
-    --version will always be 1.1, as per the middleware
-end)
-```
-
 ### server:GET
 
 'takes a string (the path) and a function to be ran in the background on request
 
 the function has 2 arguments, the first (res) contains functions and info about resolving the request,
-the second (req) contains info on the request
+the second (req) contains info on the request, the path allows for wildcards, multiple get requests per path is allowed
 
 ```lua
+
+
+server:GET("*", function(res, req, next) 
+   if(req['Version'] ~= "HTTP/1.1") then 
+      res:deny()
+   end
+end)
+
 ...
 server:GET("/", function(res, req) do
+    --version will always be 1.1, as per the middleware
     ...
 end)
 ...
@@ -77,11 +69,25 @@ res:deny() --make the client timeout, lol
 ...
 ```
 
+#### res:write
+
+'takes a string 
+
+sends the string to the client, constructs a header on first call (whether or not res.header._sent is null)
+(the constructed header can not be changed later on in the request), and sends the string without closing the client
+
+```lua
+...
+res:write("<h1>hello world</h1>")
+res:write("<h1>good bye world</h1>")
+...
+```
+
 #### res:send
 
 'takes a string 
 
-sends the string to the client
+sends the string to the client, constructs a header then closes client_fd
 
 ```lua
 ...
@@ -89,9 +95,9 @@ res:send("<h1>hello world</h1>")
 ...
 ```
 
-#### res:close **
+#### res:end
 
-closes connection
+closes connection, sets res.client_fd to -1, any calls that use this value will fail
 
 #### res.header
 
