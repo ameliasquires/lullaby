@@ -11,7 +11,7 @@ aea = 5
 --llib.io.pprint(_G.sleep)
 llib.io.pprint(llib.net.listen(
     function(server)
-        --print("wowa")
+        print("wowa")
         server:GET("/", function(res, req)
             --llib.io.pprint(res)
             --llib.io.pprint(res)
@@ -24,14 +24,10 @@ llib.io.pprint(llib.net.listen(
         end)
 
         server:GET("/", function(res, req)
-            --llib.io.pprint(res)
-            --llib.io.pprint(res)
-            --print(res.send)
-            --res:send("hi");
-            --res.Code = 201
-            --wwo.sleep(1)
-            --wwo.llib.io.pprint(wwo.sleep)
-            res:send("<h2>hello world</h2>")
+            
+            res:write("test")
+            res:write("test2")
+            res:end()
         end)
 
         server:GET("/test", function(res, req)

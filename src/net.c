@@ -217,28 +217,14 @@ void http_code(int code, char* code_det){
   }
 }
 
-int l_send(lua_State* L){
-  int res_idx = 1;
-  
-  lua_pushvalue(L, res_idx);
-  lua_pushstring(L, "client_fd");
-  lua_gettable(L, res_idx);
-  int client_fd = luaL_checkinteger(L, -1);
- 
-  /*
-  lua_pushvalue(L, res_idx);
-  lua_pushstring(L, "Content");
-  lua_gettable(L, res_idx);*/
-  char* content = (char*)luaL_checkstring(L, 2);
-  
-  lua_pushvalue(L, res_idx);
-  lua_pushstring(L, "header");
-  lua_gettable(L, -2);
-  int header = lua_gettop(L);
+void i_write_header(lua_State* L, int header_top, str** _resp, char* content){
+  str* resp;
+  lua_pushvalue(L, header_top);
 
   str* header_vs = str_init("");
   lua_pushnil(L);
-  for(;lua_next(L, header) != 0;){
+    
+  for(;lua_next(L, header_top) != 0;){
       char* key = (char*)luaL_checklstring(L, -2, NULL);
       if(strcmp(key, "Code") != 0){
         str_push(header_vs, key);
@@ -249,18 +235,99 @@ int l_send(lua_State* L){
       lua_pop(L, 1);
   }
 
-  lua_pushvalue(L, header);
+  lua_pushvalue(L, header_top);
   lua_pushstring(L, "Code");
-  lua_gettable(L, header);
+  lua_gettable(L, header_top);
   int code = luaL_checkinteger(L, -1);
-  str* resp;
-  
+    
   char code_det[50] = {0};
   http_code(code, code_det);
   http_build(&resp, code,  code_det, header_vs->c, content);
-  send(client_fd, resp->c, resp->len, 0);
-  str_free(resp);
+
   str_free(header_vs);
+
+  *_resp = resp;
+}
+int l_write(lua_State* L){
+  int res_idx = 1;
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "client_fd");
+  lua_gettable(L, res_idx);
+  int client_fd = luaL_checkinteger(L, -1);
+  if(client_fd <= 0) abort(); // add error message
+  
+  char* content = (char*)luaL_checkstring(L, 2);
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "header");
+  lua_gettable(L, -2);
+  int header_top = lua_gettop(L);
+
+  lua_pushstring(L, "_sent");
+  lua_gettable(L, -2);
+  str* resp;
+  if(lua_isnil(L, -1)){
+    i_write_header(L, header_top, &resp, content);
+
+    lua_pushvalue(L, header_top);
+    lua_pushstring(L, "_sent");
+    lua_pushinteger(L, 1);
+    lua_settable(L, -3);
+  } else {
+    resp = str_init(content);
+  }
+
+  send(client_fd, resp->c, resp->len, 0);
+
+  str_free(resp);
+  return 0;
+}
+
+int l_send(lua_State* L){
+  int res_idx = 1;
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "client_fd");
+  lua_gettable(L, res_idx);
+  int client_fd = luaL_checkinteger(L, -1);
+  if(client_fd <= 0) abort(); // add error message
+  
+  char* content = (char*)luaL_checkstring(L, 2);
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "header");
+  lua_gettable(L, -2);
+  int header = lua_gettop(L);
+
+  str* resp;
+  i_write_header(L, header, &resp, content);
+
+  send(client_fd, resp->c, resp->len, 0);
+  
+  lua_pushstring(L, "client_fd");
+  lua_pushinteger(L, -1);
+  lua_settable(L, res_idx);
+  closesocket(client_fd);
+
+  str_free(resp);
+  return 0;
+}
+
+int l_end(lua_State* L){
+  int res_idx = 1;
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "client_fd");
+  lua_gettable(L, res_idx);
+  int client_fd = luaL_checkinteger(L, -1);
+  if(client_fd <= 0) abort(); // add error message
+  
+  lua_pushstring(L, "client_fd");
+  lua_pushinteger(L, -1);
+  lua_settable(L, res_idx);
+  closesocket(client_fd);
+  
   return 0;
 }
 
@@ -319,6 +386,14 @@ void* handle_client(void *_arg){
         lua_pushcfunction(L, l_send);
         lua_settable(L, -3);
 
+        lua_pushstring(L, "write");
+        lua_pushcfunction(L, l_write);
+        lua_settable(L, -3);
+
+        lua_pushstring(L, "end");
+        lua_pushcfunction(L, l_end);
+        lua_settable(L, -3);
+
         //values
         lua_pushstring(L, "client_fd");
         lua_pushinteger(L, client_fd);
@@ -360,21 +435,11 @@ void* handle_client(void *_arg){
             lua_call(L, 2, 0);
           }
         }
-        /*
-        for(int i = 0; i != awa->len; i++){
-          //struct lchar* wowa = awa->cs[i];
-          
-          luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
+        parray_lclear(owo);
 
-          int func = lua_gettop(L);
-
-          lua_pushvalue(L, func); // push function call
-          lua_pushvalue(L, res_idx); //push methods related to dealing with the request
-          lua_pushvalue(L, req_idx); //push info about the request
-
-          //call the function
-          lua_call(L, 2, 0);
-        }*/
+        lua_pushstring(L, "client_fd");
+        lua_gettable(L, res_idx);
+        client_fd = luaL_checkinteger(L, -1);
 
       }
       
@@ -386,7 +451,7 @@ void* handle_client(void *_arg){
     free(table);
   }
 
-  closesocket(client_fd);
+  if(client_fd > 0) closesocket(client_fd);
   free(args);
   free(buffer);
   lua_close(L);
