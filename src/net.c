@@ -147,6 +147,7 @@ typedef struct {
   int fd;
   int port;
   lua_State* L;
+  struct sockaddr_in cli;
 } thread_arg_struct;
 
 void http_code(int code, char* code_det){
@@ -314,7 +315,7 @@ int l_send(lua_State* L){
   return 0;
 }
 
-int l_end(lua_State* L){
+int l_close(lua_State* L){
   int res_idx = 1;
   
   lua_pushvalue(L, res_idx);
@@ -327,12 +328,13 @@ int l_end(lua_State* L){
   lua_pushinteger(L, -1);
   lua_settable(L, res_idx);
   closesocket(client_fd);
-  
+
   return 0;
 }
 
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
+  
   //pthread_mutex_lock(&mutex);
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
@@ -353,6 +355,7 @@ void* handle_client(void *_arg){
     int len = 0;
     //checks for a valid header
     if(parse_header(buffer, header_eof, &table, &len) != -1){
+      
       int k = stable_key(table, "Path", len);
 
       char portc[10] = {0};
@@ -370,57 +373,46 @@ void* handle_client(void *_arg){
         str_free(resp);
       } else {
         lua_newtable(L);
-        lua_newtable(L);
-        for(int i = 0; i != len * 2; i+=2){
-          //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
-          lua_pushstring(L, table[i]->c);
-          lua_pushstring(L, table[i+1]->c);
-          lua_settable(L, -3);
-        }
-        
         int req_idx = lua_gettop(L);
         lua_newtable(L);
         int res_idx = lua_gettop(L);
+
+        for(int i = 0; i != len * 2; i+=2){
+          //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
+          luaI_tsets(L, req_idx, table[i]->c, table[i+1]->c);
+        }
+
+        luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
+        
         //functions
-        lua_pushstring(L, "send");
-        lua_pushcfunction(L, l_send);
-        lua_settable(L, -3);
-
-        lua_pushstring(L, "write");
-        lua_pushcfunction(L, l_write);
-        lua_settable(L, -3);
-
-        lua_pushstring(L, "end");
-        lua_pushcfunction(L, l_end);
-        lua_settable(L, -3);
+        luaI_tsetcf(L, res_idx, "send", l_send);
+        luaI_tsetcf(L, res_idx, "write", l_write);
+        luaI_tsetcf(L, res_idx, "close", l_close);
 
         //values
-        lua_pushstring(L, "client_fd");
-        lua_pushinteger(L, client_fd);
-        lua_settable(L, -3);
-  
+        luaI_tseti(L, res_idx, "client_fd", client_fd);
+
         //header table
         lua_newtable(L);
-        lua_pushstring(L, "Code");
-        lua_pushinteger(L, 200);
-        lua_settable(L, -3);
-
-        lua_pushstring(L, "Content-Type");
-        lua_pushstring(L, "text/html");
-        lua_settable(L, -3);
+        int header_idx = lua_gettop(L);
+        luaI_tseti(L, header_idx, "Code", 200);
+        luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
-        lua_pushstring(L, "header");
-        lua_pushvalue(L, -2);
-        lua_settable(L, res_idx);
+        luaI_tsetv(L, res_idx, "header", header_idx);
 
         //the function(s)
         //get all function that kinda match
         parray_t* owo = (parray_t*)v;
+        uint64_t passes = 0;
         for(int i = 0; i != owo->len; i++){
           //though these are arrays of arrays we have to iterate *again*
           struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
 
           for(int z = 0; z != awa->len; z++){
+            
+            luaI_tseti(L, res_idx, "passes", passes);
+            passes++;
+
             struct lchar* wowa = awa->cs[z];
             
             luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
@@ -511,12 +503,14 @@ int start_serv(lua_State* L, int port){
       printf("failed to accept\n");
       abort();
     }
+    //printf("%s\n",inet_ntoa(client_addr.sin_addr));
     //printf("%i\n",threads);
     //open a state to call shit, should be somewhat thread safe
 
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
+    args->cli = client_addr;
     //args->L = oL;
 
     pthread_mutex_lock(&mutex);

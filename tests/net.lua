@@ -20,14 +20,18 @@ llib.io.pprint(llib.net.listen(
             --res.Code = 201
             --wwo.sleep(1)
             --wwo.llib.io.pprint(wwo.sleep)
+            require "llib"
+            llib.io.pprint(req)
             print("hi from first")
         end)
 
         server:GET("/", function(res, req)
-            
-            res:write("test")
-            res:write("test2")
-            res:end()
+            require "llib"
+            res.header["Content-Type"] = "text/plain"
+
+            res:write("hi\n")
+            res:write("next")
+            res:close()
         end)
 
         server:GET("/test", function(res, req)
