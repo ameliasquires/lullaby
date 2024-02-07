@@ -32,6 +32,7 @@ static parray_t* paths = NULL;
 struct lchar {
   char* c;
   int len;
+  char req[20];
 };
 
 struct sarray_t {
@@ -251,6 +252,12 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content){
 }
 int l_write(lua_State* L){
   int res_idx = 1;
+
+  lua_pushvalue(L, 1);
+  lua_pushstring(L, "_request");
+  lua_gettable(L, -2);
+
+  int head = strcmp(luaL_checkstring(L, -1), "HEAD") == 0;
   
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
@@ -269,13 +276,15 @@ int l_write(lua_State* L){
   lua_gettable(L, -2);
   str* resp;
   if(lua_isnil(L, -1)){
-    i_write_header(L, header_top, &resp, content);
+    if(head) i_write_header(L, header_top, &resp, "");
+    else i_write_header(L, header_top, &resp, content);
 
     lua_pushvalue(L, header_top);
     lua_pushstring(L, "_sent");
     lua_pushinteger(L, 1);
     lua_settable(L, -3);
   } else {
+    if(head) return 0;
     resp = str_init(content);
   }
 
@@ -293,16 +302,23 @@ int l_send(lua_State* L){
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
   if(client_fd <= 0) abort(); // add error message
-  
+
   char* content = (char*)luaL_checkstring(L, 2);
-  
+
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "header");
   lua_gettable(L, -2);
   int header = lua_gettop(L);
 
   str* resp;
-  i_write_header(L, header, &resp, content);
+  lua_pushvalue(L, 1);
+  lua_pushstring(L, "_request");
+  lua_gettable(L, -2);
+
+  if(strcmp(luaL_checkstring(L, -1), "HEAD") == 0){
+    i_write_header(L, header, &resp, "");
+  } else 
+    i_write_header(L, header, &resp, content);
 
   send(client_fd, resp->c, resp->len, 0);
   
@@ -345,7 +361,11 @@ void* handle_client(void *_arg){
   //create state for this thread
   lua_State* L = luaL_newstate();
   luaL_openlibs(L);
-
+  pthread_mutex_lock(&mutex);
+  lua_getglobal(args->L, "_G");
+  i_dcopy(args->L, L, NULL);
+  lua_setglobal(L, "_G");
+  pthread_mutex_unlock(&mutex);
   //read full request
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
 
@@ -357,6 +377,7 @@ void* handle_client(void *_arg){
     if(parse_header(buffer, header_eof, &table, &len) != -1){
       
       int k = stable_key(table, "Path", len);
+      int R = stable_key(table, "Request", len);
 
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
@@ -391,6 +412,7 @@ void* handle_client(void *_arg){
 
         //values
         luaI_tseti(L, res_idx, "client_fd", client_fd);
+        luaI_tsets(L, res_idx, "_request", table[R]->c);
 
         //header table
         lua_newtable(L);
@@ -409,22 +431,24 @@ void* handle_client(void *_arg){
           struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
 
           for(int z = 0; z != awa->len; z++){
-            
-            luaI_tseti(L, res_idx, "passes", passes);
-            passes++;
 
             struct lchar* wowa = awa->cs[z];
-            
-            luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
+            if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, table[R]->c) == 0 ||
+                (strcmp(table[R]->c, "HEAD") && strcmp(wowa->req, "GET"))){
+              luaI_tseti(L, res_idx, "passes", passes);
+              passes++;
 
-            int func = lua_gettop(L);
+              luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
 
-            lua_pushvalue(L, func); // push function call
-            lua_pushvalue(L, res_idx); //push methods related to dealing with the request
-            lua_pushvalue(L, req_idx); //push info about the request
+              int func = lua_gettop(L);
 
-            //call the function
-            lua_call(L, 2, 0);
+              lua_pushvalue(L, func); // push function call
+              lua_pushvalue(L, res_idx); //push methods related to dealing with the request
+              lua_pushvalue(L, req_idx); //push info about the request
+
+              //call the function
+              lua_call(L, 2, 0);
+            }
           }
         }
         parray_lclear(owo);
@@ -511,7 +535,7 @@ int start_serv(lua_State* L, int port){
     args->fd = *client_fd;
     args->port = port;
     args->cli = client_addr;
-    //args->L = oL;
+    args->L = L;
 
     pthread_mutex_lock(&mutex);
     threads++;
@@ -526,7 +550,7 @@ int start_serv(lua_State* L, int port){
 
 }
 
-int l_GET(lua_State* L){
+int l_req_com(lua_State* L, char* req){
   lua_pushstring(L, "port");
   lua_gettable(L, 1);
   int port = luaL_checkinteger(L, -1);
@@ -546,6 +570,8 @@ int l_GET(lua_State* L){
   struct lchar* awa = malloc(len + 1);
   awa->c = a;
   awa->len = len;
+  strcpy(awa->req, req);
+  printf("%s\n",awa->req);
 
   if(paths == NULL)
     paths = parray_init();
@@ -567,6 +593,21 @@ int l_GET(lua_State* L){
   return 1;
 }
 
+#define gen_reqs(T)\
+int l_##T##q (lua_State* L){\
+  l_req_com(L, #T);\
+  return 1;\
+}
+gen_reqs(GET);
+gen_reqs(HEAD);
+gen_reqs(POST);
+gen_reqs(PUT);
+gen_reqs(DELETE);
+gen_reqs(CONNECT);
+gen_reqs(OPTIONS);
+gen_reqs(TRACE);
+gen_reqs(PATCH);
+gen_reqs(all); //non standard lol, like expressjs use keyword :3
 int l_lock(lua_State* L){
   pthread_mutex_lock(&lua_mutex);
   return 0;
@@ -593,10 +634,17 @@ int l_listen(lua_State* L){
   int port = luaL_checkinteger(L, 2);
   
   lua_newtable(L);
-  lua_pushstring(L, "GET");
-  lua_pushcfunction(L, l_GET);
-  lua_settable(L, -3);
-
+  int mt = lua_gettop(L);
+  luaI_tsetcf(L, mt, "GET", l_GETq);
+  luaI_tsetcf(L, mt, "HEAD", l_HEADq);
+  luaI_tsetcf(L, mt, "POST", l_POSTq);
+  luaI_tsetcf(L, mt, "PUT", l_PUTq);
+  luaI_tsetcf(L, mt, "DELETE", l_DELETEq);
+  luaI_tsetcf(L, mt, "CONNECT", l_CONNECTq);
+  luaI_tsetcf(L, mt, "OPTIONS", l_OPTIONSq);
+  luaI_tsetcf(L, mt, "TRACE", l_TRACEq);
+  luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
+  luaI_tsetcf(L, mt, "all", l_allq);
   lua_pushstring(L, "lock");
   lua_pushcfunction(L, l_lock);
   lua_settable(L, -3);

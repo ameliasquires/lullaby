@@ -35,15 +35,17 @@ server:unlock()
 
 closes server
 
-### server:GET
+### server:GET/POST/...
 
 'takes a string (the path) and a function to be ran in the background on request
 
 the function has 2 arguments, the first (res) contains functions and info about resolving the request,
 the second (req) contains info on the request, the path allows for wildcards, multiple get requests per path is allowed
 
+the actual name of the function will change based on what request method you want to accept, all requests are treated the exact same on the backend, besides HEAD requests which will also use all GET requets, and the 'all' variant will get everything
+
 ```lua
-server:GET("*", function(res, req, next) 
+server:all("*", function(res, req, next) 
    if(req['Version'] ~= "HTTP/1.1") then 
       res:close()
    end

@@ -72,7 +72,8 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             s = (char*)luaL_checklstring(src, -1, &len);
             lua_pushlstring(dest, s, len);
             //for(int i = 0; i != len; i++) printf("%c",s[i]);
-            printf("%i\n",luaL_loadbuffer(dest, s, len, "test"));
+            luaL_loadbuffer(dest, s, len, "test");
+            lua_remove(dest, -2);
             //lua_pushvalue(dest, -1);
             break;
         case LUA_TUSERDATA:
