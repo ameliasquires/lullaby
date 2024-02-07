@@ -1,5 +1,5 @@
 require "llib"
-llib.config.set({max_depth=5})
+llib.config.set({max_depth=1})
 --local print = llib.io.pprint
 sleep = function(a) 
     local sec = tonumber(os.clock() + a); 
@@ -7,12 +7,12 @@ sleep = function(a)
     end 
 end
 aea = 5
-
---llib.io.pprint(_G.sleep)
+_G.ww = llib
+--llib.io.pprint(_G)
 llib.io.pprint(llib.net.listen(
     function(server)
         print("wowa")
-        server:GET("/", function(res, req)
+        server:all("/*", function(res, req)
             --llib.io.pprint(res)
             --llib.io.pprint(res)
             --print(res.send)
@@ -21,14 +21,16 @@ llib.io.pprint(llib.net.listen(
             --wwo.sleep(1)
             --wwo.llib.io.pprint(wwo.sleep)
             require "llib"
-            llib.io.pprint(req)
-            print("hi from first")
+            llib.io.pprint(_G)
+            llib.config.set({max_depth=4})
+            llib.io.pprint(_G.ww)
+            --print("hi from first")
+            --llib.io.pprint(llib.crypto.md5("hewwo"))
         end)
 
-        server:GET("/", function(res, req)
-            require "llib"
+        server:GET("/aa", function(res, req)
             res.header["Content-Type"] = "text/plain"
-
+            server:lock()
             res:write("hi\n")
             res:write("next")
             res:close()
