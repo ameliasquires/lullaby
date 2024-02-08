@@ -26,6 +26,17 @@ void str_push(str* s, char* insert){
   strcat(s->c, insert);
 }
 
+void str_pushl(str* s, char* insert, size_t l){
+  
+  s->c = realloc(s->c, s->len + l + 5);
+  //strcat(s->c, insert);
+  for(int i = 0; i != l; i++){
+    s->c[i + s->len] = insert[i];
+  }
+  s->len += l;
+  s->c[s->len] = '\0';
+}
+
 void str_clear(str* s){
   memset(s->c, 0, s->len);
 
