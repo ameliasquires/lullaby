@@ -7,6 +7,18 @@
 #include "parray.h"
 
 static int ii = 0;
+
+int writer(lua_State *L, const void* p, size_t sz, void* ud){
+    char o[2] = {0};
+    for (int i =0; i<sz; i++){
+        //printf("%c\n",((char*)p)[i]);
+        o[0] = ((char*)p)[i];
+        str_pushl((str*)ud, o, 1);
+        //printf("%s\n",((str*)ud)->c);
+    }
+    
+    return 0;
+}
 void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
     parray_t* seen = (parray_t*)_seen;
     if(seen == NULL) seen = parray_init();
@@ -55,25 +67,26 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             lua_settop(dest, at);
             break;
         case LUA_TFUNCTION:
-            //lua_pushnil(dest);
-            //break;
             if(lua_iscfunction(src, old_top)){
                 //kinda silly
                 lua_pushcfunction(dest, lua_tocfunction(src, -1));
                 break;
             }
             
-            lua_getglobal(src, "string");
-            lua_pushstring(src, "dump");
-            lua_gettable(src, -2);
-            lua_pushvalue(src, old_top);
-            lua_call(src, 1, 1);
+            str* awa = str_init("");
+            lua_dump(src, writer, (void*)awa, 0);
+            //l_pprint(src);
+            //lua_pcall(src, 1, 1, 0);
+            //l_pprint(src);
+            //lua_settop(src, oo);
+            //lua_pop(src, 6);
 
-            s = (char*)luaL_checklstring(src, -1, &len);
-            lua_pushlstring(dest, s, len);
-            //for(int i = 0; i != len; i++) printf("%c",s[i]);
-            luaL_loadbuffer(dest, s, len, "test");
+            //s = (char*)luaL_checklstring(src, -1, &len);
+            lua_pushlstring(dest, awa->c, awa->len);
+            //for(int i = 0; i != awa->len; i++) printf("%i : %c\n",i, awa->c[i]);
+            luaL_loadbuffer(dest, awa->c, awa->len, awa->c);
             lua_remove(dest, -2);
+            str_free(awa);
             //lua_pushvalue(dest, -1);
             break;
         case LUA_TUSERDATA:

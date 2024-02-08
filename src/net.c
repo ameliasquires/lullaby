@@ -338,8 +338,11 @@ int l_close(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0) abort(); // add error message
-  
+  if(client_fd <= 0){
+    printf("already closed\n");
+    abort();
+  }// add error message
+  return 0;
   lua_pushstring(L, "client_fd");
   lua_pushinteger(L, -1);
   lua_settable(L, res_idx);
@@ -361,11 +364,15 @@ void* handle_client(void *_arg){
   //create state for this thread
   lua_State* L = luaL_newstate();
   luaL_openlibs(L);
+
   pthread_mutex_lock(&mutex);
+  int old_top = lua_gettop(args->L);
   lua_getglobal(args->L, "_G");
   i_dcopy(args->L, L, NULL);
+  lua_settop(args->L, old_top);
   lua_setglobal(L, "_G");
   pthread_mutex_unlock(&mutex);
+
   //read full request
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
 
