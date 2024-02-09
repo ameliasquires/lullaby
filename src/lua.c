@@ -42,20 +42,22 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             at = lua_gettop(dest);
             at2 = lua_gettop(src);
 
-            *sp = at2;
+            *sp = at;
             whar = parray_get(seen, (void*)lua_topointer(src, at2));
             if( whar != NULL){
-                //printf("%s\n",lua_tostring(src, at2));
-                //printf("WHAR\n");
-                    
-                lua_pushvalue(dest, *(int*)whar);
+                //printf("%s\n",lua_tostring(src, at2 - 1));
+                printf("WHAR\n");
+                //lua_pop(dest, 1);
+                //lua_pushvalue(dest, *(int*)whar);
                 return;
             } else parray_set(seen, (void*)lua_topointer(src, at2), sp);
 
             lua_pushnil(src);
             for(;lua_next(src, at2) != 0;){
                 lua_pushvalue(src, -2);
-                
+                int a = lua_gettop(src);
+                l_pprint(src);
+                lua_settop(src, a);
                 i_dcopy(src, dest, seen);
 
                 lua_pushvalue(src, -2);
@@ -64,7 +66,7 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
                 lua_settable(dest, at);
                 lua_pop(src, 3);
             }
-            lua_settop(dest, at);
+            //lua_settop(dest, at);
             break;
         case LUA_TFUNCTION:
             if(lua_iscfunction(src, old_top)){
@@ -90,6 +92,8 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             //lua_pushvalue(dest, -1);
             break;
         case LUA_TUSERDATA:
+            //printf("aww\n");
+            //lua_pushnumber(dest, 8);
             lua_pushlightuserdata(dest, lua_touserdata(src, -1));
             break;
         default:
