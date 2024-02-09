@@ -7,14 +7,16 @@ sleep = function(a)
     end 
 end
 aea = 5
---_G.wo = llib
+local wowa = 5
+_G.wo = llib
 --_G.ww = llib
 --llib.io.pprint(_G)
-llib.io.pprint(llib.net.listen(
+
+llib.net.listen(
     function(server)
         --llib = nil
-        llib.io.pprint(_G)
-        print("wowa")
+        --llib.io.pprint(_G)
+        _G.server = server
         server:all("/*", function(res, req)
             --llib.io.pprint(res)
             --llib.io.pprint(res)
@@ -31,13 +33,16 @@ llib.io.pprint(llib.net.listen(
             --print("hi from first")
             --llib.io.pprint(llib.crypto.md5("hewwo"))
             --_G.sleep(1)
+            _G.llib.io.pprint(_G)
+            --_G.llib.io.pprint(_G.wo.crypto.md5("55"))
         end)
 
         server:GET("/aa", function(res, req)
             res.header["Content-Type"] = "text/plain"
-            --_G.server:lock()
+            _G.server:lock()
             res:write("hi\n")
             res:write("next")
+            _G.server:unlock()
             res:close()
         end)
 
@@ -49,4 +54,4 @@ llib.io.pprint(llib.net.listen(
         
     end,
     8080  
-))
+)
