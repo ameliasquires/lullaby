@@ -24,7 +24,8 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
     if(seen == NULL) seen = parray_init();
     size_t len;
     int at, at2;
-    int *sp = malloc(1);
+    //int *sp = malloc(1);
+    //int *sp;
     char* s;
     void* whar;
     int old_top = lua_gettop(src);
@@ -41,22 +42,43 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             lua_newtable(dest);
             at = lua_gettop(dest);
             at2 = lua_gettop(src);
+            char aauwu[50] = {0};
+            sprintf(aauwu, "%p", lua_topointer(src, at2));
 
-            *sp = at;
-            whar = parray_get(seen, (void*)lua_topointer(src, at2));
+            int* sp = malloc(1);
+            whar = parray_get(seen, aauwu);
             if( whar != NULL){
                 //printf("%s\n",lua_tostring(src, at2 - 1));
-                printf("WHAR\n");
-                //lua_pop(dest, 1);
-                //lua_pushvalue(dest, *(int*)whar);
-                return;
-            } else parray_set(seen, (void*)lua_topointer(src, at2), sp);
+                //printf("WHAR\n");
+                lua_pop(dest, 1);
+                lua_rawgeti(dest, LUA_REGISTRYINDEX, *(int*)whar);
 
+                //lua_pushnumber(dest, 23);
+                /*int abb = lua_gettop(src);
+                l_pprint(src);
+                lua_settop(src, abb);
+                abb = lua_gettop(dest);
+                printf("\n**\n");
+                l_pprint(dest);
+                lua_settop(dest, abb);
+                printf("used %i\n",*(int*)whar);*/
+                return;
+            }
+            //lua_pushinteger(dest, 55);
+            int r = luaL_ref(dest, LUA_REGISTRYINDEX);
+            lua_rawgeti(dest, LUA_REGISTRYINDEX, r);
+            *sp = r;
+            parray_set(seen, aauwu, sp);
+            //printf("saved %i\n", *sp);
+
+            //for(int i = 0; i != seen->len; i++){
+            //    printf("%i ", *(int*)seen->P[i].value);
+            //}
             lua_pushnil(src);
             for(;lua_next(src, at2) != 0;){
                 lua_pushvalue(src, -2);
                 int a = lua_gettop(src);
-                l_pprint(src);
+                //l_pprint(src);
                 lua_settop(src, a);
                 i_dcopy(src, dest, seen);
 

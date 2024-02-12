@@ -579,7 +579,7 @@ int l_req_com(lua_State* L, char* req){
   awa->c = a;
   awa->len = len;
   strcpy(awa->req, req);
-  printf("%s\n",awa->req);
+  //printf("%s\n",awa->req);
 
   if(paths == NULL)
     paths = parray_init();
