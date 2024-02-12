@@ -8,7 +8,8 @@ sleep = function(a)
 end
 aea = 5
 local wowa = 5
-_G.wo = llib
+--_G.wo = llib
+_G._llib = _G.llib
 --_G.ww = llib
 --llib.io.pprint(_G)
 
@@ -33,7 +34,8 @@ llib.net.listen(
             --print("hi from first")
             --llib.io.pprint(llib.crypto.md5("hewwo"))
             --_G.sleep(1)
-            _G.llib.io.pprint(_G)
+            _G.llib.io.pprint(_G._G._G._llib.crypto.md5("hi"))
+            --_G.llib.io.pprint(_G._Go)
             --_G.llib.io.pprint(_G.wo.crypto.md5("55"))
         end)
 
