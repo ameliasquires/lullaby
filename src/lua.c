@@ -21,8 +21,10 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
 }
 void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
     parray_t* seen = (parray_t*)_seen;
-    if(seen == NULL) seen = parray_init();
+    int wnull = seen == NULL;
+    if(wnull) seen = parray_init();
     size_t len;
+    //printf("%i\n",seen->len);
     int at, at2;
     //int *sp = malloc(1);
     //int *sp;
@@ -123,5 +125,7 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             lua_pushnil(dest);
             break;
     }
+    if(wnull) parray_clear(seen, 1);
     //lua_settop(src, old_top);
+    _seen = seen;
 }
