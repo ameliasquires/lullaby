@@ -368,7 +368,9 @@ void* handle_client(void *_arg){
   pthread_mutex_lock(&mutex);
   int old_top = lua_gettop(args->L);
   lua_getglobal(args->L, "_G");
+
   i_dcopy(args->L, L, NULL);
+  
   lua_settop(args->L, old_top);
   //l_pprint(L);
   lua_setglobal(L, "_G");

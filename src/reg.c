@@ -6,21 +6,22 @@
 #include "math.h"
 #include "net.h"
 #include <signal.h>
+#include <stdlib.h>
+
+void sigHandle(int s){
+  //signal(s, SIG_IGN);
+
+  //signal(s, sigHandle);
+  exit(s);
+}
 
 static int lua_exit(lua_State* L){
-  printf("hi\n");
+
+  sigHandle(0);
   return 0;
 }
 
-void sigHandle(int s){
-  signal(s, SIG_IGN);
-  printf("meow\n");
-  signal(s, sigHandle);
-}
-
 int luaopen_llib(lua_State* L) { 
-    /*
-    
     lua_newuserdata(L, sizeof(void*));
     luaL_newmetatable(L, "gc");
 		lua_pushstring(L, "__gc");
@@ -31,7 +32,7 @@ int luaopen_llib(lua_State* L) {
 		lua_setfield(L, LUA_REGISTRYINDEX, "grr");
     signal(SIGTERM, sigHandle);
 		signal(SIGINT, sigHandle);
-*/
+
     //create <lib>.array functions
     lua_newtable(L);
 

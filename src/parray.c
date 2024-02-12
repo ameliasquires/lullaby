@@ -42,8 +42,8 @@ void parray_lclear(parray_t* p){
 
 void parray_clear(parray_t* p, int clear_val){
     for(int i = 0; i != p->len; i++){
-        str_free(p[i].P->key);
-        if(clear_val) free(p[i].P->value);
+        str_free(p->P[i].key);
+        if(clear_val) free(p->P[i].value);
     }
     parray_lclear(p);
 }
