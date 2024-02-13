@@ -1,6 +1,10 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#include <stdlib.h>
+
+void* __malloc_(size_t);
+void __free_(void*);
 
 void i_dcopy(lua_State* src, lua_State* dest, void*);
 

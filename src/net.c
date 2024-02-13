@@ -397,6 +397,7 @@ void* handle_client(void *_arg){
 
       void* v = parray_find(paths, aa->c);
 
+      str_free(aa);
       if(v == NULL){
         str* resp;
         http_build(&resp, 404, "Not Found","text/html", "<h1>404</h1>");
@@ -461,7 +462,7 @@ void* handle_client(void *_arg){
             }
           }
         }
-        parray_lclear(owo);
+        parray_lclear(owo); //dont free the rest
 
         lua_pushstring(L, "client_fd");
         lua_gettable(L, res_idx);
@@ -471,7 +472,7 @@ void* handle_client(void *_arg){
       
     }
 
-    for(int i = 0; i != len; i++){
+    for(int i = 0; i != len * 2; i++){
       str_free(table[i]);
     }
     free(table);
@@ -556,6 +557,7 @@ int start_serv(lua_State* L, int port){
     pthread_create(&thread_id, NULL, handle_client, (void*)args);
     pthread_detach(thread_id);
     
+    free(client_fd);
   }
 
 }

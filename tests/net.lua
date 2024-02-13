@@ -34,18 +34,20 @@ llib.net.listen(
             --print("hi from first")
             --llib.io.pprint(llib.crypto.md5("hewwo"))
             --_G.sleep(1)
-            _G.llib.io.pprint(_G._G._G._llib.crypto.md5("hi"))
+            --_G.llib.io.pprint(_G._G._G._llib.crypto.md5("hi"))
             --_G.llib.io.pprint(_G._Go)
             --_G.llib.io.pprint(_G.wo.crypto.md5("55"))
         end)
 
         server:GET("/aa", function(res, req)
-            res.header["Content-Type"] = "text/plain"
+            --[[res.header["Content-Type"] = "text/plain"
             _G.server:lock()
             res:write("hi\n")
             res:write("next")
             _G.server:unlock()
-            res:close()
+            res:close()]]
+            res.header["Content-Type"] = "text/plain"
+            res:send(_G.llib.io.readfile("tests/net.lua"))
         end)
 
         server:GET("/test", function(res, req)

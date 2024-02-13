@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lua.h"
 #include "parray.h"
 
 parray_t* parray_init(){

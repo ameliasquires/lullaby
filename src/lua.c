@@ -7,6 +7,19 @@
 #include "parray.h"
 
 static int ii = 0;
+static int malloc_count = 0;
+
+void* __malloc_(size_t N){
+    printf("hi");
+    malloc_count++;
+    return (malloc)(N);
+}
+
+void __free_(void* p){
+    malloc_count--;
+    printf("%i\n",malloc_count);
+    return (free)(p);
+}
 
 int writer(lua_State *L, const void* p, size_t sz, void* ud){
     char o[2] = {0};
@@ -55,15 +68,7 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
                 lua_pop(dest, 1);
                 lua_rawgeti(dest, LUA_REGISTRYINDEX, *(int*)whar);
 
-                //lua_pushnumber(dest, 23);
-                /*int abb = lua_gettop(src);
-                l_pprint(src);
-                lua_settop(src, abb);
-                abb = lua_gettop(dest);
-                printf("\n**\n");
-                l_pprint(dest);
-                lua_settop(dest, abb);
-                printf("used %i\n",*(int*)whar);*/
+                
                 return;
             }
             //lua_pushinteger(dest, 55);
