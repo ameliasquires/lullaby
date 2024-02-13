@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lua.h"
+
 void p_fatal(const char* m){
   fprintf(stderr, "%s[ fatal ] %s %s\n",color_red, m, color_reset);
   exit(EXIT_FAILURE);
