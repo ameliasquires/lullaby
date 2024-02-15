@@ -395,7 +395,7 @@ void* handle_client(void *_arg){
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
-      if(table[k]->c[table[k]->len - 1] != '/') str_push(table[k], "/");
+      //if(table[k]->c[table[k]->len - 1] != '/') str_push(table[k], "/");
       str_push(aa, table[k]->c);
       //if(aa->c[aa->len - 1] != '/') str_push(aa, "/");
 
@@ -571,7 +571,7 @@ int l_req_com(lua_State* L, char* req){
   sprintf(portc, "%i", port);//, lua_tostring(L, 2));
   str* portss = str_init(portc);
   str_push(portss, (char*)lua_tostring(L, 2));
-  if(portss->c[portss->len - 1] != '/') str_push(portss, "/");
+  //if(portss->c[portss->len - 1] != '/') str_push(portss, "/");
 
   struct lchar* awa;
   lua_getglobal(L, "string");
