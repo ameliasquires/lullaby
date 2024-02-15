@@ -15,6 +15,8 @@
 #include <pthread.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+
 #include "net.h"
 #include "lua.h"
 
@@ -33,6 +35,7 @@ struct lchar {
   char* c;
   int len;
   char req[20];
+  enum route_type type;
 };
 
 struct sarray_t {
@@ -263,7 +266,8 @@ int l_write(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0) abort(); // add error message
+  if(client_fd <= 0)
+    p_fatal("client fd already closed\n");
   
   char* content = (char*)luaL_checkstring(L, 2);
   
@@ -301,7 +305,8 @@ int l_send(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0) abort(); // add error message
+  if(client_fd <= 0)
+    p_fatal("client fd already closed\n");
 
   char* content = (char*)luaL_checkstring(L, 2);
 
@@ -338,10 +343,8 @@ int l_close(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0){
-    printf("already closed\n");
-    abort();
-  }// add error message
+  if(client_fd <= 0)
+    p_fatal("client fd already closed\n");
   return 0;
   lua_pushstring(L, "client_fd");
   lua_pushinteger(L, -1);
@@ -393,7 +396,9 @@ void* handle_client(void *_arg){
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
+      if(table[k]->c[table[k]->len - 1] != '/') str_push(table[k], "/");
       str_push(aa, table[k]->c);
+      //if(aa->c[aa->len - 1] != '/') str_push(aa, "/");
 
       void* v = parray_find(paths, aa->c);
 
@@ -442,23 +447,24 @@ void* handle_client(void *_arg){
           struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
 
           for(int z = 0; z != awa->len; z++){
-
+            char* path;
             struct lchar* wowa = awa->cs[z];
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, table[R]->c) == 0 ||
                 (strcmp(table[R]->c, "HEAD") && strcmp(wowa->req, "GET"))){
-              luaI_tseti(L, res_idx, "passes", passes);
-              passes++;
+                  luaI_tseti(L, res_idx, "passes", passes);
+                  passes++;
 
-              luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
+                  luaL_loadbuffer(L, wowa->c, wowa->len, wowa->c);
 
-              int func = lua_gettop(L);
+                  int func = lua_gettop(L);
 
-              lua_pushvalue(L, func); // push function call
-              lua_pushvalue(L, res_idx); //push methods related to dealing with the request
-              lua_pushvalue(L, req_idx); //push info about the request
+                  lua_pushvalue(L, func); // push function call
+                  lua_pushvalue(L, res_idx); //push methods related to dealing with the request
+                  lua_pushvalue(L, req_idx); //push info about the request
 
-              //call the function
-              lua_call(L, 2, 0);
+                  //call the function
+                  lua_call(L, 2, 0);
+                 
             }
           }
         }
@@ -500,25 +506,19 @@ int start_serv(lua_State* L, int port){
   struct sockaddr_in server_addr;
 
   //open the socket
-  if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-    printf("error opening socket\n");
-    abort();
-  }
+  if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    p_fatal("error opening socket\n");
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(port);
 
   //bind to port
-  if(bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
-    printf("failed to bind to port\n");
-    abort();
-  }
+  if(bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
+    p_fatal("failed to bind to port\n");
 
-  if(listen(server_fd, max_con) < 0){
-    printf("failed to listen\n");
-    abort();
-  }
+  if(listen(server_fd, max_con) < 0)
+    p_fatal("failed to listen\n");
   /*
   lua_rawgeti(L, LUA_REGISTRYINDEX, ports[port]);
   lua_pushstring(L, "/");
@@ -527,17 +527,18 @@ int start_serv(lua_State* L, int port){
   lua_gettable(L, -2);
   int aa = lua_gettop(L);*/
   if (pthread_mutex_init(&mutex, NULL) != 0)
-    printf("mutex init failed\n");
+    p_fatal("mutex init failed\n");
+
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&(int){1}, sizeof(int)) < 0)
+    p_fatal("SO_REUSEADDR refused\n");
 
   for(;;){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     int* client_fd = malloc(sizeof(int));
 
-    if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0){
-      printf("failed to accept\n");
-      abort();
-    }
+    if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
+      p_fatal("failed to accept\n");
     //printf("%s\n",inet_ntoa(client_addr.sin_addr));
     //printf("%i\n",threads);
     //open a state to call shit, should be somewhat thread safe
@@ -568,9 +569,12 @@ int l_req_com(lua_State* L, char* req){
   int port = luaL_checkinteger(L, -1);
 
   char portc[10] = {0};
-  sprintf(portc, "%i%s", port, lua_tostring(L, 2));
+  sprintf(portc, "%i", port);//, lua_tostring(L, 2));
+  str* portss = str_init(portc);
+  str_push(portss, (char*)lua_tostring(L, 2));
+  if(portss->c[portss->len - 1] != '/') str_push(portss, "/");
 
-  
+  struct lchar* awa;
   lua_getglobal(L, "string");
   lua_pushstring(L, "dump");
   lua_gettable(L, -2);
@@ -579,7 +583,7 @@ int l_req_com(lua_State* L, char* req){
 
   size_t len;
   char* a = (char*)luaL_checklstring(L, -1, &len);
-  struct lchar* awa = malloc(len + 1);
+  awa = malloc(len + 1);
   awa->c = a;
   awa->len = len;
   strcpy(awa->req, req);
@@ -589,7 +593,7 @@ int l_req_com(lua_State* L, char* req){
     paths = parray_init();
 
   //please free this
-  void* v_old_paths = parray_get(paths, portc);
+  void* v_old_paths = parray_get(paths, portss->c);
   struct sarray_t* old_paths;
   if(v_old_paths == NULL){
     old_paths = malloc(sizeof * old_paths);
@@ -601,7 +605,8 @@ int l_req_com(lua_State* L, char* req){
   old_paths->cs = realloc(old_paths->cs, sizeof * old_paths->cs * old_paths->len);
   old_paths->cs[old_paths->len - 1] = awa;
 
-  parray_set(paths, portc, (void*)old_paths);
+  parray_set(paths, portss->c, (void*)old_paths);
+  str_free(portss);
   return 1;
 }
 

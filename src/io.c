@@ -113,6 +113,7 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
           printf(" '%s'"color_gray": "color_reset, lua_tostring(L,-2)); 
         } else {
           if(!skip) print_indentation(indent + 1);
+          //printf(" '%i'"color_gray": "color_reset, luaL_checknumber(L,-2)); 
         }
         int tuwu = lua_gettop(L);
         i_pprint(L,indent+1,1);
@@ -161,7 +162,7 @@ enum json_state {
 
 #define push() \
   if(is_array){\
-    lua_pushinteger(L, i);\
+    lua_pushinteger(L, iter_count);\
   } else {\
     char kbuf[key->len];\
     memset(kbuf, 0, key->len);\
@@ -198,14 +199,22 @@ void json_parse(lua_State* L, str* raw){
   int last_idx = lua_gettop(L);
   int is_array = raw->c[0] == '[';
   int i = 1;
+  int iter_count = 1;
+  int escape_next = 0;
   for(i = 1; i != raw->len - 1; i++){  
     topush[0] = *(raw->c + i);
     if(state == normal && (topush[0] == ' ' || topush[0] == '\n' || topush[0] <= 10)) continue;
+    if(escape_next > 0) escape_next--;
 
     switch(topush[0]){
+      case '\\':
+        escape_next = 2;
+        break;
       case '"':
+        if(escape_next == 1) break;
       case '{': case '}':
       case '[': case ']':
+
         if(last == '{' && topush[0] == '}' || last == '[' && topush[0] == ']') token_depth--;
 
         if((last == '\0' || last == '"' && topush[0] == '"'
@@ -228,6 +237,7 @@ void json_parse(lua_State* L, str* raw){
           str_clear(key);
           str_clear(value);
           count = 0;
+          iter_count++;
           continue;
         }
         break;
@@ -238,6 +248,7 @@ void json_parse(lua_State* L, str* raw){
         }
         break;
     }
+    //if(escape_next == 2) continue;
     if(last == '{' && topush[0] == '{' || last == '[' && topush[0] == '[') token_depth++;
 
     if(count == 0 && !is_array) str_push(key, topush);
