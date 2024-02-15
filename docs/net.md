@@ -19,7 +19,7 @@ llib.net.listen(function(server)
 end, 80)
 ```
 
-### server:lock server:unlock **
+### server:lock server:unlock
 
 continues on the current thread, but pauses all other threads at that point
 
