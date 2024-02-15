@@ -35,7 +35,6 @@ struct lchar {
   char* c;
   int len;
   char req[20];
-  enum route_type type;
 };
 
 struct sarray_t {
