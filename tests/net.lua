@@ -37,6 +37,7 @@ llib.net.listen(
             --_G.llib.io.pprint(_G._G._G._llib.crypto.md5("hi"))
             --_G.llib.io.pprint(_G._Go)
             --_G.llib.io.pprint(_G.wo.crypto.md5("55"))
+            --_G.llib.io.pprint(req)
         end)
 
         server:GET("/aa", function(res, req)
