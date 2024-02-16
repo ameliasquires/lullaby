@@ -54,6 +54,8 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   int n;
   int content_len = -1;
   //printf("before\n");
+  //fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL) | O_NONBLOCK)
+  printf("\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
@@ -66,21 +68,25 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
       for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
       content_len = strtol(cont_len_str->c, NULL, 10);
       str_free(cont_len_str);
-      //printf("nut\n");
+      //printf("nut\n");*/
+
     }
     //check if the recv read the whole buffer length, sometimes it wont so i peek to see if there is more
     //if(n != BUFFER_SIZE && recv(client_fd, NULL, 1, MSG_PEEK) != 1) break;
+    printf("%i %i\n", n, content_len);
     len += n;
-    if(n != 0){
+    //if(n != 0){
       //printf("buffer %i\n", n);
-      buffer = realloc(buffer, len + n);
+      buffer = realloc(buffer, len + BUFFER_SIZE);
       //printf("realloc\n");
       memset(buffer + len, 0, n);
+
+      
       //printf("%i\n", len - *header_eof - 4);
-    }
+    //}
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
-  //printf("%i\n",len - *header_eof - 4);
+  printf("%i\n",len - *header_eof - 4);
   *_buffer = buffer;
   return len + BUFFER_SIZE;
 }
@@ -442,7 +448,6 @@ void* handle_client(void *_arg){
 
   //read full request
   size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-
   //if the buffer, yknow exists
   if(bytes_received > 0){
     str** table;
@@ -483,7 +488,7 @@ void* handle_client(void *_arg){
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
         //printf("%s\n",table[T]->c);
-        file_parse(L, buffer + header_eof, table[T]);
+        //file_parse(L, buffer + header_eof, table[T]);
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
