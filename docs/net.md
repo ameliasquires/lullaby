@@ -110,13 +110,13 @@ res.header["test"] = "wowa"
 ...
 ```
 
-### server:static_serve **
+### res:serve **
 
-'takes two strings, first is server serve path, second is local path, being a file or directory
+'takes one string, which is a path that will be served, file or dir
 
 ```lua
 ...
-server:static_serve("/public", "./html/")
+res:serve("./html/")
 ...
 ```
 

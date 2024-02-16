@@ -52,19 +52,35 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   size_t len = 0;
   *header_eof = -1;
   int n;
-
+  int content_len = -1;
+  //printf("before\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
+      //printf("head\n");
       *header_eof = header - buffer;
+      char* cont_len_raw = strstr(buffer, "Content-Length: ");
+      str* cont_len_str = str_init("");
+      if(cont_len_raw == NULL) abort();
+      //i is length of 'Content-Length: '
+      for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
+      content_len = strtol(cont_len_str->c, NULL, 10);
+      str_free(cont_len_str);
+      //printf("nut\n");
     }
-    if(n != BUFFER_SIZE) break;
-    len += BUFFER_SIZE;
-    buffer = realloc(buffer, len + BUFFER_SIZE);
-    memset(buffer + len, 0, BUFFER_SIZE);
+    //check if the recv read the whole buffer length, sometimes it wont so i peek to see if there is more
+    //if(n != BUFFER_SIZE && recv(client_fd, NULL, 1, MSG_PEEK) != 1) break;
+    len += n;
+    if(n != 0){
+      //printf("buffer %i\n", n);
+      buffer = realloc(buffer, len + n);
+      //printf("realloc\n");
+      memset(buffer + len, 0, n);
+      //printf("%i\n", len - *header_eof - 4);
+    }
+    if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
-  //buffer[len - 1] = 0;
-
+  //printf("%i\n",len - *header_eof - 4);
   *_buffer = buffer;
   return len + BUFFER_SIZE;
 }
@@ -74,7 +90,7 @@ int parse_header(char* buffer, int header_eof, str*** _table, int* _len){
   char add[] = {0,0};
   int lines = 3;
   for(int i = 0; i != header_eof; i++) lines += buffer[i] == '\n';
-  str** table = malloc(sizeof ** table * lines * 2);
+  str** table = malloc(sizeof ** table * (lines * 2 + 2));
   table[0] = str_init("Request");// table[1] = str_init("Post|Get");
   table[2] = str_init("Path");// table[3] = str_init("/");
   table[4] = str_init("Version");// table[5] = str_init("HTTP/1.1");
@@ -110,6 +126,10 @@ int parse_header(char* buffer, int header_eof, str*** _table, int* _len){
     str_push(current, add);
   }
   table[tlen] = str_init(current->c);
+  tlen++;
+  table[tlen] = str_init("Body");
+  tlen++;
+  table[tlen] = str_init(buffer + header_eof + 4);
   tlen++;
   str_free(current);
   *_len = tlen / 2;
@@ -344,13 +364,55 @@ int l_close(lua_State* L){
   int client_fd = luaL_checkinteger(L, -1);
   if(client_fd <= 0)
     p_fatal("client fd already closed\n");
-  return 0;
   lua_pushstring(L, "client_fd");
   lua_pushinteger(L, -1);
   lua_settable(L, res_idx);
   closesocket(client_fd);
 
   return 0;
+}
+
+int l_serve(lua_State* L){
+  int res_idx = 1;
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "client_fd");
+  lua_gettable(L, res_idx);
+  int client_fd = luaL_checkinteger(L, -1);
+  if(client_fd <= 0)
+    p_fatal("client fd already closed\n");
+
+  char* path = (char*)luaL_checkstring(L, 2);
+
+  //continue here
+
+  return 0;
+}
+
+void file_parse(lua_State* L, char* buffer, str* content_type){
+  str* boundary = str_init("");
+  int state = 0;
+  for(int i = 0; content_type->c[i] != '\0'; i++){
+    if(state == 2) str_pushl(boundary, content_type->c + i, 1);
+    if(content_type->c[i] == ';') state = 1;
+    if(content_type->c[i] == '=' && state == 1) state = 2;
+  }
+  //printf("%s\n",boundary->c);
+  
+  for(;;){
+    str* file = str_init("");
+    char* ind = strstr(buffer, boundary->c);
+    if(ind == NULL) break;
+    char* ending_ind = strstr(ind + boundary->len + 2, boundary->c);
+    if(ending_ind == NULL) break;
+
+    str_pushl(file, ind + boundary->len + 2, ending_ind - ind - boundary->len - 4);
+    printf("'%s'\n",file->c);
+    buffer = ending_ind;
+    //printf("'%s'\n", buffer);
+    str_free(file);
+  }
+  str_free(boundary);
 }
 
 volatile size_t threads = 0;
@@ -390,6 +452,7 @@ void* handle_client(void *_arg){
       
       int k = stable_key(table, "Path", len);
       int R = stable_key(table, "Request", len);
+      int T = stable_key(table, "Content-Type", len);
 
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
@@ -419,9 +482,12 @@ void* handle_client(void *_arg){
         }
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
+        //printf("%s\n",table[T]->c);
+        file_parse(L, buffer + header_eof, table[T]);
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
+        //luaI_tsetcf(L, res_idx, "serve", l_serve);
         luaI_tsetcf(L, res_idx, "write", l_write);
         luaI_tsetcf(L, res_idx, "close", l_close);
 
