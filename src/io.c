@@ -23,22 +23,15 @@ int l_readfile(lua_State* L){
     p_fatal("missing permissions");
   }
 
-  fp = fopen(a, "r");
-  char* out = malloc(chunk);
-    
-  for(;;){
-    char ch = fgetc(fp);
-    if(ch==EOF) break;
-    
-    if(count >= chunk){
-      chunk += chunk_iter;
-      out = realloc(out, chunk);
-    }
-    out[count] = ch;
-    count++;
-  }
-  out[count] = '\0';
-  lua_pushstring(L, out);
+  fp = fopen(a, "rb");
+  fseek(fp, 0L, SEEK_END);
+  size_t sz = ftell(fp);
+  fseek(fp, 0L, SEEK_SET);
+  char* out = calloc(sz + 1, sizeof * out);
+
+  fread(out, sizeof * out, sz, fp);
+  
+  lua_pushlstring(L, out, sz);
   
   fclose(fp);
   free(out);
