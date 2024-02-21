@@ -1,5 +1,5 @@
 require "llib"
-llib.config.set({max_depth=1})
+llib.config.set({max_depth=4})
 --local print = llib.io.pprint
 sleep = function(a) 
     local sec = tonumber(os.clock() + a); 
@@ -41,7 +41,8 @@ llib.net.listen(
             --print(req.partial)
             --_G.llib.io.pprint(_G.llib.io.readfile(".gitignore"))
             --print(req._bytes)
-            res:send(_G.llib.io.readfile("llib.dll"))
+            --res:send(_G.llib.io.readfile("llib.dll"))
+            _G.llib.io.pprint(req)
         end)
 
         server:GET("/aa", function(res, req)
