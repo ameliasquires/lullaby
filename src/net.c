@@ -422,7 +422,7 @@ int l_serve(lua_State* L){
   return 0;
 }
 
-void file_parse(lua_State* L, char* buffer, str* content_type){
+int file_parse(lua_State* L, char* buffer, str* content_type){
   str* boundary = str_init("");
   int state = 0;
   for(int i = 0; content_type->c[i] != '\0'; i++){
@@ -432,20 +432,60 @@ void file_parse(lua_State* L, char* buffer, str* content_type){
   }
   //printf("%s\n",boundary->c);
   
-  for(;;){
+  lua_newtable(L);
+  int base_T = lua_gettop(L);
+
+  for(int i = 1;;i++){
+    lua_newtable(L);
+    int file_T = lua_gettop(L);
+
     str* file = str_init("");
     char* ind = strstr(buffer, boundary->c);
     if(ind == NULL) break;
     char* ending_ind = strstr(ind + boundary->len + 2, boundary->c);
     if(ending_ind == NULL) break;
 
-    str_pushl(file, ind + boundary->len + 2, ending_ind - ind - boundary->len - 4);
-    printf("'%s'\n",file->c);
+    char* header_eof = strstr(ind + boundary->len + 2, "\r\n\r\n");
+    str* current = str_init("");
+    int key = -1;
+    for(char* s = ind + boundary->len + 2; s != header_eof; s++){
+
+      if(*s == ':'){ //collapse Content-Disposition
+        lua_pushlstring(L, current->c, current->len);
+        key = lua_gettop(L);
+        str_clear(current);
+      } else if(*s == '\n') {
+        if(key != -1){
+          luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
+          key = -1;
+          str_clear(current);
+        }
+      } else if(*s != '\r' && !(*s == ' ' && strcmp(current->c, "") == 0)){
+        str_pushl(current, s, 1);
+      }
+    }
+    str_free(current);
+    luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
+
+    str_pushl(file, header_eof + 2, ending_ind - header_eof - 4);
+    //printf("'%s'\n",file->c);
+    lua_pushstring(L, "content");
+    lua_pushlstring(L, file->c, file->len);
+    lua_settable(L, file_T);
+    
     buffer = ending_ind;
     //printf("'%s'\n", buffer);
     str_free(file);
+
+    lua_pushinteger(L, i);
+    lua_pushvalue(L, file_T);
+    lua_settable(L, base_T);
+    //l_pprint(L);
   }
   str_free(boundary);
+  
+  lua_pushvalue(L, base_T);
+  return base_T;
 }
 
 volatile size_t threads = 0;
@@ -523,7 +563,8 @@ void* handle_client(void *_arg){
         luaI_tsetb(L, req_idx, "partial", bytes_received == -1);
         luaI_tseti(L, req_idx, "_bytes", bytes_received);
         //printf("%s\n",table[T]->c);
-        //file_parse(L, buffer + header_eof, table[T]);
+        int pf = file_parse(L, buffer + header_eof, table[T]);
+        luaI_tsetv(L, req_idx, "files", pf);
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
