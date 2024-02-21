@@ -45,7 +45,7 @@ struct sarray_t {
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
+int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   char* buffer = malloc(BUFFER_SIZE * sizeof * buffer);
   memset(buffer, 0, BUFFER_SIZE);
   char* header;
@@ -55,13 +55,23 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   int content_len = -1;
   //printf("before\n");
   //fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL) | O_NONBLOCK)
-  printf("\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
+    if(n < 0){
+      *_buffer = buffer;
+      if(*header_eof == -1) return -2; //dont even try w/ request, no header to read
+      return -1; //well the header is fine atleast
+
+    };
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
       //printf("head\n");
       *header_eof = header - buffer;
       char* cont_len_raw = strstr(buffer, "Content-Length: ");
+      if(cont_len_raw == NULL) {
+        len += n;
+        *_buffer = buffer;
+        return len + BUFFER_SIZE;
+      }
       str* cont_len_str = str_init("");
       if(cont_len_raw == NULL) abort();
       //i is length of 'Content-Length: '
@@ -73,7 +83,7 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
     }
     //check if the recv read the whole buffer length, sometimes it wont so i peek to see if there is more
     //if(n != BUFFER_SIZE && recv(client_fd, NULL, 1, MSG_PEEK) != 1) break;
-    printf("%i %i\n", n, content_len);
+    //printf("%i %i\n", n, content_len);
     len += n;
     //if(n != 0){
       //printf("buffer %i\n", n);
@@ -86,7 +96,7 @@ size_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
     //}
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
-  printf("%i\n",len - *header_eof - 4);
+  //printf("%i\n",len - *header_eof - 4);
   *_buffer = buffer;
   return len + BUFFER_SIZE;
 }
@@ -152,7 +162,7 @@ int stable_key(str** table, char* target, int flen){
   return -1;
 }
 
-void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content){
+void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
   /**dest = str_init(
     "HTTP/1.1 404 Not Found\r\n"
     "Content-Type: text/plain\r\n"
@@ -168,7 +178,10 @@ void http_build(str** _dest, int code, char* code_det, char* header_vs, char* co
     , code, code_det, header_vs);
 
   *_dest = str_init(dest);
-  str_push(*_dest, content);
+  //str_push(*_dest, content);
+  for(size_t i = 0; i != len; i++){
+    str_pushl(*_dest, content + i, 1);
+  }
   free(dest);
 }
 
@@ -247,7 +260,7 @@ void http_code(int code, char* code_det){
   }
 }
 
-void i_write_header(lua_State* L, int header_top, str** _resp, char* content){
+void i_write_header(lua_State* L, int header_top, str** _resp, char* content, size_t len){
   str* resp;
   lua_pushvalue(L, header_top);
 
@@ -272,11 +285,24 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content){
     
   char code_det[50] = {0};
   http_code(code, code_det);
-  http_build(&resp, code,  code_det, header_vs->c, content);
+  http_build(&resp, code,  code_det, header_vs->c, content, len);
 
   str_free(header_vs);
 
   *_resp = resp;
+}
+
+void client_fd_errors(int client_fd){
+  if(client_fd>=0) return;
+
+  switch(client_fd){
+    case -1:
+      p_fatal("client fd already closed\n");
+    case -2:
+      p_fatal("request was partial\n");
+    default:
+      p_fatal("unknown negative client_fd value");
+  }
 }
 int l_write(lua_State* L){
   int res_idx = 1;
@@ -291,10 +317,11 @@ int l_write(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0)
-    p_fatal("client fd already closed\n");
-  
-  char* content = (char*)luaL_checkstring(L, 2);
+
+  client_fd_errors(client_fd);
+
+  size_t len;
+  char* content = (char*)luaL_checklstring(L, 2, &len);
   
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "header");
@@ -305,8 +332,8 @@ int l_write(lua_State* L){
   lua_gettable(L, -2);
   str* resp;
   if(lua_isnil(L, -1)){
-    if(head) i_write_header(L, header_top, &resp, "");
-    else i_write_header(L, header_top, &resp, content);
+    if(head) i_write_header(L, header_top, &resp, "", 0);
+    else i_write_header(L, header_top, &resp, content, len);
 
     lua_pushvalue(L, header_top);
     lua_pushstring(L, "_sent");
@@ -330,10 +357,11 @@ int l_send(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0)
-    p_fatal("client fd already closed\n");
+  
+  client_fd_errors(client_fd);
 
-  char* content = (char*)luaL_checkstring(L, 2);
+  size_t len;
+  char* content = (char*)luaL_checklstring(L, 2, &len);
 
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "header");
@@ -346,9 +374,9 @@ int l_send(lua_State* L){
   lua_gettable(L, -2);
 
   if(strcmp(luaL_checkstring(L, -1), "HEAD") == 0){
-    i_write_header(L, header, &resp, "");
+    i_write_header(L, header, &resp, "", 0);
   } else 
-    i_write_header(L, header, &resp, content);
+    i_write_header(L, header, &resp, content, len);
 
   send(client_fd, resp->c, resp->len, 0);
   
@@ -368,8 +396,8 @@ int l_close(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0)
-    p_fatal("client fd already closed\n");
+  client_fd_errors(client_fd);
+
   lua_pushstring(L, "client_fd");
   lua_pushinteger(L, -1);
   lua_settable(L, res_idx);
@@ -385,8 +413,7 @@ int l_serve(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  if(client_fd <= 0)
-    p_fatal("client fd already closed\n");
+  client_fd_errors(client_fd);
 
   char* path = (char*)luaL_checkstring(L, 2);
 
@@ -447,9 +474,9 @@ void* handle_client(void *_arg){
   pthread_mutex_unlock(&mutex);
 
   //read full request
-  size_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-  //if the buffer, yknow exists
-  if(bytes_received > 0){
+  int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
+  //ignore if header is just fucked
+  if(bytes_received >= -1){
     str** table;
     int len = 0;
     //checks for a valid header
@@ -471,8 +498,9 @@ void* handle_client(void *_arg){
 
       str_free(aa);
       if(v == NULL){
+        //this should not be here
         str* resp;
-        http_build(&resp, 404, "Not Found","text/html", "<h1>404</h1>");
+        http_build(&resp, 404, "Not Found","text/html", "<h1>404</h1>", 12);
         send(client_fd, resp->c, resp->len, 0);
         str_free(resp);
       } else {
@@ -487,6 +515,13 @@ void* handle_client(void *_arg){
         }
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
+
+        if(bytes_received == -1){
+          client_fd = -2;
+        }
+
+        luaI_tsetb(L, req_idx, "partial", bytes_received == -1);
+        luaI_tseti(L, req_idx, "_bytes", bytes_received);
         //printf("%s\n",table[T]->c);
         //file_parse(L, buffer + header_eof, table[T]);
         

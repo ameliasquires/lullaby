@@ -38,6 +38,10 @@ llib.net.listen(
             --_G.llib.io.pprint(_G._Go)
             --_G.llib.io.pprint(_G.wo.crypto.md5("55"))
             --_G.llib.io.pprint(req)
+            --print(req.partial)
+            --_G.llib.io.pprint(_G.llib.io.readfile(".gitignore"))
+            --print(req._bytes)
+            res:send(_G.llib.io.readfile("llib.dll"))
         end)
 
         server:GET("/aa", function(res, req)
