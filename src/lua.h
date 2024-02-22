@@ -27,6 +27,8 @@ void i_dcopy(lua_State* src, lua_State* dest, void*);
 #define luaI_tsetcf(L, Tidx, K, V)\
     _tset_b(L, Tidx, K, V, lua_pushcfunction)
 
+int writer(lua_State*, const void*, size_t, void*);
+
 #if LUA_VERSION_NUM == 504
     #define lreg(N, FN)\
         lua_pushstring(L, N);\

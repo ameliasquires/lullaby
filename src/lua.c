@@ -43,11 +43,14 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
     //int *sp;
     char* s;
     void* whar;
+    double n;
     int old_top = lua_gettop(src);
     //printf("%i\n",ii++);
     switch(lua_type(src, -1)){
         case LUA_TNUMBER:
-            lua_pushnumber(dest, luaL_checknumber(src, -1));
+            n = luaL_checknumber(src, -1);
+            if(n == (int)n) lua_pushinteger(dest, (int)n);
+            else lua_pushnumber(dest, n);
             break;
         case LUA_TSTRING:
             s = (char*)luaL_checklstring(src, -1, &len);
@@ -106,15 +109,8 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             
             str* awa = str_init("");
             lua_dump(src, writer, (void*)awa, 0);
-            //l_pprint(src);
-            //lua_pcall(src, 1, 1, 0);
-            //l_pprint(src);
-            //lua_settop(src, oo);
-            //lua_pop(src, 6);
-
-            //s = (char*)luaL_checklstring(src, -1, &len);
             lua_pushlstring(dest, awa->c, awa->len);
-            //for(int i = 0; i != awa->len; i++) printf("%i : %c\n",i, awa->c[i]);
+
             luaL_loadbuffer(dest, awa->c, awa->len, awa->c);
             lua_remove(dest, -2);
             str_free(awa);
