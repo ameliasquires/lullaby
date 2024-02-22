@@ -16,5 +16,7 @@
 #define color_white "\e[97m"
 #define color_reset "\e[0m"
 
+#define i_swap(A,B) double temp = A; A = B; B = temp;
+
 void p_fatal(const char*);
 void p_error(const char*);

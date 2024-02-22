@@ -1,6 +1,5 @@
 #include "lua.h"
-#include "i_util.h"
-#include "i_common.h"
+#include "util.h"
 
 //comparison sorts
 int l_quicksort(lua_State*);    //[double+int] -> arr[N] (greatest -> least)

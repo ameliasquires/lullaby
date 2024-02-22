@@ -1,5 +1,5 @@
 #include "lua.h"
-#include "i_util.h"
+#include "util.h"
 #include "hash/md5.h"
 #include "hash/sha01.h"
 #include "hash/sha2xx.h"

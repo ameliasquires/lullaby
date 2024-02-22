@@ -3,8 +3,8 @@
 #include "io.h"
 #include <stdlib.h>
 #include <string.h>
-#include "i_str.h"
-#include "parray.h"
+#include "types/str.h"
+#include "types/parray.h"
 
 static int ii = 0;
 static int malloc_count = 0;

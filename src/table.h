@@ -1,6 +1,5 @@
 #include "lua.h"
-#include "i_util.h"
-#include "i_common.h"
+#include "util.h"
 #include "sort.h"
 #include <stdint.h>
 
