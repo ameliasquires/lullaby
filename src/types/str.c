@@ -1,4 +1,4 @@
-#include "i_str.h"
+#include "str.h"
 #include "lua.h"
 
 str* str_init(char* init){

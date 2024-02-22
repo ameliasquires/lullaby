@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "i_str.h"
+#include "types/str.h"
 #include "io.h"
 #include "stdlib.h"
 #include "stdio.h"
@@ -30,7 +30,7 @@ int l_readfile(lua_State* L){
   char* out = calloc(sz + 1, sizeof * out);
 
   fread(out, sizeof * out, sz, fp);
-  
+
   lua_pushlstring(L, out, sz);
   
   fclose(fp);

@@ -22,8 +22,8 @@
 
 #include "io.h"
 #include "table.h"
-#include "i_str.h"
-#include "parray.h"
+#include "types/str.h"
+#include "types/parray.h"
 
 #define max_con 200
 #define BUFFER_SIZE 2048
@@ -101,66 +101,52 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   return len + BUFFER_SIZE;
 }
 
-int parse_header(char* buffer, int header_eof, str*** _table, int* _len){
+int parse_header(char* buffer, int header_eof, parray_t** _table){
   if(header_eof == -1) return -1;
   char add[] = {0,0};
   int lines = 3;
   for(int i = 0; i != header_eof; i++) lines += buffer[i] == '\n';
-  str** table = malloc(sizeof ** table * (lines * 2 + 2));
-  table[0] = str_init("Request");// table[1] = str_init("Post|Get");
-  table[2] = str_init("Path");// table[3] = str_init("/");
-  table[4] = str_init("Version");// table[5] = str_init("HTTP/1.1");
+  parray_t* table = parray_init();
   str* current = str_init("");
-  int ins = 1;
+
   int oi = 0;
+  int item = 0;
   for(; oi != header_eof; oi++){
-    add[0] = buffer[oi];
-    if(buffer[oi] == '\n') break;
-    if(buffer[oi] == ' '){
-      table[ins] = str_init(current->c);
-      ins += 2;
+    if(buffer[oi] == ' ' || buffer[oi] == '\n'){
+      if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
+      parray_set(table, item == 0 ? "Request" :
+                item == 1 ? "Path" : "Version", (void*)str_init(current->c));
       str_clear(current);
-    } else str_push(current, add);
+      item++;
+      if(buffer[oi] == '\n') break;
+    } else str_pushl(current, buffer + oi, 1);
   }
-  current->c[current->len - 1] = 0;
-  table[ins] = str_init(current->c);
-  str_clear(current);
-  int tlen = 6;
 
   int key = 1;
+  str* sw = NULL;
   for(int i = oi + 1; i != header_eof; i++){
-    if(key && buffer[i]==':' || !key && buffer[i]=='\n') {
-      if(!key) current->c[current->len - 1] = 0;
-      table[tlen] = str_init(current->c);
-      str_clear(current);
-      tlen++;
-      i+=key;
-      key = !key;
+    if(buffer[i] == ' ' && strcmp(current->c, "") == 0) continue;
+    if(key && buffer[i] == ':' || !key && buffer[i] == '\n'){
+      if(key){
+        sw = current;
+        current = str_init("");
+        key = 0;
+      } else {
+        if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
+        parray_set(table, sw->c, (void*)str_init(current->c));
+        str_clear(current);
+        sw = NULL;
+        key = 1;
+      }
       continue;
-    }
-    add[0] = buffer[i];
-    str_push(current, add);
+    } else str_pushl(current, buffer + i, 1);
   }
-  table[tlen] = str_init(current->c);
-  tlen++;
-  table[tlen] = str_init("Body");
-  tlen++;
-  table[tlen] = str_init(buffer + header_eof + 4);
-  tlen++;
+  parray_set(table, sw->c, (void*)str_init(current->c));
+  parray_set(table, "Body", (void*)str_init(buffer + header_eof + 4));
   str_free(current);
-  *_len = tlen / 2;
-  *_table = table; 
+  *_table = table;
   return 0;
-}
-
-int stable_key(str** table, char* target, int flen){
-  for(int i = 0; i != flen * 2; i+=2){
-    if(strcmp(table[i]->c,target) == 0){
-      return i + 1;
-    }
-  }
-  return -1;
-}
+}s
 
 void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
   /**dest = str_init(
@@ -422,8 +408,8 @@ int l_serve(lua_State* L){
   return 0;
 }
 
-int file_parse(lua_State* L, char* buffer, str* content_type){
-  str* boundary = str_init("");
+int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer){
+  str* boundary = str_init(""); //usually add + 2 to the length when using
   int state = 0;
   for(int i = 0; content_type->c[i] != '\0'; i++){
     if(state == 2) str_pushl(boundary, content_type->c + i, 1);
@@ -450,7 +436,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type){
     int key = -1;
     for(char* s = ind + boundary->len + 2; s != header_eof; s++){
 
-      if(*s == ':'){ //collapse Content-Disposition
+      if(*s == ':'){ //todo: collapse Content-Disposition
         lua_pushlstring(L, current->c, current->len);
         key = lua_gettop(L);
         str_clear(current);
@@ -472,7 +458,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type){
     lua_pushstring(L, "content");
     lua_pushlstring(L, file->c, file->len);
     lua_settable(L, file_T);
-    
+
     buffer = ending_ind;
     //printf("'%s'\n", buffer);
     str_free(file);
@@ -484,6 +470,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type){
   }
   str_free(boundary);
   
+  *end_buffer = buffer + boundary->len + 2;
   lua_pushvalue(L, base_T);
   return base_T;
 }
@@ -517,21 +504,25 @@ void* handle_client(void *_arg){
   int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
   //ignore if header is just fucked
   if(bytes_received >= -1){
-    str** table;
-    int len = 0;
+    //str** table;
+    parray_t* table;
     //checks for a valid header
-    if(parse_header(buffer, header_eof, &table, &len) != -1){
+    if(parse_header(buffer, header_eof, &table) != -1){
       
-      int k = stable_key(table, "Path", len);
-      int R = stable_key(table, "Request", len);
-      int T = stable_key(table, "Content-Type", len);
+      //int k = stable_key(table, "Path", len);
+      //int R = stable_key(table, "Request", len);
+      //int T = stable_key(table, "Content-Type", len);
 
+      str* sk = (str*)parray_get(table, "Path");
+      str* sR = (str*)parray_get(table, "Request");
+      str* sT = (str*)parray_get(table, "Content-Type");
+      //printf("%s\n", sk->c);
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
       //if(table[k]->c[table[k]->len - 1] != '/') str_push(table[k], "/");
-      str_push(aa, table[k]->c);
+      str_push(aa, sk->c);
       //if(aa->c[aa->len - 1] != '/') str_push(aa, "/");
 
       void* v = parray_find(paths, aa->c);
@@ -549,9 +540,14 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int res_idx = lua_gettop(L);
 
-        for(int i = 0; i != len * 2; i+=2){
+        char* new_cont;
+        int pf = file_parse(L, buffer + header_eof, sT, &new_cont);
+        
+        luaI_tsetv(L, req_idx, "files", pf);
+
+        for(int i = 0; i != table->len; i+=1){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
-          luaI_tsets(L, req_idx, table[i]->c, table[i+1]->c);
+          luaI_tsets(L, req_idx, table->P[i].key->c, ((str*)table->P[i].value)->c);
         }
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
@@ -563,8 +559,6 @@ void* handle_client(void *_arg){
         luaI_tsetb(L, req_idx, "partial", bytes_received == -1);
         luaI_tseti(L, req_idx, "_bytes", bytes_received);
         //printf("%s\n",table[T]->c);
-        int pf = file_parse(L, buffer + header_eof, table[T]);
-        luaI_tsetv(L, req_idx, "files", pf);
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
@@ -574,7 +568,7 @@ void* handle_client(void *_arg){
 
         //values
         luaI_tseti(L, res_idx, "client_fd", client_fd);
-        luaI_tsets(L, res_idx, "_request", table[R]->c);
+        luaI_tsets(L, res_idx, "_request", sR->c);
 
         //header table
         lua_newtable(L);
@@ -595,8 +589,8 @@ void* handle_client(void *_arg){
           for(int z = 0; z != awa->len; z++){
             char* path;
             struct lchar* wowa = awa->cs[z];
-            if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, table[R]->c) == 0 ||
-                (strcmp(table[R]->c, "HEAD") && strcmp(wowa->req, "GET"))){
+            if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
+                (strcmp(sR->c, "HEAD") && strcmp(wowa->req, "GET"))){
                   luaI_tseti(L, res_idx, "passes", passes);
                   passes++;
 
@@ -624,10 +618,7 @@ void* handle_client(void *_arg){
       
     }
 
-    for(int i = 0; i != len * 2; i++){
-      str_free(table[i]);
-    }
-    free(table);
+    parray_clear(table, 1);
   }
 
   if(client_fd > 0) closesocket(client_fd);
