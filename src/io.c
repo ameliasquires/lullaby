@@ -124,8 +124,15 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
       size_t len;
       char* wowa = (char*)luaL_tolstring(L, -1, &len);
       printf("\"");
-      for(int i = 0; i != len; i++) printf("%c",wowa[i]);
+      for(int i = 0; i != len; i++) {
+        printf("%c",wowa[i]);
+        if(wowa[i] == '\n') print_indentation(indent);
+      }
       printf("\"");
+      break;
+    case LUA_TBOOLEAN:
+      if(!skip_indent) print_indentation(indent);
+      printf(color_blue"%s"color_reset, lua_toboolean(L,-1)?"true":"false");
       break;
     case LUA_TFUNCTION:
       if(!skip_indent) print_indentation(indent);
