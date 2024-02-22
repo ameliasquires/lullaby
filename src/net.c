@@ -45,16 +45,23 @@ struct sarray_t {
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+ * @brief calls recv into buffer until everything is read
+ *
+ * buffer is allocated in BUFFER_SIZE chunks
+ *
+ * @param {int} fd of the connection
+ * @param {char**} pointer to a unallocated buffer
+ * @param {int*} pointer to an int, will be where the header ends
+ * @return {int64_t} bytes read, -1 if the body was damaged, -2 if the header was
+*/
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
-  char* buffer = malloc(BUFFER_SIZE * sizeof * buffer);
+  char* header, *buffer = malloc(BUFFER_SIZE * sizeof * buffer);
   memset(buffer, 0, BUFFER_SIZE);
-  char* header;
   size_t len = 0;
   *header_eof = -1;
-  int n;
-  int content_len = -1;
-  //printf("before\n");
-  //fcntl(client_fd, F_SETFL, fcntl(client_fd, F_GETFL) | O_NONBLOCK)
+  int n, content_len = -1;
+
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
     if(n < 0){
@@ -64,7 +71,6 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
 
     };
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
-      //printf("head\n");
       *header_eof = header - buffer;
       char* cont_len_raw = strstr(buffer, "Content-Length: ");
       if(cont_len_raw == NULL) {
@@ -78,29 +84,28 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
       for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
       content_len = strtol(cont_len_str->c, NULL, 10);
       str_free(cont_len_str);
-      //printf("nut\n");*/
 
     }
-    //check if the recv read the whole buffer length, sometimes it wont so i peek to see if there is more
-    //if(n != BUFFER_SIZE && recv(client_fd, NULL, 1, MSG_PEEK) != 1) break;
-    //printf("%i %i\n", n, content_len);
+    
     len += n;
-    //if(n != 0){
-      //printf("buffer %i\n", n);
-      buffer = realloc(buffer, len + BUFFER_SIZE);
-      //printf("realloc\n");
-      memset(buffer + len, 0, n);
+    buffer = realloc(buffer, len + BUFFER_SIZE);
 
-      
-      //printf("%i\n", len - *header_eof - 4);
-    //}
+    memset(buffer + len, 0, n);
+
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
-  //printf("%i\n",len - *header_eof - 4);
   *_buffer = buffer;
   return len + BUFFER_SIZE;
 }
 
+/**
+ * @brief converts the request buffer into a parray_t
+ *
+ * @param {char*} request buffer
+ * @param {int} where the header ends
+ * @param {parray_t**} pointer to a unallocated parray_t
+ * @return {int} returns 0 or -1 on failure
+*/
 int parse_header(char* buffer, int header_eof, parray_t** _table){
   if(header_eof == -1) return -1;
   char add[] = {0,0};
@@ -148,13 +153,17 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   return 0;
 }
 
+/**
+ * @brief contructs an http request
+ *
+ * @param {str**} pointer to an unallocated destination string
+ * @param {int} response code
+ * @param {char*} string representation of the response code
+ * @param {char*} all other header values
+ * @param {char*} response content
+ * @param {size_t} content length
+*/
 void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
-  /**dest = str_init(
-    "HTTP/1.1 404 Not Found\r\n"
-    "Content-Type: text/plain\r\n"
-    "\r\n"
-    "test"
-  );*/
   char* dest = malloc(BUFFER_SIZE);
   memset(dest, 0, BUFFER_SIZE);
   sprintf(dest, 
@@ -164,10 +173,7 @@ void http_build(str** _dest, int code, char* code_det, char* header_vs, char* co
     , code, code_det, header_vs);
 
   *_dest = str_init(dest);
-  //str_push(*_dest, content);
-  for(size_t i = 0; i != len; i++){
-    str_pushl(*_dest, content + i, 1);
-  }
+  str_pushl(*_dest, content, len);
   free(dest);
 }
 
@@ -178,6 +184,12 @@ typedef struct {
   struct sockaddr_in cli;
 } thread_arg_struct;
 
+/**
+ * @brief gets a string representation of a http code
+ *
+ * @param {int} http response code
+ * @param {char*} allocated destination string
+*/
 void http_code(int code, char* code_det){
   //this was done with a script btw
   switch(code){
@@ -290,6 +302,7 @@ void client_fd_errors(int client_fd){
       p_fatal("unknown negative client_fd value");
   }
 }
+
 int l_write(lua_State* L){
   int res_idx = 1;
 
@@ -338,14 +351,14 @@ int l_write(lua_State* L){
 
 int l_send(lua_State* L){
   int res_idx = 1;
-  
+  printf("start");
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
   
   client_fd_errors(client_fd);
-
+  printf("after error\n");
   size_t len;
   char* content = (char*)luaL_checklstring(L, 2, &len);
 
@@ -358,12 +371,12 @@ int l_send(lua_State* L){
   lua_pushvalue(L, 1);
   lua_pushstring(L, "_request");
   lua_gettable(L, -2);
-
+  printf("befor write\n");
   if(strcmp(luaL_checkstring(L, -1), "HEAD") == 0){
     i_write_header(L, header, &resp, "", 0);
   } else 
     i_write_header(L, header, &resp, content, len);
-
+  printf("after write\n");
   send(client_fd, resp->c, resp->len, 0);
   
   lua_pushstring(L, "client_fd");
@@ -408,7 +421,35 @@ int l_serve(lua_State* L){
   return 0;
 }
 
-int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer){
+char *strnstr(const char *haystack, const char *needle, size_t len)
+{
+        int i;
+        size_t needle_len;
+
+        if (0 == (needle_len = strnlen(needle, len)))
+                return (char *)haystack;
+
+        for (i=0; i<=(int)(len-needle_len); i++)
+        {
+                if ((haystack[0] == needle[0]) &&
+                        (0 == strncmp(haystack, needle, needle_len)))
+                        return (char *)haystack;
+
+                haystack++;
+        }
+        return NULL;
+}
+
+/**
+ * @brief parses all files in response buffer into a lua table
+ *
+ * @param {lua_State*} lua state to put table into
+ * @param {char*} response buffer
+ * @param {str*} response header Content-Type value
+ * @param {char**} pointer to the remaining body after all files
+ * @return {int} lua index of table
+*/
+int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer, size_t blen){
   str* boundary = str_init(""); //usually add + 2 to the length when using
   int state = 0;
   for(int i = 0; content_type->c[i] != '\0'; i++){
@@ -426,12 +467,12 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer)
     int file_T = lua_gettop(L);
 
     str* file = str_init("");
-    char* ind = strstr(buffer, boundary->c);
+    char* ind = strnstr(buffer, boundary->c, blen);
     if(ind == NULL) break;
-    char* ending_ind = strstr(ind + boundary->len + 2, boundary->c);
+    char* ending_ind = strnstr(ind + boundary->len + 2, boundary->c, blen);
     if(ending_ind == NULL) break;
 
-    char* header_eof = strstr(ind + boundary->len + 2, "\r\n\r\n");
+    char* header_eof = strnstr(ind + boundary->len + 2, "\r\n\r\n", blen);
     str* current = str_init("");
     int key = -1;
     for(char* s = ind + boundary->len + 2; s != header_eof; s++){
@@ -454,19 +495,18 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer)
     luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
 
     str_pushl(file, header_eof + 2, ending_ind - header_eof - 4);
-    //printf("'%s'\n",file->c);
+
     lua_pushstring(L, "content");
     lua_pushlstring(L, file->c, file->len);
     lua_settable(L, file_T);
 
     buffer = ending_ind;
-    //printf("'%s'\n", buffer);
+
     str_free(file);
 
     lua_pushinteger(L, i);
     lua_pushvalue(L, file_T);
     lua_settable(L, base_T);
-    //l_pprint(L);
   }
   str_free(boundary);
   
@@ -502,48 +542,38 @@ void* handle_client(void *_arg){
 
   //read full request
   int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
+
   //ignore if header is just fucked
   if(bytes_received >= -1){
-    //str** table;
     parray_t* table;
     //checks for a valid header
     if(parse_header(buffer, header_eof, &table) != -1){
-      
-      //int k = stable_key(table, "Path", len);
-      //int R = stable_key(table, "Request", len);
-      //int T = stable_key(table, "Content-Type", len);
 
       str* sk = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
-      //printf("%s\n", sk->c);
+
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
-      //if(table[k]->c[table[k]->len - 1] != '/') str_push(table[k], "/");
+
       str_push(aa, sk->c);
-      //if(aa->c[aa->len - 1] != '/') str_push(aa, "/");
 
       void* v = parray_find(paths, aa->c);
 
       str_free(aa);
-      if(v == NULL){
-        //this should not be here
-        str* resp;
-        http_build(&resp, 404, "Not Found","text/html", "<h1>404</h1>", 12);
-        send(client_fd, resp->c, resp->len, 0);
-        str_free(resp);
-      } else {
+      if(v != NULL){
         lua_newtable(L);
         int req_idx = lua_gettop(L);
         lua_newtable(L);
         int res_idx = lua_gettop(L);
 
-        char* new_cont;
-        int pf = file_parse(L, buffer + header_eof, sT, &new_cont);
-        
-        luaI_tsetv(L, req_idx, "files", pf);
+        if(sT != NULL && 0){
+          char* new_cont;
+          int pf = file_parse(L, buffer + header_eof, sT, &new_cont, bytes_received);
+          if(pf >= 0) luaI_tsetv(L, req_idx, "files", pf);
+        }
 
         for(int i = 0; i != table->len; i+=1){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
@@ -558,7 +588,6 @@ void* handle_client(void *_arg){
 
         luaI_tsetb(L, req_idx, "partial", bytes_received == -1);
         luaI_tseti(L, req_idx, "_bytes", bytes_received);
-        //printf("%s\n",table[T]->c);
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
@@ -656,13 +685,7 @@ int start_serv(lua_State* L, int port){
 
   if(listen(server_fd, max_con) < 0)
     p_fatal("failed to listen\n");
-  /*
-  lua_rawgeti(L, LUA_REGISTRYINDEX, ports[port]);
-  lua_pushstring(L, "/");
-  lua_gettable(L, -2);
-  lua_pushstring(L, "fn");
-  lua_gettable(L, -2);
-  int aa = lua_gettop(L);*/
+
   if (pthread_mutex_init(&mutex, NULL) != 0)
     p_fatal("mutex init failed\n");
 
@@ -676,10 +699,8 @@ int start_serv(lua_State* L, int port){
 
     if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
       p_fatal("failed to accept\n");
-    //printf("%s\n",inet_ntoa(client_addr.sin_addr));
-    //printf("%i\n",threads);
-    //open a state to call shit, should be somewhat thread safe
 
+    //open a state to call shit, should be somewhat thread safe
     thread_arg_struct* args = malloc(sizeof * args);
     args->fd = *client_fd;
     args->port = port;
@@ -709,14 +730,13 @@ int l_req_com(lua_State* L, char* req){
   sprintf(portc, "%i", port);//, lua_tostring(L, 2));
   str* portss = str_init(portc);
   str_push(portss, (char*)lua_tostring(L, 2));
-  //if(portss->c[portss->len - 1] != '/') str_push(portss, "/");
 
   struct lchar* awa;
-  lua_getglobal(L, "string");
-  lua_pushstring(L, "dump");
-  lua_gettable(L, -2);
+  str* uwu = str_init("");
   lua_pushvalue(L, 3);
-  lua_call(L, 1, 1);
+  lua_dump(L, writer, (void*)uwu, 0);
+  lua_pushlstring(L, uwu->c, uwu->len);
+  str_free(uwu);
 
   size_t len;
   char* a = (char*)luaL_checklstring(L, -1, &len);
@@ -724,7 +744,6 @@ int l_req_com(lua_State* L, char* req){
   awa->c = a;
   awa->len = len;
   strcpy(awa->req, req);
-  //printf("%s\n",awa->req);
 
   if(paths == NULL)
     paths = parray_init();
@@ -761,7 +780,8 @@ gen_reqs(CONNECT);
 gen_reqs(OPTIONS);
 gen_reqs(TRACE);
 gen_reqs(PATCH);
-gen_reqs(all); //non standard lol, like expressjs use keyword :3
+gen_reqs(all); //non standard lol, like expressjs 'use' keyword :3
+
 int l_lock(lua_State* L){
   pthread_mutex_lock(&lua_mutex);
   return 0;
@@ -817,43 +837,5 @@ int l_listen(lua_State* L){
   lua_pcall(L, 1, 0, 0);
 
   start_serv(L, port);
-  return 0;
-}
-
-void* hh(void* _L){
-
-  lua_State* L = (lua_State*)_L;
-  lua_call(L, 0, 0);
-
-  return NULL;
-}
-
-int l_spawn(lua_State* L){
-  lua_getglobal(L, "string");
-  lua_pushstring(L, "dump");
-  lua_gettable(L, -2);
-  lua_pushvalue(L, 1);
-  lua_call(L, 1, 1);
-
-  size_t len;
-  char* a = (char*)luaL_checklstring(L, -1, &len);
-  //luaL_loadbuffer(L, a, len, a);
-  //lua_call(L,0,0);
-
-  lua_State* sL = luaL_newstate();
-  luaL_openlibs(sL);
-  requiref(sL, "_G", luaopen_base, 0);
-  requiref(sL, "package", luaopen_package, 1);
-
-  lua_pushlstring(sL, a, len);
-  char* b = (char*)luaL_checklstring(sL, -1, &len);
-  luaL_loadbuffer(sL, b, len, b);
-  
-  //l_pprint(L);
-  pthread_t thread_id;
-  pthread_create(&thread_id, NULL, hh, (void*)sL);
-  pthread_detach(thread_id);
-  
-
   return 0;
 }
