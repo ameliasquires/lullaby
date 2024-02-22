@@ -146,7 +146,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   str_free(current);
   *_table = table;
   return 0;
-}s
+}
 
 void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
   /**dest = str_init(
