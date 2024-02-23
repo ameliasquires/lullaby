@@ -95,7 +95,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
   *_buffer = buffer;
-  return len + BUFFER_SIZE;
+  return len;
 }
 
 /**
@@ -421,23 +421,23 @@ int l_serve(lua_State* L){
   return 0;
 }
 
-char *strnstr(const char *haystack, const char *needle, size_t len)
-{
-        int i;
-        size_t needle_len;
+char* strnstr(const char *s1, const char *s2, size_t n) {
+  // simplistic algorithm with O(n2) worst case, stolen from stack overflow
+  size_t i, len;
+  char c = *s2;
 
-        if (0 == (needle_len = strnlen(needle, len)))
-                return (char *)haystack;
+  if(c == '\0')
+    return (char *)s1;
 
-        for (i=0; i<=(int)(len-needle_len); i++)
-        {
-                if ((haystack[0] == needle[0]) &&
-                        (0 == strncmp(haystack, needle, needle_len)))
-                        return (char *)haystack;
-
-                haystack++;
-        }
-        return NULL;
+  for(len = strlen(s2); len <= n; n--, s1++){
+    if(*s1 == c){
+      for(i = 1;; i++){
+        if(i == len) return (char *)s1;
+        if(s1[i] != s2[i]) break;
+      }
+    }
+  }
+  return NULL;
 }
 
 /**
@@ -450,6 +450,11 @@ char *strnstr(const char *haystack, const char *needle, size_t len)
  * @return {int} lua index of table
 */
 int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer, size_t blen){
+  //printf("***\n'%s', %i\n'",content_type->c, blen);
+  //for(int i = 0; i != blen; i++)
+  //  printf("%c", buffer[i]);
+  //printf("'\n");
+
   str* boundary = str_init(""); //usually add + 2 to the length when using
   int state = 0;
   for(int i = 0; content_type->c[i] != '\0'; i++){
@@ -457,12 +462,12 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
     if(content_type->c[i] == ';') state = 1;
     if(content_type->c[i] == '=' && state == 1) state = 2;
   }
-  //printf("%s\n",boundary->c);
-  
+  char* end = buffer + blen;
   lua_newtable(L);
   int base_T = lua_gettop(L);
 
   for(int i = 1;;i++){
+    //printf("%lu %i\n", blen, strlen(buffer));
     lua_newtable(L);
     int file_T = lua_gettop(L);
 
@@ -473,8 +478,13 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
     if(ending_ind == NULL) break;
 
     char* header_eof = strnstr(ind + boundary->len + 2, "\r\n\r\n", blen);
+    if(header_eof == NULL) {
+      printf("header eof null\n");
+      break;
+    };
     str* current = str_init("");
     int key = -1;
+
     for(char* s = ind + boundary->len + 2; s != header_eof; s++){
 
       if(*s == ':'){ //todo: collapse Content-Disposition
@@ -491,6 +501,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
         str_pushl(current, s, 1);
       }
     }
+
     str_free(current);
     luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
 
@@ -500,6 +511,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
     lua_pushlstring(L, file->c, file->len);
     lua_settable(L, file_T);
 
+    blen = end - ending_ind;
     buffer = ending_ind;
 
     str_free(file);
@@ -510,7 +522,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
   }
   str_free(boundary);
   
-  *end_buffer = buffer + boundary->len + 2;
+  *end_buffer = buffer + boundary->len + 4;
   lua_pushvalue(L, base_T);
   return base_T;
 }
@@ -569,10 +581,13 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int res_idx = lua_gettop(L);
 
-        if(sT != NULL && 0){
+        if(sT != NULL && bytes_received > 0){
           char* new_cont;
-          int pf = file_parse(L, buffer + header_eof, sT, &new_cont, bytes_received);
-          if(pf >= 0) luaI_tsetv(L, req_idx, "files", pf);
+          int pf = file_parse(L, buffer + header_eof, sT, &new_cont, bytes_received - header_eof);
+          if(pf >= 0){
+            luaI_tsetv(L, req_idx, "files", pf);
+            parray_set(table, "Body", (void*)str_init(new_cont));
+          }
         }
 
         for(int i = 0; i != table->len; i+=1){
