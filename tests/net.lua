@@ -1,5 +1,5 @@
 require "llib"
-llib.config.set({max_depth=4})
+llib.config.set({max_depth=1})
 --local print = llib.io.pprint
 sleep = function(a) 
     local sec = tonumber(os.clock() + a); 
@@ -42,6 +42,7 @@ llib.net.listen(
             --_G.llib.io.pprint(_G.llib.io.readfile(".gitignore"))
             --print(req._bytes)
             --res:send(_G.llib.io.readfile("llib.dll"))
+            --_G.llib.io.pprint(_G.llib.crypto.md5(_G.llib.io.readfile(".gitignore")))
             _G.llib.io.pprint(req)
         end)
 
