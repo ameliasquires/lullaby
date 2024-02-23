@@ -26,7 +26,8 @@
 #include "types/parray.h"
 
 #define max_con 200
-#define BUFFER_SIZE 2048
+//2^42
+#define BUFFER_SIZE 67108864
 
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
@@ -78,6 +79,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
         *_buffer = buffer;
         return len + BUFFER_SIZE;
       }
+      
       str* cont_len_str = str_init("");
       if(cont_len_raw == NULL) abort();
       //i is length of 'Content-Length: '
@@ -86,7 +88,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
       str_free(cont_len_str);
 
     }
-    
+
     len += n;
     buffer = realloc(buffer, len + BUFFER_SIZE);
 
@@ -584,6 +586,7 @@ void* handle_client(void *_arg){
         if(sT != NULL && bytes_received > 0){
           char* new_cont;
           int pf = file_parse(L, buffer + header_eof, sT, &new_cont, bytes_received - header_eof);
+
           if(pf >= 0){
             luaI_tsetv(L, req_idx, "files", pf);
             parray_set(table, "Body", (void*)str_init(new_cont));
