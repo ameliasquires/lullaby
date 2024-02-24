@@ -59,7 +59,7 @@ pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
   char* header, *buffer = malloc(BUFFER_SIZE * sizeof * buffer);
   memset(buffer, 0, BUFFER_SIZE);
-  size_t len = 0;
+  int64_t len = 0;
   *header_eof = -1;
   int n, content_len = -1;
 
@@ -77,7 +77,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
       if(cont_len_raw == NULL) {
         len += n;
         *_buffer = buffer;
-        return len + BUFFER_SIZE;
+        return len;
       }
       
       str* cont_len_str = str_init("");
@@ -448,14 +448,13 @@ char* strnstr(const char *s1, const char *s2, size_t n) {
  * @param {lua_State*} lua state to put table into
  * @param {char*} response buffer
  * @param {str*} response header Content-Type value
- * @param {char**} pointer to the remaining body after all files
  * @return {int} lua index of table
 */
-int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer, size_t blen){
-  //printf("***\n'%s', %i\n'",content_type->c, blen);
-  //for(int i = 0; i != blen; i++)
-  //  printf("%c", buffer[i]);
-  //printf("'\n");
+int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
+  /*printf("***\n'%s', %i\n'",content_type->c, blen);
+  for(int i = 0; i != blen; i++)
+    printf("%c", buffer[i]);
+  printf("'\n");*/
 
   str* boundary = str_init(""); //usually add + 2 to the length when using
   int state = 0;
@@ -464,6 +463,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
     if(content_type->c[i] == ';') state = 1;
     if(content_type->c[i] == '=' && state == 1) state = 2;
   }
+  if(state != 2) return -1;
   char* end = buffer + blen;
   lua_newtable(L);
   int base_T = lua_gettop(L);
@@ -524,7 +524,6 @@ int file_parse(lua_State* L, char* buffer, str* content_type, char** end_buffer,
   }
   str_free(boundary);
   
-  *end_buffer = buffer + boundary->len + 4;
   lua_pushvalue(L, base_T);
   return base_T;
 }
@@ -584,12 +583,11 @@ void* handle_client(void *_arg){
         int res_idx = lua_gettop(L);
 
         if(sT != NULL && bytes_received > 0){
-          char* new_cont;
-          int pf = file_parse(L, buffer + header_eof, sT, &new_cont, bytes_received - header_eof);
+          int pf = file_parse(L, buffer + header_eof, sT, bytes_received - header_eof);
 
           if(pf >= 0){
             luaI_tsetv(L, req_idx, "files", pf);
-            parray_set(table, "Body", (void*)str_init(new_cont));
+            parray_set(table, "Body", (void*)str_init(""));
           }
         }
 

@@ -1,5 +1,5 @@
 #include "str.h"
-#include "lua.h"
+#include "../lua.h"
 
 str* str_init(char* init){
   if(init == NULL){
