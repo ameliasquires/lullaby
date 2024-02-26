@@ -1,4 +1,7 @@
 
+#ifndef __PARRAY_H
+#define __PARRAY_H
+
 typedef struct {
     void* value;
     str* key;
@@ -20,3 +23,5 @@ void parray_clear(parray_t*, int);
 void parray_lclear(parray_t*);
 
 parray_t* parray_find(parray_t*, char*);
+
+#endif //parray_h

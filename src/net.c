@@ -360,7 +360,7 @@ int l_send(lua_State* L){
   int client_fd = luaL_checkinteger(L, -1);
   
   client_fd_errors(client_fd);
-  printf("after error\n");
+
   size_t len;
   char* content = (char*)luaL_checklstring(L, 2, &len);
 
@@ -373,12 +373,12 @@ int l_send(lua_State* L){
   lua_pushvalue(L, 1);
   lua_pushstring(L, "_request");
   lua_gettable(L, -2);
-  printf("befor write\n");
+
   if(strcmp(luaL_checkstring(L, -1), "HEAD") == 0){
     i_write_header(L, header, &resp, "", 0);
   } else 
     i_write_header(L, header, &resp, content, len);
-  printf("after write\n");
+
   send(client_fd, resp->c, resp->len, 0);
   
   lua_pushstring(L, "client_fd");
@@ -423,23 +423,29 @@ int l_serve(lua_State* L){
   return 0;
 }
 
-char* strnstr(const char *s1, const char *s2, size_t n) {
-  // simplistic algorithm with O(n2) worst case, stolen from stack overflow
-  size_t i, len;
-  char c = *s2;
+int content_disposition(str* src, parray_t** _dest){
 
-  if(c == '\0')
-    return (char *)s1;
-
-  for(len = strlen(s2); len <= n; n--, s1++){
-    if(*s1 == c){
-      for(i = 1;; i++){
-        if(i == len) return (char *)s1;
-        if(s1[i] != s2[i]) break;
-      }
-    }
+  char* end = strnstr(src->c, ";", src->len);
+  parray_t* dest = parray_init();
+  if(end == NULL){
+    parray_set(dest, "form-data", (void*)str_init(src->c));
+    return 0;
   }
-  return NULL;
+  str* temp = str_init("");
+  str_pushl(temp, src->c, end - src->c);
+  parray_set(dest, "form-data", (void*)temp);
+
+  int len = end - src->c;
+  char* buffer = end + 1;
+
+  gen_parse(buffer, src->len - len, &dest);
+  //printf("\n**\n");
+  //for(int i = 0; i != dest->len; i++){
+  //  printf("'%s : %s'\n",((str*)dest->P[i].key)->c,((str*)dest->P[i].value)->c);
+  //}
+  *_dest = dest;
+
+  return 1;
 }
 
 /**
@@ -486,18 +492,34 @@ int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
     };
     str* current = str_init("");
     int key = -1;
-
+    int cont_disp = 0;
     for(char* s = ind + boundary->len + 2; s != header_eof; s++){
 
-      if(*s == ':'){ //todo: collapse Content-Disposition
+      if(*s == ':'){
+        cont_disp = strcmp(current->c, "Content-Disposition") == 0;
         lua_pushlstring(L, current->c, current->len);
         key = lua_gettop(L);
         str_clear(current);
       } else if(*s == '\n') {
         if(key != -1){
-          luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
-          key = -1;
+        
+          if(cont_disp){
+            parray_t* aw;
+            content_disposition(current, &aw);
+            lua_newtable(L);
+            int tt = lua_gettop(L);
+            for(int i = 0; i != aw->len; i++){
+              //printf("'%s : %s'\n",((str*)dest->P[i].key)->c,((str*)dest->P[i].value)->c);
+              luaI_tsets(L, tt, ((str*)aw->P[i].key)->c, ((str*)aw->P[i].value)->c);
+            }
+            luaI_tsetv(L, file_T, "Content-Disposition", tt);
+            parray_clear(aw, 2);
+          } else {
+            luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
+            key = -1;
+          }
           str_clear(current);
+          cont_disp = 0;
         }
       } else if(*s != '\r' && !(*s == ' ' && strcmp(current->c, "") == 0)){
         str_pushl(current, s, 1);
@@ -814,13 +836,12 @@ int l_listen(lua_State* L){
 
 
   if(lua_gettop(L) != 2) {
-    printf("not enough args");
-    abort();
+    p_fatal("not enough args");
   }
   if(lua_type(L, 1) != LUA_TFUNCTION) {
-    printf("expected a function at arg 1");
-    abort();
+    p_fatal("(arg:1) expected a function");
   }
+
   int port = luaL_checkinteger(L, 2);
   
   lua_newtable(L);
