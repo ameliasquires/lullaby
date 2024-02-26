@@ -1,5 +1,5 @@
 require "llib"
-llib.config.set({max_depth=1})
+llib.config.set({max_depth=5})
 --local print = llib.io.pprint
 sleep = function(a) 
     local sec = tonumber(os.clock() + a); 

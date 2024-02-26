@@ -1,3 +1,9 @@
+#ifndef __UTIL_H
+#define __UTIL_H
+
+#include "types/str.h"
+#include "types/parray.h"
+
 #define color_black "\e[30m"
 #define color_red "\e[31m"
 #define color_green "\e[32m"
@@ -18,5 +24,9 @@
 
 #define i_swap(A,B) double temp = A; A = B; B = temp;
 
+int gen_parse(char*,int, parray_t**);
 void p_fatal(const char*);
 void p_error(const char*);
+char* strnstr(const char*, const char*, size_t);
+
+#endif //__UTIL_H
