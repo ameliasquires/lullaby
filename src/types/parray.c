@@ -6,6 +6,13 @@
 #include "../lua.h"
 #include "parray.h"
 
+void free_method(void* v, enum free_type free_meth){
+    if(v != NULL){
+        if(free_meth == FREE) free(v);
+        else if(free_meth == STR) str_free(v);
+    }
+}
+
 parray_t* parray_init(){
     parray_t* awa = malloc(sizeof * awa);
     awa->P = malloc(sizeof * awa->P);
@@ -36,16 +43,36 @@ void* parray_get(parray_t* p, char* key){
     return NULL;
 }
 
+int parray_geti(parray_t* p, char* key){
+    for(int i = 0; i != p->len; i++){
+        if(strcmp(p->P[i].key->c, key) == 0){
+            return i;
+        }
+    }
+    return -1;
+}
+
+void parray_remove(parray_t* p, char* key, enum free_type free){
+    int ind = parray_geti(p, key);
+    if(ind == -1) return;
+
+    str_free(p->P[ind].key);
+    free_method(p->P[ind].value, free);
+
+    for(int i = ind; i < p->len - 1; i++) p->P[i] = p->P[i+1];
+    p->len--;
+    p->P = realloc(p->P, sizeof * p->P * (p->len + 1));
+}
+
 void parray_lclear(parray_t* p){
     free(p->P);
     free(p);
 }
 
-void parray_clear(parray_t* p, int clear_val){
+void parray_clear(parray_t* p, enum free_type clear_val){
     for(int i = 0; i != p->len; i++){
         str_free(p->P[i].key);
-        if(clear_val == 1) free(p->P[i].value);
-        else if(clear_val == 2) str_free(p->P[i].value);
+        free_method(p->P[i].value, clear_val);
     }
     parray_lclear(p);
 }

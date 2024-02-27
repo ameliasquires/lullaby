@@ -513,7 +513,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
               luaI_tsets(L, tt, ((str*)aw->P[i].key)->c, ((str*)aw->P[i].value)->c);
             }
             luaI_tsetv(L, file_T, "Content-Disposition", tt);
-            parray_clear(aw, 2);
+            parray_clear(aw, STR);
           } else {
             luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
             key = -1;
@@ -587,7 +587,8 @@ void* handle_client(void *_arg){
       str* sk = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
-
+      str* sC = (str*)parray_get(table, "Cookie");
+      
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
 
@@ -604,6 +605,25 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int res_idx = lua_gettop(L);
 
+        //handle cookies
+        if(sC != NULL){
+          lua_newtable(L);
+          int lcookie = lua_gettop(L);
+
+          parray_t* cookie = parray_init();
+          printf("%i\n",gen_parse(sC->c, sC->len, &cookie));
+          for(int i = 0; i != cookie->len; i++){
+            //printf("%s %s\n", cookie->P[i].key->c, ((str*)cookie->P[i].value)->c);
+            luaI_tsets(L, lcookie, cookie->P[i].key->c, ((str*)cookie->P[i].value)->c);
+          }
+          luaI_tsetv(L, req_idx, "cookies", lcookie);
+          parray_clear(cookie, STR);
+
+          str_free(sC);
+          parray_remove(table, "Cookie", NONE);
+        }
+
+        //handle files
         if(sT != NULL && bytes_received > 0){
           int pf = file_parse(L, buffer + header_eof, sT, bytes_received - header_eof);
 
@@ -685,7 +705,7 @@ void* handle_client(void *_arg){
       
     }
 
-    parray_clear(table, 1);
+    parray_clear(table, STR);
   }
 
   if(client_fd > 0) closesocket(client_fd);
