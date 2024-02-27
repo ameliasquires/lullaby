@@ -27,8 +27,11 @@ int gen_parse(char* inp, int len, parray_t** _table){
       state = 0;
     } else if(current->c[0] != '\0' || inp[i] != ' ') str_pushl(current, inp + i, 1);
   }
-  parray_set(table, last->c, (void*)current);
-  str_free(last);
+
+  if(last != NULL){
+    parray_set(table, last->c, (void*)current);
+    str_free(last);
+  }
   *_table = table;
   return 1;
 }

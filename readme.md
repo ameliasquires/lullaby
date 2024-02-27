@@ -24,8 +24,6 @@ todo:
 
     * connection limit
 
-    * parse ~~Content-Disposition and~~ cookies (maybe a general parsing function too)
-
 * more doxygen like docs, everywhere
 
 * make parray_t hash based
