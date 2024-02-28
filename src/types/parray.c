@@ -6,6 +6,12 @@
 #include "../lua.h"
 #include "parray.h"
 
+/**
+ * @brief internal table on how to free values
+ *
+ * @param {void*} value to be free'd
+ * @param {enum free_type} type of free
+*/
 void free_method(void* v, enum free_type free_meth){
     if(v != NULL){
         if(free_meth == FREE) free(v);
@@ -13,6 +19,11 @@ void free_method(void* v, enum free_type free_meth){
     }
 }
 
+/**
+ * @brief defines a parray_t
+ *
+ * @return {parray_t*} allocated parray_t
+*/
 parray_t* parray_init(){
     parray_t* awa = malloc(sizeof * awa);
     awa->P = malloc(sizeof * awa->P);
@@ -20,6 +31,13 @@ parray_t* parray_init(){
     return awa;
 }
 
+/**
+ * @brief sets value at key to value, adds a new index if new
+ *
+ * {parray_t*} the parray to update
+ * {char*} key
+ * {void*} value
+*/
 void parray_set(parray_t* p, char* key, void* value){
     for(int i = 0; i != p->len; i++){
         if(strcmp(p->P[i].key->c, key) == 0){
@@ -34,6 +52,13 @@ void parray_set(parray_t* p, char* key, void* value){
     p->P[p->len - 1].value = value;
 }
 
+/**
+ * @brief gets item with a key
+ *
+ * @param {parray_t*} the parray to search
+ * @param {char*} key
+ * @return value at index, or NULL
+*/
 void* parray_get(parray_t* p, char* key){
     for(int i = 0; i != p->len; i++){
         if(strcmp(p->P[i].key->c, key) == 0){
@@ -43,6 +68,13 @@ void* parray_get(parray_t* p, char* key){
     return NULL;
 }
 
+/**
+ * @brief gets index with a key
+ *
+ * @param {parray_t*} the parray to search
+ * @param {char*} key
+ * @return index, or -1 if not found
+*/
 int parray_geti(parray_t* p, char* key){
     for(int i = 0; i != p->len; i++){
         if(strcmp(p->P[i].key->c, key) == 0){
@@ -52,6 +84,13 @@ int parray_geti(parray_t* p, char* key){
     return -1;
 }
 
+/**
+ * @brief remove element if found
+ *
+ * @param {parray_t*} the parray to modify
+ * @param {char*} key
+ * @param {enum free_type} method to free value
+*/
 void parray_remove(parray_t* p, char* key, enum free_type free){
     int ind = parray_geti(p, key);
     if(ind == -1) return;
@@ -64,11 +103,22 @@ void parray_remove(parray_t* p, char* key, enum free_type free){
     p->P = realloc(p->P, sizeof * p->P * (p->len + 1));
 }
 
+/**
+ * @brief frees base of parray_t, leaving the values
+ *
+ * @param {parray_t*} the parray free
+*/
 void parray_lclear(parray_t* p){
     free(p->P);
     free(p);
 }
 
+/**
+ * @brief frees entire parray_t
+ *
+ * @param {parray_t*} the parray free
+ * @param {enum free_type} the method to free values
+*/
 void parray_clear(parray_t* p, enum free_type clear_val){
     for(int i = 0; i != p->len; i++){
         str_free(p->P[i].key);
@@ -100,6 +150,13 @@ int fmatch(char* s, char* p) {
     return 1;
 }
 
+/**
+ * @brief find all elements in an array that match, allowing for wildcards
+ *
+ * @param {parray_t*} the parray to search
+ * @param {char*} the string to search for
+ * @return {parray_t*} populated array of matches
+*/
 parray_t* parray_find(parray_t* p, char* match){
     parray_t* ret = malloc(sizeof * ret);
     ret->P = malloc(sizeof * ret->P * p->len);

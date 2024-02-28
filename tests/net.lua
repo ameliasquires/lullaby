@@ -1,5 +1,5 @@
 require "llib"
-llib.config.set({max_depth=5})
+llib.config.set({max_depth=1})
 --local print = llib.io.pprint
 sleep = function(a) 
     local sec = tonumber(os.clock() + a); 
@@ -17,6 +17,7 @@ llib.net.listen(
     function(server)
         --llib = nil
         --llib.io.pprint(_G)
+        llib.io.pprint("online")
         _G.server = server
         server:all("/*", function(res, req)
             --llib.io.pprint(res)
@@ -43,7 +44,8 @@ llib.net.listen(
             --print(req._bytes)
             --res:send(_G.llib.io.readfile("llib.dll"))
             --_G.llib.io.pprint(_G.llib.crypto.md5(_G.llib.io.readfile(".gitignore")))
-            _G.llib.io.pprint(req)
+            --_G.llib.io.pprint(req)
+            res:send("owo")
         end)
 
         server:GET("/aa", function(res, req)

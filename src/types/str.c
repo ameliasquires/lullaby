@@ -1,6 +1,8 @@
 #include "str.h"
 #include "../lua.h"
 
+#define alloc_buffer 64
+
 str* str_init(char* init){
   if(init == NULL){
     char cc = '\0';
@@ -9,7 +11,8 @@ str* str_init(char* init){
 
   size_t len = strlen(init);
   str* s = malloc(sizeof * s);
-  s->c = malloc(len + 1);
+  s->_bytes = len + 1 + alloc_buffer;
+  s->c = malloc(s->_bytes);
   s->len = len ;
   
   memcpy(s->c, init, len + 1);
@@ -23,13 +26,14 @@ void str_free(str* s){
 
 void str_push(str* s, char* insert){
   s->len += strlen(insert);
-  s->c = realloc(s->c, s->len + 5);
+  if(s->len + 1 >= s->_bytes)
+    s->c = realloc(s->c, s->_bytes = s->len + 1 + alloc_buffer);
   strcat(s->c, insert);
 }
 
 void str_pushl(str* s, char* insert, size_t l){
-  
-  s->c = realloc(s->c, s->len + l + 5);
+  if(s->len + l >= s->_bytes)
+    s->c = realloc(s->c, s->_bytes = s->len + l + alloc_buffer);
   //strcat(s->c, insert);
   for(int i = 0; i != l; i++){
     s->c[i + s->len] = insert[i];

@@ -1,8 +1,8 @@
 #include "../lua.h"
 #include <stdint.h>
 
-/**
- * calculates a adler hash of (len) bytes
+/*!
+ * \brief calculates a adler hash of (len) bytes
  *
  * @param {uint8_t*} input bytes
  * @param {size_t} input length
