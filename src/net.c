@@ -497,6 +497,7 @@ int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
     str* current = str_init("");
     int key = -1;
     int cont_disp = 0;
+    
     for(char* s = ind + boundary->len + 2; s != header_eof; s++){
 
       if(*s == ':'){
@@ -530,19 +531,19 @@ int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
       }
     }
 
-    str_free(current);
-    luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
+    //str_free(current);
+    //luaI_tsets(L, file_T , luaL_checkstring(L, key), current->c);
 
-    str_pushl(file, header_eof + 2, ending_ind - header_eof - 4);
+    //str_pushl(file, header_eof + 2, ending_ind - header_eof - 4);
 
     lua_pushstring(L, "content");
-    lua_pushlstring(L, file->c, file->len);
+    lua_pushlstring(L, header_eof + 2, ending_ind - header_eof - 4);
     lua_settable(L, file_T);
 
     blen = end - ending_ind;
     buffer = ending_ind;
 
-    str_free(file);
+    //str_free(file);
 
     lua_pushinteger(L, i);
     lua_pushvalue(L, file_T);
