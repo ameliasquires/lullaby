@@ -16,6 +16,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "net.h"
 #include "lua.h"
@@ -27,7 +28,7 @@
 
 #define max_con 200
 //2^42
-#define BUFFER_SIZE 67108864
+#define BUFFER_SIZE 26000000
 
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
@@ -67,6 +68,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
     if(n < 0){
       *_buffer = buffer;
+      printf("%s %i\n",strerror(errno),errno);
       if(*header_eof == -1) return -2; //dont even try w/ request, no header to read
       return -1; //well the header is fine atleast
 
@@ -86,16 +88,18 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
       for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
       content_len = strtol(cont_len_str->c, NULL, 10);
       str_free(cont_len_str);
-
+      buffer = realloc(buffer, content_len + *header_eof + 4 + BUFFER_SIZE);
     }
 
     len += n;
-    buffer = realloc(buffer, len + BUFFER_SIZE);
-
-    memset(buffer + len, 0, n);
+    if(*header_eof == -1){
+      buffer = realloc(buffer, len + BUFFER_SIZE);
+    }
+    //memset(buffer + len, 0, n);
 
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
+  //printf("%li\n%li",len, content_len + *header_eof + 4);
   *_buffer = buffer;
   return len;
 }
@@ -552,14 +556,14 @@ int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
 
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
-  
+  clock_t begin = clock();
   //pthread_mutex_lock(&mutex);
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
   char* buffer;
   char dummy[2] = {0, 0};
   int header_eof;
-
+  //sleep(1);
   //create state for this thread
   lua_State* L = luaL_newstate();
   luaL_openlibs(L);
@@ -574,16 +578,19 @@ void* handle_client(void *_arg){
   //l_pprint(L);
   lua_setglobal(L, "_G");
   pthread_mutex_unlock(&mutex);
-
+  printf("start: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+  begin = clock();
   //read full request
   int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-
+  printf("read bytes: %li, %f\n",bytes_received,(double)(clock() - begin) / CLOCKS_PER_SEC);
+  begin = clock();
   //ignore if header is just fucked
   if(bytes_received >= -1){
     parray_t* table;
     //checks for a valid header
     if(parse_header(buffer, header_eof, &table) != -1){
-
+      printf("parsed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+      begin = clock();
       str* sk = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
@@ -597,7 +604,8 @@ void* handle_client(void *_arg){
       str_push(aa, sk->c);
 
       void* v = parray_find(paths, aa->c);
-
+      printf("found: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+      begin = clock();
       str_free(aa);
       if(v != NULL){
         lua_newtable(L);
@@ -632,7 +640,8 @@ void* handle_client(void *_arg){
             parray_set(table, "Body", (void*)str_init(""));
           }
         }
-
+        printf("cookie and file: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        begin = clock();
         for(int i = 0; i != table->len; i+=1){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
           luaI_tsets(L, req_idx, table->P[i].key->c, ((str*)table->P[i].value)->c);
@@ -664,7 +673,8 @@ void* handle_client(void *_arg){
         luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
         luaI_tsetv(L, res_idx, "header", header_idx);
-
+        printf("wrote table: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        begin = clock();
         //the function(s)
         //get all function that kinda match
         parray_t* owo = (parray_t*)v;
@@ -696,7 +706,8 @@ void* handle_client(void *_arg){
           }
         }
         parray_lclear(owo); //dont free the rest
-
+        printf("out: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        begin = clock();
         lua_pushstring(L, "client_fd");
         lua_gettable(L, res_idx);
         client_fd = luaL_checkinteger(L, -1);
@@ -712,7 +723,7 @@ void* handle_client(void *_arg){
   free(args);
   free(buffer);
   lua_close(L);
-
+  printf("closed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   pthread_mutex_lock(&mutex);
   threads--;
   pthread_mutex_unlock(&mutex);

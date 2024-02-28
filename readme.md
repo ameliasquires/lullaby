@@ -28,8 +28,6 @@ todo:
 
 * make parray_t hash based
 
-* str optimizations
-
 
 ----
 
