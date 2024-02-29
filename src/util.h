@@ -23,7 +23,7 @@
 #define color_reset "\e[0m"
 
 #define i_swap(A,B) double temp = A; A = B; B = temp;
-
+#define lesser(A,B) (A>B?B:A)
 int gen_parse(char*,int, parray_t**);
 void p_fatal(const char*);
 void p_error(const char*);
