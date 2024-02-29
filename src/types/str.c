@@ -48,4 +48,9 @@ void str_clear(str* s){
   s->len = 0;
 }
 
+void str_popf(str* s, int len){
+  memmove(s->c, s->c + len, s->len -= len);
+  s->c[s->len] = 0;
+}
+
 

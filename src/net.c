@@ -28,7 +28,9 @@
 
 #define max_con 200
 //2^42
-#define BUFFER_SIZE 26000000
+#define BUFFER_SIZE 20000
+#define HTTP_BUFFER_SIZE 4098
+#define max_content_length 10
 
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
@@ -57,7 +59,7 @@ pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
  * @param {int*} pointer to an int, will be where the header ends
  * @return {int64_t} bytes read, -1 if the body was damaged, -2 if the header was
 */
-int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
+int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state){
   char* header, *buffer = malloc(BUFFER_SIZE * sizeof * buffer);
   memset(buffer, 0, BUFFER_SIZE);
   int64_t len = 0;
@@ -88,12 +90,18 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof){
       for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
       content_len = strtol(cont_len_str->c, NULL, 10);
       str_free(cont_len_str);
+      if(content_len > max_content_length) {
+        *_buffer = buffer;
+        *state = (len + n != content_len + *header_eof + 4);
+        return len + n;
+      }
       buffer = realloc(buffer, content_len + *header_eof + 4 + BUFFER_SIZE);
+      if(buffer == NULL) p_fatal("unable to allocate");
     }
 
     len += n;
     if(*header_eof == -1){
-      buffer = realloc(buffer, len + BUFFER_SIZE);
+      buffer = realloc(buffer, len + BUFFER_SIZE + 1);
     }
     //memset(buffer + len, 0, n);
 
@@ -153,7 +161,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
     } else str_pushl(current, buffer + i, 1);
   }
   parray_set(table, sw->c, (void*)str_init(current->c));
-  parray_set(table, "Body", (void*)str_init(buffer + header_eof + 4));
+  //parray_set(table, "Body", (void*)str_initl(buffer + header_eof + 4, buffer_len - header_eof - 4));
   str_free(current);
   *_table = table;
   return 0;
@@ -170,8 +178,8 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
  * @param {size_t} content length
 */
 void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
-  char* dest = malloc(BUFFER_SIZE);
-  memset(dest, 0, BUFFER_SIZE);
+  char* dest = malloc(HTTP_BUFFER_SIZE);
+  memset(dest, 0, HTTP_BUFFER_SIZE);
   sprintf(dest, 
     "HTTP/1.1 %i %s\r\n"
     "%s"
@@ -357,7 +365,6 @@ int l_write(lua_State* L){
 
 int l_send(lua_State* L){
   int res_idx = 1;
-  printf("start");
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
@@ -460,11 +467,12 @@ int content_disposition(str* src, parray_t** _dest){
  * @param {str*} response header Content-Type value
  * @return {int} lua index of table
 */
+/*
 int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
   /*printf("***\n'%s', %i\n'",content_type->c, blen);
   for(int i = 0; i != blen; i++)
     printf("%c", buffer[i]);
-  printf("'\n");*/
+  printf("'\n");//*\/
 
   str* boundary = str_init(""); //usually add + 2 to the length when using
   int state = 0;
@@ -553,12 +561,89 @@ int file_parse(lua_State* L, char* buffer, str* content_type, size_t blen){
   
   lua_pushvalue(L, base_T);
   return base_T;
+}*/
+
+enum file_status {
+  _ignore, BARRIER_READ, FILE_HEADER, FILE_BODY, NORMAL
+};
+int rolling_file_parse(lua_State* L, char* buffer, str* content_type, size_t blen, parray_t** _content){
+  parray_t* content = *_content;
+  enum file_status* status = (enum file_status*)parray_get(content, "_status");
+  str* current = (str*)parray_get(content, "_current");
+  str* old = (str*)parray_get(content, "_old");
+  int override = 0;
+
+  if(status == NULL){
+    str* boundary = str_init(""); //usually add + 2 to the length when using
+    int state = 0;
+    for(int i = 0; content_type->c[i] != '\0'; i++){
+      if(state == 2) str_pushl(boundary, content_type->c + i, 1);
+      if(content_type->c[i] == ';') state = 1;
+      if(content_type->c[i] == '=' && state == 1) state = 2;
+    }
+    if(state == 2){
+      str_pushl(boundary, "\r\n\r\n", 4);
+    }
+    //printf("%s\n",boundary->c);
+    parray_set(content, "_status", (void*)(status = &(enum file_status){state==2?BARRIER_READ:NORMAL}));
+    parray_set(content, "_current", (void*)(current = boundary));
+    parray_set(content, "_boundary", str_init(boundary));
+  }
+
+  if(*status == NORMAL){
+    //strnstr(buffer, )
+    if(override) str_clear(current);
+    str_pushl(current, buffer, blen);
+    printf("%s\n",current->c);
+  } else {
+    if(*status == BARRIER_READ){
+      int less = lesser(current->len, blen);
+      blen -= less;
+      buffer += less;
+      str_popf(current, less);
+      if(current->len == 0){
+        *status = FILE_HEADER;
+        str_clear(current); //prolly not needed
+      };
+    }
+    if(*status == FILE_HEADER){
+      for(int i = 0; i < blen; i++){
+        //printf("%c",buffer[i]);
+        if(buffer[i] == ':'){
+          old = current;
+          current = str_init("");
+        } else if(buffer[i] == '\n'){
+          if(current->len == 0){
+            *status = FILE_BODY;
+            break;
+          }
+          //luaI_tsets(L, file_T , old->c, current->c);
+          printf("'%s' : '%s'\n",old->c, current->c);
+          old = NULL;
+          str_clear(current);
+        } else if(buffer[i] != '\r') str_pushl(current, buffer + i, 1);
+      }
+    } 
+    if(*status == FILE_BODY){
+
+    }
+  }
+
+  parray_set(content, "_status", status);
+  parray_set(content, "_current", current);
+  parray_set(content, "_old", old);
+  *_content = content;
+  //printf("%i | %s\n",*status, current->c);
+  //for(int i = 0; i != blen; i++) printf("%c", buffer[i]);
+  //printf("\n");
+  return 0;
 }
 
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
   clock_t begin = clock();
   //pthread_mutex_lock(&mutex);
+  int read_state = 0;
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
   char* buffer;
@@ -579,24 +664,30 @@ void* handle_client(void *_arg){
   //l_pprint(L);
   lua_setglobal(L, "_G");
   pthread_mutex_unlock(&mutex);
-  printf("start: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+  //printf("start: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   begin = clock();
   //read full request
-  int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof);
-  printf("read bytes: %li, %f\n",bytes_received,(double)(clock() - begin) / CLOCKS_PER_SEC);
+  int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof, &read_state);
+  //printf("read bytes: %li, %f\n",bytes_received,(double)(clock() - begin) / CLOCKS_PER_SEC);
   begin = clock();
+
   //ignore if header is just fucked
   if(bytes_received >= -1){
     parray_t* table;
     //checks for a valid header
     if(parse_header(buffer, header_eof, &table) != -1){
-      printf("parsed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+      //printf("parsed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
       begin = clock();
       str* sk = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
       str* sC = (str*)parray_get(table, "Cookie");
-      
+      int some = bytes_received - header_eof - 10;
+      parray_t* file_cont = parray_init();
+      //printf("'%s'\n\n",buffer);
+      rolling_file_parse(L, buffer + header_eof + 4, sT, 300, &file_cont);
+      rolling_file_parse(L, buffer + header_eof + 4 + 300, sT, 100, &file_cont);
+
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
 
@@ -605,7 +696,7 @@ void* handle_client(void *_arg){
       str_push(aa, sk->c);
 
       void* v = parray_find(paths, aa->c);
-      printf("found: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+      //printf("found: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
       begin = clock();
       str_free(aa);
       if(v != NULL){
@@ -620,10 +711,10 @@ void* handle_client(void *_arg){
           int lcookie = lua_gettop(L);
 
           parray_t* cookie = parray_init();
-          printf("%i\n",gen_parse(sC->c, sC->len, &cookie));
+          //printf("%i\n",gen_parse(sC->c, sC->len, &cookie));
           for(int i = 0; i != cookie->len; i++){
             //printf("%s %s\n", cookie->P[i].key->c, ((str*)cookie->P[i].value)->c);
-            luaI_tsets(L, lcookie, cookie->P[i].key->c, ((str*)cookie->P[i].value)->c);
+            luaI_tsetsl(L, lcookie, cookie->P[i].key->c, ((str*)cookie->P[i].value)->c, ((str*)cookie->P[i].value)->len);
           }
           luaI_tsetv(L, req_idx, "cookies", lcookie);
           parray_clear(cookie, STR);
@@ -632,6 +723,7 @@ void* handle_client(void *_arg){
           parray_remove(table, "Cookie", NONE);
         }
 
+        /*
         //handle files
         if(sT != NULL && bytes_received > 0){
           int pf = file_parse(L, buffer + header_eof, sT, bytes_received - header_eof);
@@ -640,8 +732,12 @@ void* handle_client(void *_arg){
             luaI_tsetv(L, req_idx, "files", pf);
             parray_set(table, "Body", (void*)str_init(""));
           }
-        }
-        printf("cookie and file: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        }*/
+
+        //printf("cookie and file: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        //parray_set(table, "Body", (void*)str_initl(buffer + header_eof + 4, buffer_len - header_eof - 4));
+        luaI_tsetsl(L, req_idx, "Body", buffer + header_eof + 4, bytes_received - header_eof - 4);
+        //printf("%s\n",buffer);
         begin = clock();
         for(int i = 0; i != table->len; i+=1){
           //printf("'%s' :: '%s'\n",table[i]->c, table[i+1]->c);
@@ -654,8 +750,9 @@ void* handle_client(void *_arg){
           client_fd = -2;
         }
 
-        luaI_tsetb(L, req_idx, "partial", bytes_received == -1);
+        luaI_tsetb(L, req_idx, "partial", read_state == 1);
         luaI_tseti(L, req_idx, "_bytes", bytes_received);
+        //luaI_tsetcf(L, req_idx, "continue", l_continue);
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
@@ -674,7 +771,7 @@ void* handle_client(void *_arg){
         luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
         luaI_tsetv(L, res_idx, "header", header_idx);
-        printf("wrote table: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        //printf("wrote table: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
         begin = clock();
         //the function(s)
         //get all function that kinda match
@@ -707,7 +804,7 @@ void* handle_client(void *_arg){
           }
         }
         parray_lclear(owo); //dont free the rest
-        printf("out: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+        //printf("out: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
         begin = clock();
         lua_pushstring(L, "client_fd");
         lua_gettable(L, res_idx);
@@ -724,7 +821,7 @@ void* handle_client(void *_arg){
   free(args);
   free(buffer);
   lua_close(L);
-  printf("closed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+  //printf("closed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   pthread_mutex_lock(&mutex);
   threads--;
   pthread_mutex_unlock(&mutex);
