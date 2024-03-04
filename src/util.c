@@ -1,7 +1,9 @@
 #include "util.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "lua.h"
+#include "net.h"
 
 int gen_parse(char* inp, int len, parray_t** _table){
   str* current = str_init(""), *last = NULL;
@@ -55,11 +57,13 @@ char* strnstr(const char *s1, const char *s2, size_t n) {
   return NULL;
 }
 
-void p_fatal(const char* m){
-  fprintf(stderr, "%s[ fatal ] %s %s\n",color_red, m, color_reset);
+void _p_fatal(const char* m, int line, const char* file, const char* function){
+  fprintf(stderr, "%s[fatal] %s \n"
+                  "\tthread: %i/%i\n"
+                  "\tat: %s:%s(%i) %s\n",color_red, m, pthread_self(), threads, file, function, line, color_reset);
   exit(EXIT_FAILURE);
 }
 
 void p_error(const char* m){
-  fprintf(stderr, "%s[ error ]%s %s\n",color_red, color_reset, m);
+  fprintf(stderr, "%s[error]%s %s\n",color_red, color_reset, m);
 }
