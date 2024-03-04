@@ -120,3 +120,24 @@ res:serve("./html/")
 ...
 ```
 
+### req:roll **
+
+'takes an integer of bytes to read & parse
+
+will update req according to how the bytes needed to be parsed
+
+return chart
+|code|meaning|
+|--|--|
+|0|no more to read|
+|1|finished file/chunk, may be more|
+
+(may add more)
+
+```lua
+--when a request contains "hello world"
+req.Body --"hello"
+req:roll(30) --does not matter if you go over
+req.Body --"hello world
+```
+
