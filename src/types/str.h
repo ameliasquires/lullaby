@@ -17,4 +17,5 @@ void str_push(str*, char*);
 void str_pushl(str*, char*, size_t);
 void str_clear(str*);
 void str_popf(str*, int);
+void str_popb(str*, int);
 #endif //__STR_H

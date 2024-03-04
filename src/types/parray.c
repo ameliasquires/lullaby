@@ -41,7 +41,7 @@ parray_t* parray_init(){
 void parray_set(parray_t* p, char* key, void* value){
     for(int i = 0; i != p->len; i++){
         if(strcmp(p->P[i].key->c, key) == 0){
-            p->P[p->len - 1].value = value;
+            p->P[i].value = value;
             return;
         }
     }

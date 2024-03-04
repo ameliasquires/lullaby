@@ -25,7 +25,9 @@
 #define i_swap(A,B) double temp = A; A = B; B = temp;
 #define lesser(A,B) (A>B?B:A)
 int gen_parse(char*,int, parray_t**);
-void p_fatal(const char*);
+
+#define p_fatal(M) _p_fatal(M, __LINE__, __FILE__, __func__ );
+void _p_fatal(const char*, int, const char*, const char*);
 void p_error(const char*);
 char* strnstr(const char*, const char*, size_t);
 
