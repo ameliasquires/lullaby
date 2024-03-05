@@ -44,7 +44,10 @@ llib.net.listen(
             --print(req._bytes)
             --res:send(_G.llib.io.readfile("llib.dll"))
             --_G.llib.io.pprint(_G.llib.crypto.md5(_G.llib.io.readfile(".gitignore")))
-            --_G.llib.io.pprint(req.files)
+            --_G.llib.io.pprint(req)
+            _G.llib.io.pprint(req)
+            print(req:roll(2000))
+            _G.llib.io.pprint(req)
             res:send("owo")
         end)
 
