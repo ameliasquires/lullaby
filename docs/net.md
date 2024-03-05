@@ -8,9 +8,8 @@
 the function will be ran on initilization, the argument has info on the server and functions to set it up
 
 **
-right now everything within a server:GET function is completley local, cannot access the global context at all,
-i am planning on copying the global state to each thread (optionally ofc) to make the global state read only, and maybe
-and option to sync the global state (push and pull seperately)
+right now everything within a server:GET function is partially global, it can read global variables (by making a copy),
+it can not read/copy local variables or modify globals
 **
 
 ```lua
@@ -120,24 +119,42 @@ res:serve("./html/")
 ...
 ```
 
-### req:roll **
+### req:roll
 
 'takes an integer of bytes to read & parse
 
-will update req according to how the bytes needed to be parsed
-
-return chart
-|code|meaning|
-|--|--|
-|0|no more to read|
-|1|finished file/chunk, may be more|
-
-(may add more)
+will update req according to how the bytes needed to be parsed, returns the number of bytes read (not necessarily parsed), 0 if there
+is no more data, and any other values \< 1 is a recv error
 
 ```lua
 --when a request contains "hello world"
 req.Body --"hello"
-req:roll(30) --does not matter if you go over
-req.Body --"hello world
+req:roll(30) --does not matter if you go over, returns 7 (probably)
+req.Body --"hello world"
+req:roll(50) --returns 0, no more to read 
+--req.Body has not been updated
+```
+
+can have unique results with files (this example is not perfect, roll could read less than 2 bytes, and this does not account for newlines)
+
+```lua
+--sent a file ina request to the server, where the boundary is 'abcd':
+--  ---abcd
+--  (header junk, file name and stuff)
+--  
+--  wowa
+--  --
+--  --ab
+--  --abcd
+
+--when the line 'wowa' has just been read, using roll for less than two will not update the file
+req.Body -- (...)"wowa"
+req:roll(2)
+req.Body -- (...)"wowa" (unchanged)
+--any lines that contain just the boundary and -'s will be put in a seperate buffer until it ends or breaks
+--a previous condition, then it will be added
+req:roll(2)
+req.Body -- (...)"wowa\n--"
+--and now "--" (from the next line) is in the possible boundary buffer, it ends in "ab" so it will be added to the main body
 ```
 
