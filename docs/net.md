@@ -124,7 +124,7 @@ res:serve("./html/")
 'takes an integer of bytes to read & parse
 
 will update req according to how the bytes needed to be parsed, returns the number of bytes read (not necessarily parsed), 0 if there
-is no more data, and any other values \< 1 is a recv error
+is no more data, and any other values \< 0 is a recv error
 
 ```lua
 --when a request contains "hello world"
