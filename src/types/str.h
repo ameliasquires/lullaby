@@ -11,6 +11,7 @@ typedef struct {
   char* c; 
 } str;
 
+str* str_initl(char*, size_t len);
 str* str_init(char*);
 void str_free(str*);
 void str_push(str*, char*);

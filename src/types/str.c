@@ -1,22 +1,27 @@
 #include "str.h"
 #include "../lua.h"
+#include "../util.h"
 
 #define alloc_buffer 64
 
-str* str_init(char* init){
+str* str_initl(char* init, size_t len){
   if(init == NULL){
     char cc = '\0';
     init = &cc;
   }
 
-  size_t len = strlen(init);
   str* s = malloc(sizeof * s);
   s->_bytes = len + 1 + alloc_buffer;
   s->c = malloc(s->_bytes);
+  if(s->c == NULL) p_fatal("failed to allocate string\n");
   s->len = len ;
   
   memcpy(s->c, init, len + 1);
   return s;
+}
+
+str* str_init(char* init){
+  return str_initl(init, strlen(init));
 }
 
 void str_free(str* s){
