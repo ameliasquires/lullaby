@@ -28,9 +28,9 @@
 
 #define max_con 200
 //2^42
-#define BUFFER_SIZE 5//20000
+#define BUFFER_SIZE 1//20000
 #define HTTP_BUFFER_SIZE 4098
-#define max_content_length 5//200000
+#define max_content_length 200000
 
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
@@ -65,9 +65,10 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
   int64_t len = 0;
   *header_eof = -1;
   int n, content_len = -1;
-
+  //printf("&_\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
+
     if(n < 0){
       *_buffer = buffer;
       printf("%s %i\n",strerror(errno),errno);
@@ -78,6 +79,8 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
       *header_eof = header - buffer;
       char* cont_len_raw = strstr(buffer, "Content-Length: ");
+      //printf("%s\n", buffer);
+      
       if(cont_len_raw == NULL) {
         len += n;
         *_buffer = buffer;
@@ -102,8 +105,9 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
     len += n;
     if(*header_eof == -1){
       buffer = realloc(buffer, len + BUFFER_SIZE + 1);
+      memset(buffer + len, 0, n + 1);
     }
-    //memset(buffer + len, 0, n);
+    
 
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
@@ -127,7 +131,6 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   for(int i = 0; i != header_eof; i++) lines += buffer[i] == '\n';
   parray_t* table = parray_init();
   str* current = str_init("");
-
   int oi = 0;
   int item = 0;
   for(; oi != header_eof; oi++){
@@ -160,7 +163,9 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
       continue;
     } else str_pushl(current, buffer + i, 1);
   }
+  //printf("'%.*s'\n",header_eof + 5, buffer);
   parray_set(table, sw->c, (void*)str_init(current->c));
+
   //parray_set(table, "Body", (void*)str_initl(buffer + header_eof + 4, buffer_len - header_eof - 4));
   str_free(current);
   *_table = table;
@@ -389,8 +394,8 @@ int l_send(lua_State* L){
     i_write_header(L, header, &resp, "", 0);
   } else 
     i_write_header(L, header, &resp, content, len);
-
-  send(client_fd, resp->c, resp->len, 0);
+  //printf("sent%i\n",send(client_fd, resp->c, resp->len, 0));
+  ;
   
   lua_pushstring(L, "client_fd");
   lua_pushinteger(L, -1);
@@ -666,6 +671,7 @@ int l_roll(lua_State* L){
 
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
+  //printf("--\n");
   clock_t begin = clock();
   //pthread_mutex_lock(&mutex);
   int read_state = 0;
@@ -693,6 +699,9 @@ void* handle_client(void *_arg){
   begin = clock();
   //read full request
   int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof, &read_state);
+  //printf("read\n");
+  //for(int i = 0; i != bytes_received; i++) putchar(buffer[i]);
+  //putchar('\n');
   //printf("read bytes: %li, %f\n",bytes_received,(double)(clock() - begin) / CLOCKS_PER_SEC);
   begin = clock();
 
@@ -700,7 +709,9 @@ void* handle_client(void *_arg){
   if(bytes_received >= -1){
     parray_t* table;
     //checks for a valid header
+    //printf("before header\n");
     if(parse_header(buffer, header_eof, &table) != -1){
+      //printf("end of header\n");
       //printf("parsed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
       begin = clock();
       str* sk = (str*)parray_get(table, "Path");
@@ -714,8 +725,10 @@ void* handle_client(void *_arg){
       int files_idx = lua_gettop(L);
       lua_pushstring(L, "");
       int body_idx = lua_gettop(L);
-      rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, &file_cont);
-      
+      //printf("before\n");
+      if(sT != NULL)
+        rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, &file_cont);
+      //printf("after\n");
       //printf("&");
       //rolling_file_parse(L, buffer + header_eof + 4 + 1200, sT, 300, &file_cont);
       //rolling_file_parse(L, buffer + header_eof + 4 + 900, sT, bytes_received - header_eof - 4 - 900, &file_cont);
@@ -851,13 +864,22 @@ void* handle_client(void *_arg){
         client_fd = luaL_checkinteger(L, -1);
 
       }
-      
-    }
 
+      /*void* awa;
+      if((awa = parray_get(file_cont, "_current")) != NULL) str_free(awa);
+      if((awa = parray_get(file_cont, "_boundary")) != NULL) str_free(awa);
+      if((awa = parray_get(file_cont, "_boundary_id")) != NULL) str_free(awa);
+      if((awa = parray_get(file_cont, "_table_idx")) != NULL) free(awa);
+      if((awa = parray_get(file_cont, "_status")) != NULL) free(awa);
+      if((awa = parray_get(file_cont, "_dash_count")) != NULL) free(awa);
+
+      parray_clear(file_cont, NONE);*/
+    }
+    //printf("end anyways\n");
     parray_clear(table, STR);
   }
 
-  if(client_fd > 0) closesocket(client_fd);
+  if(client_fd > 0)closesocket(client_fd);
   free(args);
   free(buffer);
   lua_close(L);
@@ -865,6 +887,7 @@ void* handle_client(void *_arg){
   pthread_mutex_lock(&mutex);
   threads--;
   pthread_mutex_unlock(&mutex);
+  //printf("out\n");
   return NULL;
 }
 
