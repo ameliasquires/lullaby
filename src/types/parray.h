@@ -24,5 +24,6 @@ void parray_remove(parray_t* p, char* key, enum free_type free);
 void parray_clear(parray_t*, enum free_type);
 void parray_lclear(parray_t*);
 parray_t* parray_find(parray_t*, char*);
+void free_method(void*, enum free_type);
 
 #endif //parray_h

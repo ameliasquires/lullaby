@@ -32,7 +32,7 @@ int l_fnv_0(lua_State* L){
   char digest[64];
 
   uint64_t u = fnv_1(a, len, v_0);
-  sprintf(digest,"%08lx",u);
+  sprintf(digest,"%16llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -44,7 +44,7 @@ int l_fnv_1(lua_State* L){
   char digest[64];
 
   uint64_t u = fnv_1(a, len, v_1);
-  sprintf(digest,"%08lx",u);
+  sprintf(digest,"%16llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -56,7 +56,7 @@ int l_fnv_a(lua_State* L){
   char digest[64];
 
   uint64_t u = fnv_1(a, len, v_a);
-  sprintf(digest,"%08lx",u);
+  sprintf(digest,"%16llx",u);
   lua_pushstring(L, digest);
   return 1;
 }

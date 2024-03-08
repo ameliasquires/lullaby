@@ -30,7 +30,7 @@
 //2^42
 #define BUFFER_SIZE 1//20000
 #define HTTP_BUFFER_SIZE 4098
-#define max_content_length 200000
+#define max_content_length 20
 
 static int ports[65535] = { 0 };
 static parray_t* paths = NULL;
@@ -394,14 +394,14 @@ int l_send(lua_State* L){
     i_write_header(L, header, &resp, "", 0);
   } else 
     i_write_header(L, header, &resp, content, len);
-  //printf("sent%i\n",send(client_fd, resp->c, resp->len, 0));
-  ;
+  int a = send(client_fd, resp->c, resp->len, 0);
   
-  lua_pushstring(L, "client_fd");
-  lua_pushinteger(L, -1);
-  lua_settable(L, res_idx);
-  closesocket(client_fd);
-
+  //
+  //lua_pushstring(L, "client_fd");
+  //lua_pushinteger(L, -1);
+  //lua_settable(L, res_idx);
+  //sclosesocket(client_fd);
+  //printf("%i | %i\n'%s'\n%i\n",client_fd,a,resp->c,resp->len);
   str_free(resp);
   return 0;
 }
@@ -536,10 +536,10 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
           blen-=i+2;
 
           str_clear(current);
+          
+          *table_idx = lua_rawlen(L, *files_idx) + 1;
+          lua_pushinteger(L, *table_idx);
           lua_newtable(L);
-          *table_idx = lua_gettop(L);
-          lua_pushinteger(L, lua_rawlen(L, *files_idx) + 1);
-          lua_pushvalue(L, *table_idx);
           lua_settable(L, *files_idx);
           break;
         }
@@ -547,6 +547,12 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
         buffer++;
       }
     }
+
+    lua_pushvalue(L, *files_idx);
+    lua_pushinteger(L, *table_idx);
+    lua_gettable(L, -2);
+    int rfiles_idx = lua_gettop(L);
+
     if(*status == FILE_HEADER){
       for(int i = 0; i < blen; i++){
 
@@ -563,15 +569,16 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
             current = str_init("");
             break;
           }
-          luaI_tsets(L, *table_idx , old->c, current->c);
-          //printf("'%s' : '%s'\n",old->c, current->c);
+          //printf("%i '%s' : '%s'\n",*table_idx, old->c, current->c);
+
+          luaI_tsets(L, rfiles_idx, old->c, current->c);
+          
           old = NULL;
           str_clear(current);
         } else if(buffer[i] != '\r' && !(buffer[i] == ' ' && current->len == 0)) str_pushl(current, buffer + i, 1);
       }
     } 
     if(*status == FILE_BODY){
-
       if(old==NULL) old = str_init("");
 
       for(int i = 0; i < blen; i++){
@@ -581,12 +588,12 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
           if(buffer[i] == '-') (*dash_count)++;
 
           if(old->len - *dash_count >= boundary->len){
-            luaI_tsets(L, *table_idx, "content", current->c);
-
+            
+            luaI_tsets(L, rfiles_idx, "content", current->c);
             /*lua_pushinteger(L, lua_rawlen(L, *files_idx) + 1);
             lua_pushvalue(L, *table_idx);
             lua_settable(L, *files_idx);*/
-
+            for(; i < blen; i++) if(buffer[i] == '\n') break;
             str_clear(current);
             *status = BARRIER_READ;
             buffer+=i;
@@ -609,7 +616,6 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
       
     }
   }
-
   parray_set(content, "_dash_count", dash_count);
   parray_set(content, "_boundary_id", boundary_id);
   parray_set(content, "_boundary", boundary);
@@ -623,7 +629,6 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
 }
 
 int l_roll(lua_State* L){
-  
   lua_pushvalue(L, 1);
   lua_pushstring(L, "_data");
   lua_gettable(L, -2);
@@ -661,6 +666,7 @@ int l_roll(lua_State* L){
   int files_idx = lua_gettop(L);
 
   rolling_file_parse(L, &files_idx, &body_idx, buffer, NULL, r, &data);
+
   luaI_tsetv(L, 1, "Body", body_idx);
   luaI_tsetv(L, 1, "files", files_idx);
 
@@ -865,7 +871,7 @@ void* handle_client(void *_arg){
 
       }
 
-      /*void* awa;
+      void* awa;
       if((awa = parray_get(file_cont, "_current")) != NULL) str_free(awa);
       if((awa = parray_get(file_cont, "_boundary")) != NULL) str_free(awa);
       if((awa = parray_get(file_cont, "_boundary_id")) != NULL) str_free(awa);
@@ -873,13 +879,15 @@ void* handle_client(void *_arg){
       if((awa = parray_get(file_cont, "_status")) != NULL) free(awa);
       if((awa = parray_get(file_cont, "_dash_count")) != NULL) free(awa);
 
-      parray_clear(file_cont, NONE);*/
+      parray_clear(file_cont, NONE);
     }
     //printf("end anyways\n");
     parray_clear(table, STR);
   }
 
-  if(client_fd > 0)closesocket(client_fd);
+  shutdown(client_fd, 2);
+  close(client_fd);
+
   free(args);
   free(buffer);
   lua_close(L);
@@ -932,6 +940,7 @@ int start_serv(lua_State* L, int port){
 
     //open a state to call shit, should be somewhat thread safe
     thread_arg_struct* args = malloc(sizeof * args);
+
     args->fd = *client_fd;
     args->port = port;
     args->cli = client_addr;
@@ -945,7 +954,8 @@ int start_serv(lua_State* L, int port){
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, handle_client, (void*)args);
     pthread_detach(thread_id);
-    
+
+    //handle_client((void*)args);
     free(client_fd);
   }
 

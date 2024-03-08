@@ -163,7 +163,7 @@ int l_farmhash64(lua_State* L){
   char digest[64];
 
   uint64_t u = farmhash64(a, len);
-  sprintf(digest,"%08lx",u);
+  sprintf(digest,"%016llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
