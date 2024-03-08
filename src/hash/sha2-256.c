@@ -160,20 +160,20 @@ void sha2_512_t(uint8_t* out, uint8_t* in, int t){
     if(t%8!=0) return;
     uint64_t out_stream[8] = {0};
     sha512_gen(out_stream, in, sha_iv_gen(t));
-    for(int i = 0; i != 8; i++) sprintf((char*)out, "%s%016lx", out, out_stream[i]);
+    for(int i = 0; i != 8; i++) sprintf((char*)out, "%s%016llx", out, out_stream[i]);
     out[t/4] = '\0';
 }
 
 void sha2_512(uint8_t* out, uint8_t* in){
     uint64_t out_stream[8] = {0};
     sha512_gen(out_stream, in, sha512_iv);
-    for(int i = 0; i != 8; i++) sprintf((char*)out, "%s%016lx", out, out_stream[i]);
+    for(int i = 0; i != 8; i++) sprintf((char*)out, "%s%016llx", out, out_stream[i]);
 }
 
 void sha2_384(uint8_t* out, uint8_t* in){
     uint64_t out_stream[8] = {0};
     sha512_gen(out_stream, in, sha384_iv);
-    for(int i = 0; i != 6; i++) sprintf((char*)out, "%s%016lx", out, out_stream[i]);
+    for(int i = 0; i != 6; i++) sprintf((char*)out, "%s%016llx", out, out_stream[i]);
 }
 
 int l_sha512(lua_State* L){ 

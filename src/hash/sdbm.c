@@ -21,7 +21,7 @@ int l_sdbm(lua_State* L){
   char digest[64];
 
   uint64_t u = sdbm(a, len);
-  sprintf(digest,"%016lx",u);
+  sprintf(digest,"%016llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
