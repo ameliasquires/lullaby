@@ -23,17 +23,7 @@ void endian_swap64(uint64_t *x){
     }
 }
 
-struct iv {
-    uint64_t h0, h1, h2, h3, h4, h5, h6, h7;
-};
-
-static const struct iv sha512_iv = {.h0 = 0x6a09e667f3bcc908, .h1 = 0xbb67ae8584caa73b, .h2 = 0x3c6ef372fe94f82b, .h3 = 0xa54ff53a5f1d36f1, 
-    .h4 = 0x510e527fade682d1, .h5 = 0x9b05688c2b3e6c1f, .h6 = 0x1f83d9abfb41bd6b, .h7 = 0x5be0cd19137e2179};
-
-static const struct iv sha384_iv = {.h0 = 0xcbbb9d5dc1059ed8, .h1 = 0x629a292a367cd507, .h2 = 0x9159015a3070dd17, .h3 = 0x152fecd8f70e5939, 
-    .h4 = 0x67332667ffc00b31, .h5 = 0x8eb44a8768581511, .h6 = 0xdb0c2e0d64f98fa7, .h7 = 0x47b5481dbefa4fa4};
-
-void sha512_gen(uint64_t* out_stream, uint8_t* input, struct iv sha_iv){
+void sha512_gen(uint64_t* out_stream, uint8_t* input, size_t len, struct iv sha_iv){
     uint64_t h0 = sha_iv.h0, h1 = sha_iv.h1, h2 = sha_iv.h2, h3 = sha_iv.h3, h4 = sha_iv.h4, h5 = sha_iv.h5, h6 = sha_iv.h6, h7 = sha_iv.h7;
 
     const uint64_t k[80] = {0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc, 0x3956c25bf348b538, 
@@ -53,8 +43,6 @@ void sha512_gen(uint64_t* out_stream, uint8_t* input, struct iv sha_iv){
             0x113f9804bef90dae, 0x1b710b35131c471b, 0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 
             0x431d67c49c100d4c, 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
        
-    size_t len = 0;
-    for(int i = 0; input[i]!='\0'; i++) len++;
 
     size_t blen = len*8;
     int ulen = 0;
@@ -152,27 +140,27 @@ struct iv sha_iv_gen(int i){
     uint64_t nh[8] = {0};
     uint8_t in[12];
     sprintf((char*)in, "SHA-512/%i",i);
-    sha512_gen(nh, in, oh);
+    sha512_gen(nh, in, strlen((char*)in), oh);
     return (struct iv){.h0 = nh[0], .h1 = nh[1], .h2 = nh[2], .h3 = nh[3], .h4 = nh[4], .h5 = nh[5], .h6 = nh[6], .h7 = nh[7]};
 }
 
-void sha2_512_t(uint8_t* out, uint8_t* in, int t){
+void sha2_512_t(uint8_t* out, uint8_t* in, size_t len, int t){
     if(t%8!=0) return;
     uint64_t out_stream[8] = {0};
-    sha512_gen(out_stream, in, sha_iv_gen(t));
+    sha512_gen(out_stream, in, len, sha_iv_gen(t));
     for(int i = 0; i != 8; i++) sprintf((char*)out, "%s%016llx", out, out_stream[i]);
     out[t/4] = '\0';
 }
 
-void sha2_512(uint8_t* out, uint8_t* in){
+void sha2_512(uint8_t* out, uint8_t* in, size_t len){
     uint64_t out_stream[8] = {0};
-    sha512_gen(out_stream, in, sha512_iv);
+    sha512_gen(out_stream, in, len, sha512_iv);
     for(int i = 0; i != 8; i++) sprintf((char*)out, "%s%016llx", out, out_stream[i]);
 }
 
-void sha2_384(uint8_t* out, uint8_t* in){
+void sha2_384(uint8_t* out, uint8_t* in, size_t len){
     uint64_t out_stream[8] = {0};
-    sha512_gen(out_stream, in, sha384_iv);
+    sha512_gen(out_stream, in, len, sha384_iv);
     for(int i = 0; i != 6; i++) sprintf((char*)out, "%s%016llx", out, out_stream[i]);
 }
 
@@ -182,7 +170,7 @@ int l_sha512(lua_State* L){
 
   char digest[512] = {0};
 
-  sha2_512((uint8_t*)digest, a);
+  sha2_512((uint8_t*)digest, a, len);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -193,7 +181,7 @@ int l_sha384(lua_State* L){
 
   char digest[384] = {0};
 
-  sha2_384((uint8_t*)digest, a);
+  sha2_384((uint8_t*)digest, a, len);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -205,7 +193,7 @@ int l_sha512_t(lua_State* L){
 
   char digest[512] = {0};
 
-  sha2_512_t((uint8_t*)digest, a, t);
+  sha2_512_t((uint8_t*)digest, a, t, len);
   lua_pushstring(L, digest);
   return 1;
 }

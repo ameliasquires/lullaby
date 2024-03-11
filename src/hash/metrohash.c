@@ -8,10 +8,6 @@
 #define u16(a) (*(uint16_t*)a)
 #define u8(a) (*(uint8_t*)a)
 
-enum metrohash_version {
-    v1, v2
-};
-
 uint64_t metrohash64(uint8_t* in, size_t len, uint32_t seed, enum metrohash_version v){
     uint64_t k0, k1, k2, k3, inner_r, inner_r2;
     if(v == v1){

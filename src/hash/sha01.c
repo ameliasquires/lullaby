@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 
-void i_sha01(uint8_t version, char* out_stream, const char* input){
+void i_sha01(uint8_t version, char* out_stream, int len, const char* input){
     if(!out_stream||version > 2) return;
     uint32_t h0 = 0x67452301;
     uint32_t h1 = 0xEFCDAB89;
@@ -11,8 +11,6 @@ void i_sha01(uint8_t version, char* out_stream, const char* input){
     uint32_t h3 = 0x10325476;
     uint32_t h4 = 0xC3D2E1F0;
      
-    int len = 0;
-    for(int i = 0; input[i]!='\0'; i++) len++;
     int tlen = ((((len + 8) /64) + 1) * 64) - 8;
     
     uint8_t* by = NULL;
@@ -87,12 +85,12 @@ void i_sha01(uint8_t version, char* out_stream, const char* input){
 
 int l_sha1(lua_State* L){
   
-  int len = 0;
-  char* a = (char*)luaL_checklstring(L, 1, NULL);
+  size_t len = 0;
+  char* a = (char*)luaL_checklstring(L, 1, &len);
   
   char digest[160];
 
-  i_sha01(1, digest, a);
+  i_sha01(1, digest, len, a);
   lua_pushstring(L, digest);
 
   return 1;
@@ -100,12 +98,12 @@ int l_sha1(lua_State* L){
 
 int l_sha0(lua_State* L){
   
-  int len = 0;
-  char* a = (char*)luaL_checklstring(L, 1, NULL);
+  size_t len = 0;
+  char* a = (char*)luaL_checklstring(L, 1, &len);
   
   char digest[160];
 
-  i_sha01(0, digest, a);
+  i_sha01(0, digest, len, a);
   lua_pushstring(L, digest);
 
   return 1;

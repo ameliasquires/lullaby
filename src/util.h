@@ -23,7 +23,8 @@
 #define color_reset "\e[0m"
 
 #define i_swap(A,B) double temp = A; A = B; B = temp;
-#define lesser(A,B) (A>B?B:A)
+#define lesser(A,B) ((A)>(B)?(B):(A))
+#define inter(V,I) (I * ceil((double)V / I))
 int gen_parse(char*,int, parray_t**);
 
 #define p_fatal(M) _p_fatal(M, __LINE__, __FILE__, __func__ );
