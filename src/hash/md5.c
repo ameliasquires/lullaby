@@ -20,14 +20,12 @@ static const uint32_t s[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12,
             4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
             6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21};
 
-void i_md5(char* input, char out_stream[64]){
+void i_md5(char* input, size_t len, char out_stream[64]){
   uint32_t a0 = 0x67452301;
   uint32_t b0 = 0xefcdab89;
   uint32_t c0 = 0x98badcfe;
   uint32_t d0 = 0x10325476;
 
-  int len = 0;
-  for(int i = 0; input[i] != '\0'; i++) len++;
   int tlen = ((((len + 8) /64) + 1) * 64) - 8;
 
   uint8_t* b = NULL;
@@ -96,11 +94,11 @@ void i_md5(char* input, char out_stream[64]){
 
 int l_md5(lua_State* L){
   
-
-  char* a = (char*)luaL_checklstring(L, 1, NULL);
+  size_t len = 0;
+  char* a = (char*)luaL_checklstring(L, 1, &len);
 
   char digest[64];
-  i_md5(a, digest);
+  i_md5(a, len, digest);
   lua_pushstring(L, digest);
 
   return 1;

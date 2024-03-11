@@ -10,6 +10,7 @@ typedef struct {
     void* value;
     str* key;
     uint64_t hash;
+    int used;
 } melem_t;
 
 typedef struct {
@@ -19,7 +20,7 @@ typedef struct {
 } map_t;
 
 map_t* map_init();
-void map_set(map_t*, char*, void*);
+void map_set(map_t**, char*, void*);
 void* map_get(map_t* , char*);
 int map_geti(map_t* , char*);
 void map_remove(map_t* p, char* key, enum free_type free);

@@ -7,6 +7,6 @@
  * @param {char[64]} output stream
  * @return {void}
 */
-void i_md5(char*,char*);
+void i_md5(char*,size_t,char*);
 
 int l_md5(lua_State*);

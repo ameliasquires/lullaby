@@ -8,10 +8,6 @@ static const uint64_t sc_const = 0xdeadbeefdeadbeefLL;
 static const size_t sc_blockSize = sc_numVars*8;
 static const size_t sc_bufSize = 2*sc_blockSize;
 
-enum spooky_version {
-    v1, v2
-};
-
 uint64_t i_rot64(uint64_t x, int k){
         return (x << k) | (x >> (64 - k));
 }
@@ -81,7 +77,7 @@ void spooky_short(uint8_t* in, size_t len, uint64_t* hash1, uint64_t* hash2, enu
         }
     }
 
-    d = (((uint64_t)len) << 56) + (d * (v == v2));
+    d = (((uint64_t)len) << 56) + (d * (v == spv2));
     switch(remainder){
         case 15:
             d += ((uint64_t)u.p8[14]) << 48;
@@ -243,7 +239,7 @@ int l_spookyhash128_v1(lua_State* L){
   char digest[128] = {0};
   //uint64_t b = 0;
   //uint64_t c = 0;
-  spookyhash128(a, 4, &b, &c, v1);
+  spookyhash128(a, 4, &b, &c, spv1);
   
   sprintf(digest, "%016lx%016lx", b, c);
   lua_pushstring(L, digest);
@@ -263,7 +259,7 @@ int l_spookyhash128_v2(lua_State* L){
   char digest[128] = {0};
   //uint64_t b = 0;
   //uint64_t c = 0;
-  spookyhash128(a, 4, &b, &c, v2);
+  spookyhash128(a, 4, &b, &c, spv2);
   
   sprintf(digest, "%016lx%016lx", b, c);
   lua_pushstring(L, digest);
@@ -279,7 +275,7 @@ int l_spookyhash64_v1(lua_State* L){
   
   char digest[64] = {0};
   
-  sprintf(digest, "%08lx", spookyhash64(a, len, seed, v1));
+  sprintf(digest, "%08lx", spookyhash64(a, len, seed, spv1));
   lua_pushstring(L, digest);
   return 1;
 }
@@ -293,7 +289,7 @@ int l_spookyhash64_v2(lua_State* L){
 
   char digest[64] = {0};
   
-  sprintf(digest, "%08lx", spookyhash64(a, len, seed, v2));
+  sprintf(digest, "%08lx", spookyhash64(a, len, seed, spv2));
   lua_pushstring(L, digest);
   return 1;
 }
@@ -307,7 +303,7 @@ int l_spookyhash32_v1(lua_State* L){
 
   char digest[32] = {0};
   
-  sprintf(digest, "%04x", spookyhash32(a, len, seed, v1));
+  sprintf(digest, "%04x", spookyhash32(a, len, seed, spv1));
   lua_pushstring(L, digest);
   return 1;
 }
@@ -321,7 +317,7 @@ int l_spookyhash32_v2(lua_State* L){
 
   char digest[32] = {0};
   
-  sprintf(digest, "%04x", spookyhash32(a, len, seed, v2));
+  sprintf(digest, "%04x", spookyhash32(a, len, seed, spv2));
   lua_pushstring(L, digest);
   return 1;
 }
