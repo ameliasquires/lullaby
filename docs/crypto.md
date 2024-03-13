@@ -4,7 +4,7 @@
 
 \* is optional
 
-|name|out len|arg 2|extra|
+|name|out len|other args|extra|
 |--|--|--|--|
 | sha0 | 160 | nil | insecure, use sha1|
 | sha1 | 160 | nil | |
@@ -54,6 +54,8 @@
 | spookyhash64_v2 | 64 | *seed | |
 | spookyhash32_v1 | 32 | *seed | |
 | spookyhash32_v2 | 32 | *seed | |
+| blake2b | length of arg 2 * 8 | *output len (default is 64), *key | |
+| blake2s | length of arg 2 * 8 | *output len (default is 32), *key | |
 
 ### usage
 
