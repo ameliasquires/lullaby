@@ -25,6 +25,7 @@
 #include "hash/sdbm.h"
 #include "hash/sha2-256.h"
 #include "hash/spookyhash.h"
+#include "hash/blake2.h"
 
 #include "encode/uuencode.h"
 #include "encode/base64.h"
@@ -55,7 +56,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
       {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
       {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
-
+      {"blake2b", l_blake2b}, {"blake2s", l_blake2s},
 
 
       {"uuencode",l_uuencode},
