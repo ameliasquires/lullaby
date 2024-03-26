@@ -2,6 +2,7 @@ require "llib"
 
 function test(name,b,exp,oargs)
   local hash
+  local hash2
   local add = ""
   if oargs == nil then
     hash = llib.crypto[name](b)
@@ -9,6 +10,18 @@ function test(name,b,exp,oargs)
     hash = llib.crypto[name](b,table.unpack(oargs))
     add = table.concat(oargs, ", ")
   end
+
+  if(llib.crypto[name.."_init"] ~= nil) then
+    local t = llib.crypto[name.."_init"]()
+    llib.crypto[name.."_update"](t, b)
+    hash2 = llib.crypto[name.."_final"](t)
+    if(hash2 ~= hash) then
+      llib.io.error(name.." init-update-final method not working, got:\n\t"..hash2.." other was:\n\t"..hash)
+    else 
+      llib.io.log(name.." alt method working")
+    end
+  end
+
   if not (hash == exp) then
     llib.io.error(name.." not working, got:\n\t"..hash.." wanted:\n\t"..exp.."\n\twith args: {"..add.."}")
   else

@@ -4,8 +4,15 @@
 
 \* is optional
 
+sadly i didnt think about being able to update hashes, using the common init-update-final.
+this is a pretty big problem meaning the input must be given at once, this is better for passwords,
+but bad for big files. because of this, i decided not to support inputs over 2^64 characters (which is an
+insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
+anything marked with % is fixed
+
 |name|out len|other args|extra|
 |--|--|--|--|
+| % adler32 | 32 | nil | |
 | sha0 | 160 | nil | insecure, use sha1|
 | sha1 | 160 | nil | |
 | sha256 | 256 | nil | |
@@ -56,6 +63,10 @@
 | spookyhash32_v2 | 32 | *seed | |
 | blake2b | length of arg 2 * 8 | *output len (default is 64), *key | |
 | blake2s | length of arg 2 * 8 | *output len (default is 32), *key | |
+| blake256 | 256 | nil | |
+| blake224 | 224 | nil | |
+| blake512 | 512 | nil | |
+| blake384 | 384 | nil | |
 
 ### usage
 

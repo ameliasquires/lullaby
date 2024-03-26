@@ -41,7 +41,7 @@ uint64_t rotr64(uint64_t, uint64_t);
 static const luaL_Reg crypto_function_list [] = {
       {"sha0",l_sha0}, {"sha1",l_sha1}, {"sha256",l_sha256}, {"sha224",l_sha224},
       {"setpearson",l_setpearson}, {"pearson",l_pearson}, {"xxh64",l_xxh64},
-      {"xxh32",l_xxh32}, {"adler32",l_adler32}, {"bsdchecksum",l_bsdchecksum},
+      {"xxh32",l_xxh32}, {"bsdchecksum",l_bsdchecksum},
       {"crc8",l_crc8}, {"crc16",l_crc16}, {"crc32",l_crc32}, {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
       {"sysvchecksum",l_sysvchecksum}, {"xor8",l_xor8}, {"setbuzhash",l_setbuzhash},
@@ -60,6 +60,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"blake2b", l_blake2b}, {"blake2s", l_blake2s}, {"blake256", l_blake256},
       {"blake224", l_blake224}, {"blake512", l_blake512}, {"blake384", l_blake384},
 
+      {"adler32",l_adler32}, {"adler32_init",l_adler32_init}, {"adler32_update",l_adler32_update}, {"adler32_final",l_adler32_final},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},
