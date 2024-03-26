@@ -75,6 +75,19 @@ llib.crypto.sha512("meow") -- e88348269bad036160f0d9558b7c5de68163b50e1a6ce46e85
 llib.crypto.sha512_t("meow", 224) -- would be sha512/224 - ad5e403e0d74532187f4e1665c7e705ab5eb3c2fe07ae73a3ff998b2
 ```
 
+functions supporting updates (listed with %, see note above) can be used like so:
+
+```lua
+obj = llib.crypto.adler32_init()
+llib.crypto.adler32_update(obj, "meow")
+local hash = llib.crypto.adler32_final(obj) --043c01b9
+
+--or you can chain them!
+obj = llib.crypto.adler32_init()
+obj:update("meow")
+hash = obj:final() --043c01b9s (the same)
+```
+
 ## en/decoding
 
 all functions have 1 argument which is a string, unless noted otherwise

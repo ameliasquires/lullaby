@@ -12,13 +12,11 @@ function test(name,b,exp,oargs)
   end
 
   if(llib.crypto[name.."_init"] ~= nil) then
-    local t = llib.crypto[name.."_init"]()
-    llib.crypto[name.."_update"](t, b)
-    hash2 = llib.crypto[name.."_final"](t)
+    hash2 = llib.crypto[name.."_init"]():update(b):final()
     if(hash2 ~= hash) then
       llib.io.error(name.." init-update-final method not working, got:\n\t"..hash2.." other was:\n\t"..hash)
     else 
-      llib.io.log(name.." alt method working")
+      llib.io.log(name.." alt method working "..hash2.." == "..hash)
     end
   end
 
