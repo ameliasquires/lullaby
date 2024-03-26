@@ -24,23 +24,40 @@ uint32_t adler32(uint8_t* aa, size_t len){
 }
 
 int l_adler32_init(lua_State* L){
+  lua_newtable(L);
+  int t = lua_gettop(L);
+
   struct adler32_hash* a = (struct adler32_hash*)lua_newuserdata(L, sizeof * a);
+  int ud = lua_gettop(L);
   *a = adler32_init();
+
+  luaI_tsetv(L, t, "ud", ud);
+  luaI_tsetcf(L, t, "update", l_adler32_update);
+  luaI_tsetcf(L, t, "final", l_adler32_final);
+
+  lua_pushvalue(L, t);
   return 1;
 }
 
 int l_adler32_update(lua_State* L){
-  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, 1);
+  lua_pushstring(L, "ud");
+  lua_gettable(L, 1);
+
+  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, -1);
   size_t len = 0;
   uint8_t* b = (uint8_t*)luaL_checklstring(L, 2, &len);
 
   adler32_update(b, len, a);
 
+  lua_pushvalue(L, 1);
   return 1;
 }
 
 int l_adler32_final(lua_State* L){
-  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, 1);
+  lua_pushstring(L, "ud");
+  lua_gettable(L, 1);
+
+  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, -1);
   uint32_t u = adler32_final(a);
   char digest[32];
   sprintf(digest,"%08x",u);
