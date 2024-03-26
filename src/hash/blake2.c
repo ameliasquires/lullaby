@@ -3,16 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "sha2-256.h"
-#include "blake2.h"
+#include "../crypto.h"
+//#include "blake2.h"
 #include "../util.h"
-
-uint64_t rotr64(uint64_t w, unsigned c){
-  return (w >> c) | (w << (64 - c));
-}
-uint32_t rotr32(uint32_t w, unsigned c){
-  return (w >> c) | (w << (32 - c));
-}
 
 void mix2b(uint64_t* a, uint64_t* b, uint64_t* c, uint64_t* d, int64_t x, int64_t y){
     *a = *a + *b + x;

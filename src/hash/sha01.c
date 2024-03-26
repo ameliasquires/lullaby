@@ -37,7 +37,7 @@ void i_sha01(uint8_t version, char* out_stream, int len, const char* input){
             }
         }
         for(int i = 16; i != 80; i++)
-            W[i] = i_lr(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], version);
+            W[i] = rotl32(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], version);
             
         
         uint32_t a = h0;
@@ -63,10 +63,10 @@ void i_sha01(uint8_t version, char* out_stream, int len, const char* input){
                 k = 0xCA62C1D6;
             }
             
-            uint32_t temp = i_lr(a, 5) + f + e + k + W[i];
+            uint32_t temp = rotl32(a, 5) + f + e + k + W[i];
             e = d;
             d = c;
-            c = i_lr(b, 30);
+            c = rotl32(b, 30);
             b = a;
             a = temp;
         }

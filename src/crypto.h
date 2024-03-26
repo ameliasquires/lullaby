@@ -26,15 +26,16 @@
 #include "hash/sha2-256.h"
 #include "hash/spookyhash.h"
 #include "hash/blake2.h"
+#include "hash/blake.h"
 
 #include "encode/uuencode.h"
 #include "encode/base64.h"
 #include "encode/baseN.h"
 
-unsigned i_lr(unsigned, unsigned);
-unsigned i_rr(unsigned, unsigned);
-uint64_t i_lr64(uint64_t, uint64_t);
-uint64_t i_rr64(uint64_t, uint64_t);
+unsigned rotl32(unsigned, unsigned);
+unsigned rotr32(unsigned, unsigned);
+uint64_t rotl64(uint64_t, uint64_t);
+uint64_t rotr64(uint64_t, uint64_t);
 
 
 static const luaL_Reg crypto_function_list [] = {
@@ -56,7 +57,8 @@ static const luaL_Reg crypto_function_list [] = {
       {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
       {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
       {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
-      {"blake2b", l_blake2b}, {"blake2s", l_blake2s},
+      {"blake2b", l_blake2b}, {"blake2s", l_blake2s}, {"blake256", l_blake256},
+      {"blake224", l_blake224}, {"blake512", l_blake512}, {"blake384", l_blake384},
 
 
       {"uuencode",l_uuencode},
