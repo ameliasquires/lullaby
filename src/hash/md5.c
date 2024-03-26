@@ -72,7 +72,7 @@ void i_md5(char* input, size_t len, char out_stream[64]){
       uint32_t temp = D; 
       D = C;
       C = B;
-      B = B + i_lr(F, s[i]);
+      B = B + rotl32(F, s[i]);
       A = temp;
     }
 

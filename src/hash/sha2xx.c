@@ -58,8 +58,8 @@ void i_sha2xx(enum version v, char* out_stream, char* input){
 		    W[i] = (by[i * 4] << 24) | (by[i * 4 + 1] << 16) | (by[i * 4 + 2] << 8) | (by[i * 4 + 3]);
 		
         for(int i = 16; i != 64; i++){
-            uint32_t s0 = i_rr(W[i - 15], 7) ^ i_rr(W[i - 15], 18) ^ (W[i - 15] >> 3);
-            uint32_t s1 = i_rr(W[i - 2], 17) ^ i_rr(W[i - 2], 19) ^ (W[i - 2] >> 10);
+            uint32_t s0 = rotr32(W[i - 15], 7) ^ rotr32(W[i - 15], 18) ^ (W[i - 15] >> 3);
+            uint32_t s1 = rotr32(W[i - 2], 17) ^ rotr32(W[i - 2], 19) ^ (W[i - 2] >> 10);
             W[i] = W[i - 16] + s0 + W[i - 7] + s1;
         }
         
@@ -73,11 +73,11 @@ void i_sha2xx(enum version v, char* out_stream, char* input){
         uint32_t h = h7;
         
         for(int i = 0; i != 64; i++){
-            uint32_t S1 = i_rr(e, 6) ^ i_rr(e, 11) ^ i_rr(e, 25);
+            uint32_t S1 = rotr32(e, 6) ^ rotr32(e, 11) ^ rotr32(e, 25);
             uint32_t ch = (e & f) ^ ((~e) & g);
             uint32_t temp1 = h + S1 + ch + k[i] + W[i];
             
-            uint32_t S0 = i_rr(a, 2) ^ i_rr(a, 13) ^ i_rr(a, 22);
+            uint32_t S0 = rotr32(a, 2) ^ rotr32(a, 13) ^ rotr32(a, 22);
             uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
             uint32_t temp2 = S0 + maj;
             

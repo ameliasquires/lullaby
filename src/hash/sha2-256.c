@@ -78,8 +78,8 @@ void sha512_gen(uint64_t* out_stream, uint8_t* input, size_t len, struct iv sha_
         }
 
         for (int i = 16; i != 80; i++){
-            W[i] = (i_rr64(W[i - 2],19) ^ i_rr64(W[i - 2], 61) ^ (W[i - 2] >> 6)) 
-                + W[i - 7] + (i_rr64(W[i - 15],1) ^ i_rr64(W[i - 15],8) ^ (W[i - 15] >> 7)) + W[i - 16];
+            W[i] = (rotr64(W[i - 2],19) ^ rotr64(W[i - 2], 61) ^ (W[i - 2] >> 6)) 
+                + W[i - 7] + (rotr64(W[i - 15],1) ^ rotr64(W[i - 15],8) ^ (W[i - 15] >> 7)) + W[i - 16];
         }
 
         uint64_t a = h0;
@@ -92,11 +92,11 @@ void sha512_gen(uint64_t* out_stream, uint8_t* input, size_t len, struct iv sha_
         uint64_t h = h7;
         
         for(int i = 0; i != 80; i++){
-            uint64_t S1 = i_rr64(e, 14) ^ i_rr64(e, 18) ^ i_rr64(e, 41);
+            uint64_t S1 = rotr64(e, 14) ^ rotr64(e, 18) ^ rotr64(e, 41);
             uint64_t ch = (e & f) ^ ((~e) & g);
             uint64_t temp1 = h + S1 + ch + k[i] + W[i];
             
-            uint64_t S0 = i_rr64(a, 28) ^ i_rr64(a, 34) ^ i_rr64(a, 39);
+            uint64_t S0 = rotr64(a, 28) ^ rotr64(a, 34) ^ rotr64(a, 39);
             uint64_t maj = (a & b) ^ (a & c) ^ (b & c);
             uint64_t temp2 = S0 + maj;
             

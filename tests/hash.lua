@@ -10,7 +10,7 @@ function test(name,b,exp,oargs)
     add = table.concat(oargs, ", ")
   end
   if not (hash == exp) then
-    llib.io.error(name.." not working, got \n\t"..hash.." wanted\n\t"..exp.."\n\twith args: {"..add.."}")
+    llib.io.error(name.." not working, got:\n\t"..hash.." wanted:\n\t"..exp.."\n\twith args: {"..add.."}")
   else
     llib.io.log(name.." was correct, "..hash)
   end
@@ -63,5 +63,9 @@ test("murmur1_32","meow","743df82f")
 test("murmur2_32","meow","05d01b88")
 test("blake2b","meow","9919ae53fbea6c5da68e51b6e19a890fdbc01baf97fff29efd7efaa7163ea7aa205109b818bde29da815e16b869dbb2cb1b367ed1027f52116287d760808a43d")
 test("blake2b","meow","424969d2fe47cdec2a824709b8066cc1d63cc4b6a16a3c1fa421cc2a6625f7c2",{32})
-test("blake2b","meow","6f30dec70f9ed6d8db2e7407d3e2325af23935464ec3ec1cf4c12575ff3c18043bf772033b91d52978c451d01f7eaeacabda76460b9f4b7bf516dd9d0cc886d",{64,"owo"})
+test("blake2b","meow","6f30fdec70f9ed6d8db2e7407d3e2325af23935464ec3ec1cf4c12575ff3c18043bf772033b91d52978c451d01f7eaeacabda76460b9f4b7bf516dd9d0cc886d",{64,"owo"})
 test("blake2s","meow","f461bed24c982ccb29cb967acdaebc9494b51c1d0f88f6bc47850952261a512d")
+test("blake256", "meow", "067805dd21a4ef97460c6613f231437917a1c1c7f1dcd1bfe67d952d09ccb028")
+test("blake224", "meow", "0a099d692027cfbe69d2424a5b2520a7398fa4945e0878f6c541f5ce")
+test("blake512", "meow", "09d5abe166c4ad855d4527d0be21df2b1a01c3d7c5637572561ebc247908fd7db30bf342391dd0a834fd35f391807480fb31e8a7ee3b1098e46d996d5601948f")
+test("blake384", "meow", "7edb2ff04616f5551a789217029496c3c8601ac7aba2d40d7fcd1ec85fc63f37514e5884f2ebc807b11854247620446c")
