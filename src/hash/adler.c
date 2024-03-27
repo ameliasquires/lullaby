@@ -23,35 +23,7 @@ uint32_t adler32(uint8_t* aa, size_t len){
   return adler32_final(&dig);
 }
 
-int l_adler32_init(lua_State* L){
-  lua_newtable(L);
-  int t = lua_gettop(L);
-
-  struct adler32_hash* a = (struct adler32_hash*)lua_newuserdata(L, sizeof * a);
-  int ud = lua_gettop(L);
-  *a = adler32_init();
-
-  luaI_tsetv(L, t, "ud", ud);
-  luaI_tsetcf(L, t, "update", l_adler32_update);
-  luaI_tsetcf(L, t, "final", l_adler32_final);
-
-  lua_pushvalue(L, t);
-  return 1;
-}
-
-int l_adler32_update(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, -1);
-  size_t len = 0;
-  uint8_t* b = (uint8_t*)luaL_checklstring(L, 2, &len);
-
-  adler32_update(b, len, a);
-
-  lua_pushvalue(L, 1);
-  return 1;
-}
+common_hash_init_update(adler32);
 
 int l_adler32_final(lua_State* L){
   lua_pushstring(L, "ud");
@@ -66,6 +38,7 @@ int l_adler32_final(lua_State* L){
 }
 
 int l_adler32(lua_State* L){
+  if(lua_gettop(L) == 0) return l_adler32_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
   

@@ -32,20 +32,51 @@
 #include "encode/base64.h"
 #include "encode/baseN.h"
 
+uint8_t rotl8(uint8_t, uint8_t);
+uint16_t rotl16(uint16_t, uint16_t);
 unsigned rotl32(unsigned, unsigned);
 unsigned rotr32(unsigned, unsigned);
 uint64_t rotl64(uint64_t, uint64_t);
 uint64_t rotr64(uint64_t, uint64_t);
 
+#define common_hash_init_update(hashname)\
+ int l_##hashname##_init(lua_State* L){\
+  lua_newtable(L);\
+  int t = lua_gettop(L);\
+  \
+  struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
+  int ud = lua_gettop(L);\
+  *a = hashname##_init();\
+  \
+  luaI_tsetv(L, t, "ud", ud);\
+  luaI_tsetcf(L, t, "update", l_##hashname##_update);\
+  luaI_tsetcf(L, t, "final", l_##hashname##_final);\
+  \
+  lua_pushvalue(L, t);\
+  return 1;\
+}\
+\
+int l_##hashname##_update(lua_State* L){\
+  lua_pushstring(L, "ud");\
+  lua_gettable(L, 1);\
+  \
+  struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, -1);\
+  size_t len = 0;\
+  uint8_t* b = (uint8_t*)luaL_checklstring(L, 2, &len);\
+  \
+  hashname##_update(b, len, a);\
+  \
+  lua_pushvalue(L, 1);\
+  return 1;\
+}
 
 static const luaL_Reg crypto_function_list [] = {
       {"sha0",l_sha0}, {"sha1",l_sha1}, {"sha256",l_sha256}, {"sha224",l_sha224},
       {"setpearson",l_setpearson}, {"pearson",l_pearson}, {"xxh64",l_xxh64},
-      {"xxh32",l_xxh32}, {"bsdchecksum",l_bsdchecksum},
-      {"crc8",l_crc8}, {"crc16",l_crc16}, {"crc32",l_crc32}, {"fletcher8",l_fletcher8},
+      {"xxh32",l_xxh32},  {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
       {"sysvchecksum",l_sysvchecksum}, {"xor8",l_xor8}, {"setbuzhash",l_setbuzhash},
-      {"buzhash8",l_buzhash8}, {"buzhash16",l_buzhash16}, {"cityhash32", l_cityhash32},
+       {"cityhash32", l_cityhash32},
       {"cityhash64", l_cityhash64}, {"cityhash128", l_cityhash128}, {"md5",l_md5},
       {"djb2", l_djb2}, {"farmhash32", l_farmhash32}, {"farmhash64", l_farmhash64},
       {"fasthash32", l_fasthash32}, {"fasthash64", l_fasthash64}, {"fnv_0", l_fnv_0},
@@ -61,6 +92,11 @@ static const luaL_Reg crypto_function_list [] = {
       {"blake224", l_blake224}, {"blake512", l_blake512}, {"blake384", l_blake384},
 
       {"adler32",l_adler32}, {"adler32_init",l_adler32_init}, {"adler32_update",l_adler32_update}, {"adler32_final",l_adler32_final},
+      {"bsdchecksum",l_bsdchecksum}, {"bsdchecksum_init",l_bsdchecksum_init}, {"bsdchecksum_update",l_bsdchecksum_update}, {"bsdchecksum_final",l_bsdchecksum_final},
+      {"buzhash8",l_buzhash8}, {"buzhash16",l_buzhash16},
+      {"crc8",l_crc8}, {"crc8_init",l_crc8_init}, {"crc8_update",l_crc8_update}, {"crc8_final",l_crc8_final},
+      {"crc16",l_crc16}, {"crc16_init",l_crc16_init}, {"crc16_update",l_crc16_update}, {"crc16_final",l_crc16_final},
+      {"crc32",l_crc32}, {"crc32_init",l_crc32_init}, {"crc32_update",l_crc32_update}, {"crc32_final",l_crc32_final},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},

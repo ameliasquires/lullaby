@@ -55,7 +55,7 @@ llib.net.listen(
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint("hi")
-            res:send("")
+            --res:send("")
         end)
 
         server:GET("/aa", function(res, req)

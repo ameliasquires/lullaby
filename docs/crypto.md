@@ -8,11 +8,12 @@ sadly i didnt think about being able to update hashes, using the common init-upd
 this is a pretty big problem meaning the input must be given at once, this is better for passwords,
 but bad for big files. because of this, i decided not to support inputs over 2^64 characters (which is an
 insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
-anything marked with % is fixed
+anything marked with % is fixed, 
 
 |name|out len|other args|extra|
 |--|--|--|--|
 | % adler32 | 32 | nil | |
+| % bsdchecksum | 16 | nil | |
 | sha0 | 160 | nil | insecure, use sha1|
 | sha1 | 160 | nil | |
 | sha256 | 256 | nil | |
@@ -28,11 +29,11 @@ anything marked with % is fixed
 | fletcher32 | 32 | nil | |
 | sysvchecksum | 32 | nil | |
 | xor8 | 8 | nil | |
-| buzhash8 | 8 | nil | use setbuzhash(table) to change table (will affect all buzhash functions) |
+| buzhash8 | 8 | nil | use setbuzhash(table) to change table (will affect all buzhash functions), does not support updating |
 | buzhash16 | 16 | nil | ^ |
-| cityhash32 | 32 | nil | |
-| cityhash64 | 64 | nil | |
-| cityhash128 | 128 | nil | |
+| cityhash32 | 32 | nil | does not support updating|
+| cityhash64 | 64 | nil | ^ |
+| cityhash128 | 128 | nil | ^ |
 | md5 | 128 | nil | |
 | djb2 | 64 | nil | |
 | farmhash32 | 32 | nil | |
@@ -78,12 +79,12 @@ llib.crypto.sha512_t("meow", 224) -- would be sha512/224 - ad5e403e0d74532187f4e
 functions supporting updates (listed with %, see note above) can be used like so:
 
 ```lua
-obj = llib.crypto.adler32_init()
+obj = llib.crypto.adler32() --adler32_init is equivilant to adler32 with no params
 llib.crypto.adler32_update(obj, "meow")
 local hash = llib.crypto.adler32_final(obj) --043c01b9
 
 --or you can chain them!
-obj = llib.crypto.adler32_init()
+obj = llib.crypto.adler32()
 obj:update("meow")
 hash = obj:final() --043c01b9s (the same)
 ```
