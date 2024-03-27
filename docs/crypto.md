@@ -21,9 +21,9 @@ anything marked with % is fixed,
 | pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255|
 | xxh64 | 64 | nil | xxhash |
 | xxh32 | 32 | nil | |
-| crc8 | 8 | nil | |
-| crc16 | 16 | nil | |
-| crc32 | 32 | nil | |
+| % crc8 | 8 | nil | |
+| % crc16 | 16 | nil | |
+| % crc32 | 32 | nil | |
 | fletcher8 | 8 | nil | |
 | fletcher16 | 16 | nil | |
 | fletcher32 | 32 | nil | |
