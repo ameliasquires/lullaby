@@ -1,5 +1,13 @@
 #include "crypto.h"
 
+uint8_t rotl8(uint8_t y, uint8_t offset){
+    return ( y << offset ) | ( y >> (8 - offset));
+}
+
+uint16_t rotl16(uint16_t y, uint16_t offset){
+    return ( y << offset ) | ( y >> (16 - offset));
+}
+
 unsigned rotl32(unsigned y, unsigned offset){
     return ( y << offset ) | ( y >> (32 - offset));
 }

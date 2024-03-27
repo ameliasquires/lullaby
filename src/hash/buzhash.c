@@ -19,28 +19,20 @@ static uint8_t T[256] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,
   252,253,254,255};
 
-uint8_t i_lr8(uint8_t y, uint8_t offset){
-    return ( y << offset ) | ( y >> (8 - offset));
-}
-
-uint16_t i_lr16(uint16_t y, uint16_t offset){
-    return ( y << offset ) | ( y >> (16 - offset));
-}
-
-uint8_t i_buzhash8(uint8_t* in, size_t len){
+uint8_t buzhash8(uint8_t* in, size_t len){
     uint8_t hash = 0;
 
     for(int i = 0; i != len; i++){
-        hash ^= i_lr8(T[(uint8_t)in[i]],len - (i + 1));
+        hash ^= rotl8(T[(uint8_t)in[i]],len - (i + 1));
     }
 
     return hash;
 }
-uint16_t i_buzhash16(uint8_t* in, size_t len){
+uint16_t buzhash16(uint8_t* in, size_t len){
     uint16_t hash = 0;
 
     for(int i = 0; i != len; i++){
-        hash ^= i_lr16(T[(uint8_t)in[i]],len - (i + 1));
+        hash ^= rotl16(T[(uint8_t)in[i]],len - (i + 1));
     }
 
     return hash;
@@ -72,7 +64,7 @@ int l_buzhash8(lua_State* L){
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
   char digest[3];
-  uint8_t u = i_buzhash8(a, len);
+  uint8_t u = buzhash8(a, len);
   
   sprintf(digest,"%x",u);
 
@@ -86,7 +78,7 @@ int l_buzhash16(lua_State* L){
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
   char digest[6];
-  uint16_t u = i_buzhash16(a, len);
+  uint16_t u = buzhash16(a, len);
   
   sprintf(digest,"%04x",u);
 

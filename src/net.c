@@ -68,7 +68,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
   //printf("&_\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
-
+    printf("hi");
     if(n < 0){
       *_buffer = buffer;
       printf("%s %i\n",strerror(errno),errno);
@@ -185,14 +185,15 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
 void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
   char* dest = malloc(HTTP_BUFFER_SIZE);
   memset(dest, 0, HTTP_BUFFER_SIZE);
+
   sprintf(dest, 
     "HTTP/1.1 %i %s\r\n"
     "%s"
     "\r\n"
     , code, code_det, header_vs);
-
   *_dest = str_init(dest);
   str_pushl(*_dest, content, len);
+
   free(dest);
 }
 
@@ -305,7 +306,6 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content, si
   http_build(&resp, code,  code_det, header_vs->c, content, len);
 
   str_free(header_vs);
-
   *_resp = resp;
 }
 
@@ -394,13 +394,14 @@ int l_send(lua_State* L){
     i_write_header(L, header, &resp, "", 0);
   } else 
     i_write_header(L, header, &resp, content, len);
+
   int a = send(client_fd, resp->c, resp->len, 0);
   
   //
-  //lua_pushstring(L, "client_fd");
-  //lua_pushinteger(L, -1);
-  //lua_settable(L, res_idx);
-  //sclosesocket(client_fd);
+  lua_pushstring(L, "client_fd");
+  lua_pushinteger(L, -1);
+  lua_settable(L, res_idx);
+  closesocket(client_fd);
   //printf("%i | %i\n'%s'\n%i\n",client_fd,a,resp->c,resp->len);
   str_free(resp);
   return 0;
@@ -514,7 +515,7 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
     str_popb(boundary, 4);
     parray_set(content, "_boundary", (void*)boundary);
     parray_set(content, "_boundary_id", (void*)boundary_id);
-
+    
   }
 
   if(*status == NORMAL){

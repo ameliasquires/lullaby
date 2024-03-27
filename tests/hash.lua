@@ -3,6 +3,7 @@ require "llib"
 function test(name,b,exp,oargs)
   local hash
   local hash2
+  local hash3
   local add = ""
   if oargs == nil then
     hash = llib.crypto[name](b)
@@ -12,12 +13,24 @@ function test(name,b,exp,oargs)
   end
 
   if(llib.crypto[name.."_init"] ~= nil) then
-    hash2 = llib.crypto[name.."_init"]():update(b):final()
+    hash2 = llib.crypto[name]():update(b):final()
+
+    hash3 = llib.crypto[name]()
+    b:gsub(".", function(c) hash3:update(c) end)
+    hash3 = hash3:final()
+
     if(hash2 ~= hash) then
-      llib.io.error(name.." init-update-final method not working, got:\n\t"..hash2.." other was:\n\t"..hash)
+      llib.io.error(name.." alt method not working, got:\n\t"..hash2.." other was:\n\t"..hash)
     else 
       llib.io.log(name.." alt method working "..hash2.." == "..hash)
     end
+
+    if(hash3 ~= hash) then
+      llib.io.error(name.." alt char-b-char method not working, got:\n\t"..hash3.." other was:\n\t"..hash)
+    else 
+      llib.io.log(name.." alt char-b-char method working "..hash3.." == "..hash)
+    end
+
   end
 
   if not (hash == exp) then
@@ -31,7 +44,6 @@ test("adler32","meow","043c01b9")
 test("bsdchecksum","meow","24789")
 test("crc8","meow","a4")
 test("crc16","meow","6561")
-test("crc32","meow","8a106afe")
 test("crc32","meow","8a106afe")
 test("fletcher8","meow","05")
 test("fletcher16","meow","3cb9")
