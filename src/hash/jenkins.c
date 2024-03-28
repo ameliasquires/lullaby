@@ -3,22 +3,49 @@
 #include <stdio.h>
 #include <stdint.h>
 
+struct jenkins_oaat_hash jenkins_oaat_init(){
+  return (struct jenkins_oaat_hash){.hash = 0};
+}
+
+void jenkins_oaat_update(uint8_t* in, size_t len, struct jenkins_oaat_hash* hash){
+  for(int i = 0; i != len;){
+    hash->hash += in[i++];
+    hash->hash += hash->hash << 10;
+    hash->hash ^= hash->hash >> 6;
+  }
+}
+
+uint32_t jenkins_oaat_final(struct jenkins_oaat_hash* hash){
+  hash->hash += hash->hash << 3;
+  hash->hash ^= hash->hash >> 11;
+  hash->hash += hash->hash << 15;
+
+  return hash->hash;
+}
+
+
 uint32_t jenkins_oaat(uint8_t* in, size_t len){
-    uint32_t hash = 0;
+  struct jenkins_oaat_hash a = jenkins_oaat_init();
+  jenkins_oaat_update(in, len, &a);
+  return jenkins_oaat_final(&a);
+}
 
-    for(int i = 0; i != len;){
-        hash += in[i++];
-        hash += hash << 10;
-        hash ^= hash >> 6;
-    }
-    hash += hash << 3;
-    hash ^= hash >> 11;
-    hash += hash << 15;
+lua_common_hash_init_update(jenkins_oaat, oaat);
 
-    return hash;
+int l_oaat_final(lua_State* L){
+  lua_pushstring(L, "ud");
+  lua_gettable(L, 1);
+
+  struct jenkins_oaat_hash* a = (struct jenkins_oaat_hash*)lua_touserdata(L, -1);
+  uint32_t u = jenkins_oaat_final(a);
+  char digest[64];
+  sprintf(digest,"%04x",u);
+  lua_pushstring(L, digest);
+  return 1;
 }
 
 int l_oaat(lua_State* L){ 
+  if(lua_gettop(L) == 0) return l_oaat_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 

@@ -10,6 +10,8 @@ but bad for big files. because of this, i decided not to support inputs over 2^6
 insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
 anything marked with % is fixed, 
 
+remaining to fix (inc. variants): 24
+
 |name|out len|other args|extra|
 |--|--|--|--|
 | % adler32 | 32 | nil | |
@@ -24,9 +26,9 @@ anything marked with % is fixed,
 | % crc8 | 8 | nil | |
 | % crc16 | 16 | nil | |
 | % crc32 | 32 | nil | |
-| fletcher8 | 8 | nil | |
-| fletcher16 | 16 | nil | |
-| fletcher32 | 32 | nil | |
+| % fletcher8 | 8 | nil | |
+| % fletcher16 | 16 | nil | |
+| % fletcher32 | 32 | nil | |
 | sysvchecksum | 32 | nil | |
 | xor8 | 8 | nil | |
 | buzhash8 | 8 | nil | use setbuzhash(table) to change table (will affect all buzhash functions), does not support updating |
@@ -35,33 +37,33 @@ anything marked with % is fixed,
 | cityhash64 | 64 | nil | ^ |
 | cityhash128 | 128 | nil | ^ |
 | md5 | 128 | nil | |
-| djb2 | 64 | nil | |
-| farmhash32 | 32 | nil | |
-| farmhash64 | 64 | nil | |
-| fasthash32 | 32 | *seed | |
-| fasthash64 | 64 | *seed | |
-| fnv_0 | 64 | nil | |
-| fnv_1 | 64 | nil | |
-| fnv_a | 64 | nil | |
-| oaat | 32 | nil | |
-| lostlose | 64 | nil | |
-| metrohash64_v1 | 64 | *seed | |
-| metrohash64_v2 | 64 | *seed | |
-| metrohash128_v1 | 128 | *seed | |
-| metrohash128_v2 | 128 | *seed | |
-| murmur1_32 | 32 | *seed | |
-| murmur2_32 | 32 | *seed | |
+| % djb2 | 64 | nil | |
+| farmhash32 | 32 | nil | does not support updating|
+| farmhash64 | 64 | nil | ^|
+| fasthash32 | 32 | *seed | ^|
+| fasthash64 | 64 | *seed | ^|
+| % fnv_0 | 64 | nil | |
+| % fnv_1 | 64 | nil | |
+| % fnv_a | 64 | nil | |
+| % oaat | 32 | nil | |
+| loselose | 64 | nil | |
+| metrohash64_v1 | 64 | *seed | does not support updating|
+| metrohash64_v2 | 64 | *seed | ^|
+| metrohash128_v1 | 128 | *seed | ^|
+| metrohash128_v2 | 128 | *seed | ^|
+| murmur1_32 | 32 | *seed | ^|
+| murmur2_32 | 32 | *seed | ^|
 | pjw | 32 | *seed | |
 | sdbm | 64 | nil | |
 | sha512 | 512 | nil | |
 | sha384 | 384 | nil | |
 | sha512_t | length of arg 2 | t (bit length) | bit length range is 0 < t <= 512 (this isnt checked, and it should accept any value) |
-| spookyhash128_v1 | 128 | *seed | |
-| spookyhash128_v2 | 128 | *seed | |
-| spookyhash64_v1 | 64 | *seed | |
-| spookyhash64_v2 | 64 | *seed | |
-| spookyhash32_v1 | 32 | *seed | |
-| spookyhash32_v2 | 32 | *seed | |
+| spookyhash128_v1 | 128 | *seed | does not support updating|
+| spookyhash128_v2 | 128 | *seed | ^|
+| spookyhash64_v1 | 64 | *seed | ^|
+| spookyhash64_v2 | 64 | *seed | ^|
+| spookyhash32_v1 | 32 | *seed | ^|
+| spookyhash32_v2 | 32 | *seed | ^|
 | blake2b | length of arg 2 * 8 | *output len (default is 64), *key | |
 | blake2s | length of arg 2 * 8 | *output len (default is 32), *key | |
 | blake256 | 256 | nil | |
@@ -87,6 +89,9 @@ local hash = llib.crypto.adler32_final(obj) --043c01b9
 obj = llib.crypto.adler32()
 obj:update("meow")
 hash = obj:final() --043c01b9s (the same)
+
+--and of course, the single function method still works too (will still do init-update-final in the backend)
+hash = llib.crypto.adler32("meow") --043c01b9s (the same)
 ```
 
 ## en/decoding
