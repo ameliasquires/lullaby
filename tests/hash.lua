@@ -1,9 +1,16 @@
 require "llib"
 
+local hashes_working = 0
+local hashes_failed = 0
+local functions_working = 0
+local functions_failed = 0
+
 function test(name,b,exp,oargs)
+  local fail = false
   local hash
   local hash2
   local hash3
+  local hash4
   local add = ""
   if oargs == nil then
     hash = llib.crypto[name](b)
@@ -18,26 +25,55 @@ function test(name,b,exp,oargs)
     hash3 = llib.crypto[name]()
     b:gsub(".", function(c) hash3:update(c) end)
     hash3 = hash3:final()
+    
+    hash4 = llib.crypto[name.."_init"]()
+    llib.crypto[name.."_update"](hash4, b)
+    hash4 = llib.crypto[name.."_final"](hash4)
 
     if(hash2 ~= hash) then
+      fail = true
+      functions_failed=functions_failed + 1
       llib.io.error(name.." alt method not working, got:\n\t"..hash2.." other was:\n\t"..hash)
     else 
+      functions_working=functions_working + 1
       llib.io.log(name.." alt method working "..hash2.." == "..hash)
     end
 
+    if(hash4 ~= hash) then
+      fail = true
+      functions_failed=functions_failed + 1
+      llib.io.error(name.." alt method 2 not working, got:\n\t"..hash4.." other was:\n\t"..hash)
+    else 
+      functions_working=functions_working + 1
+      llib.io.log(name.." alt method 2 working "..hash4.." == "..hash)
+    end
+
     if(hash3 ~= hash) then
+      fail = true
+      functions_failed=functions_failed + 1
       llib.io.error(name.." alt char-b-char method not working, got:\n\t"..hash3.." other was:\n\t"..hash)
     else 
+      functions_working=functions_working + 1
       llib.io.log(name.." alt char-b-char method working "..hash3.." == "..hash)
     end
 
   end
 
   if not (hash == exp) then
+    fail = true
+    functions_failed=functions_failed + 1
     llib.io.error(name.." not working, got:\n\t"..hash.." wanted:\n\t"..exp.."\n\twith args: {"..add.."}")
   else
+    functions_working=functions_working + 1
     llib.io.log(name.." was correct, "..hash)
   end
+
+  if(fail) then
+    hashes_failed=hashes_failed + 1
+  else 
+    hashes_working=hashes_working + 1
+  end
+
 end
 
 test("adler32","meow","043c01b9")
@@ -92,3 +128,6 @@ test("blake256", "meow", "067805dd21a4ef97460c6613f231437917a1c1c7f1dcd1bfe67d95
 test("blake224", "meow", "0a099d692027cfbe69d2424a5b2520a7398fa4945e0878f6c541f5ce")
 test("blake512", "meow", "09d5abe166c4ad855d4527d0be21df2b1a01c3d7c5637572561ebc247908fd7db30bf342391dd0a834fd35f391807480fb31e8a7ee3b1098e46d996d5601948f")
 test("blake384", "meow", "7edb2ff04616f5551a789217029496c3c8601ac7aba2d40d7fcd1ec85fc63f37514e5884f2ebc807b11854247620446c")
+
+print(hashes_working.."/"..hashes_failed.." hashes working/failed")
+print(functions_working.."/"..functions_failed.." functions working/failed")

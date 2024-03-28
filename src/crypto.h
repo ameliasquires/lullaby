@@ -39,8 +39,10 @@ unsigned rotr32(unsigned, unsigned);
 uint64_t rotl64(uint64_t, uint64_t);
 uint64_t rotr64(uint64_t, uint64_t);
 
-#define common_hash_init_update(hashname)\
- int l_##hashname##_init(lua_State* L){\
+#define common_hash_init_update(hashname) lua_common_hash_init_update(hashname, hashname)
+#define lua_common_hash_init_update(hashname, luaname) lua_common_hash_init(hashname, luaname) lua_common_hash_update(hashname, luaname)
+#define lua_common_hash_init(hashname, luaname)\
+ int l_##luaname##_init(lua_State* L){\
   lua_newtable(L);\
   int t = lua_gettop(L);\
   \
@@ -49,14 +51,33 @@ uint64_t rotr64(uint64_t, uint64_t);
   *a = hashname##_init();\
   \
   luaI_tsetv(L, t, "ud", ud);\
-  luaI_tsetcf(L, t, "update", l_##hashname##_update);\
-  luaI_tsetcf(L, t, "final", l_##hashname##_final);\
+  luaI_tsetcf(L, t, "update", l_##luaname##_update);\
+  luaI_tsetcf(L, t, "final", l_##luaname##_final);\
   \
   lua_pushvalue(L, t);\
   return 1;\
 }\
-\
-int l_##hashname##_update(lua_State* L){\
+
+#define lua_common_hash_init_warg(hashname, luaname, hcode, arg)\
+ int l_##luaname##_init(lua_State* L){\
+  hcode;\
+  lua_newtable(L);\
+  int t = lua_gettop(L);\
+  \
+  struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
+  int ud = lua_gettop(L);\
+  *a = hashname##_init(arg);\
+  \
+  luaI_tsetv(L, t, "ud", ud);\
+  luaI_tsetcf(L, t, "update", l_##luaname##_update);\
+  luaI_tsetcf(L, t, "final", l_##luaname##_final);\
+  \
+  lua_pushvalue(L, t);\
+  return 1;\
+}\
+
+#define lua_common_hash_update(hashname, luaname)\
+int l_##luaname##_update(lua_State* L){\
   lua_pushstring(L, "ud");\
   lua_gettable(L, 1);\
   \
@@ -76,11 +97,11 @@ static const luaL_Reg crypto_function_list [] = {
       {"xxh32",l_xxh32},  {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
       {"sysvchecksum",l_sysvchecksum}, {"xor8",l_xor8}, {"setbuzhash",l_setbuzhash},
-       {"cityhash32", l_cityhash32},
+      {"cityhash32", l_cityhash32},
       {"cityhash64", l_cityhash64}, {"cityhash128", l_cityhash128}, {"md5",l_md5},
-      {"djb2", l_djb2}, {"farmhash32", l_farmhash32}, {"farmhash64", l_farmhash64},
-      {"fasthash32", l_fasthash32}, {"fasthash64", l_fasthash64}, {"fnv_0", l_fnv_0},
-      {"fnv_1", l_fnv_1}, {"fnv_a", l_fnv_a}, {"oaat", l_oaat}, {"loselose", l_loselose},
+      {"farmhash32", l_farmhash32}, {"farmhash64", l_farmhash64},
+      {"fasthash32", l_fasthash32}, {"fasthash64", l_fasthash64},
+      {"loselose", l_loselose},
       {"metrohash64_v1", l_metrohash64_v1}, {"metrohash64_v2", l_metrohash64_v2},
       {"metrohash128_v1", l_metrohash128_v1}, {"metrohash128_v2", l_metrohash128_v2},
       {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, {"pjw", l_pjw},
@@ -97,7 +118,15 @@ static const luaL_Reg crypto_function_list [] = {
       {"crc8",l_crc8}, {"crc8_init",l_crc8_init}, {"crc8_update",l_crc8_update}, {"crc8_final",l_crc8_final},
       {"crc16",l_crc16}, {"crc16_init",l_crc16_init}, {"crc16_update",l_crc16_update}, {"crc16_final",l_crc16_final},
       {"crc32",l_crc32}, {"crc32_init",l_crc32_init}, {"crc32_update",l_crc32_update}, {"crc32_final",l_crc32_final},
-
+      {"djb2", l_djb2}, {"djb2_init", l_djb2_init}, {"djb2_update", l_djb2_update}, {"djb2_final", l_djb2_final},
+      {"fletcher8",l_fletcher8}, {"fletcher8_init",l_fletcher8_init}, {"fletcher8_update",l_fletcher8_update}, {"fletcher8_final",l_fletcher8_final},
+      {"fletcher16",l_fletcher16}, {"fletcher16_init",l_fletcher16_init}, {"fletcher16_update",l_fletcher16_update}, {"fletcher16_final",l_fletcher16_final},
+      {"fletcher32",l_fletcher32}, {"fletcher32_init",l_fletcher32_init}, {"fletcher32_update",l_fletcher32_update}, {"fletcher32_final",l_fletcher32_final},
+      {"fnv_0", l_fnv_0}, {"fnv_0_init", l_fnv_0_init}, {"fnv_0_update", l_fnv_0_update}, {"fnv_0_final", l_fnv_0_final},
+      {"fnv_1", l_fnv_1}, {"fnv_1_init", l_fnv_1_init}, {"fnv_1_update", l_fnv_1_update}, {"fnv_1_final", l_fnv_1_final},
+      {"fnv_a", l_fnv_a}, {"fnv_a_init", l_fnv_a_init}, {"fnv_a_update", l_fnv_a_update}, {"fnv_a_final", l_fnv_a_final},
+      {"oaat", l_oaat}, {"oaat_init", l_oaat_init}, {"oaat_update", l_oaat_update}, {"oaat_final", l_oaat_final},
+      
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},
 

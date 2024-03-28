@@ -79,7 +79,6 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
       *header_eof = header - buffer;
       char* cont_len_raw = strstr(buffer, "Content-Length: ");
-      //printf("%s\n", buffer);
       
       if(cont_len_raw == NULL) {
         len += n;
@@ -111,7 +110,6 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
 
     if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
   }
-  //printf("%li\n%li",len, content_len + *header_eof + 4);
   *_buffer = buffer;
   return len;
 }
