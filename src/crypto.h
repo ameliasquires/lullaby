@@ -98,7 +98,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
       {"setbuzhash",l_setbuzhash},
       {"cityhash32", l_cityhash32},
-      {"cityhash64", l_cityhash64}, {"cityhash128", l_cityhash128}, {"md5",l_md5},
+      {"cityhash64", l_cityhash64}, {"cityhash128", l_cityhash128}, 
       {"farmhash32", l_farmhash32}, {"farmhash64", l_farmhash64},
       {"fasthash32", l_fasthash32}, {"fasthash64", l_fasthash64},
       {"loselose", l_loselose},
@@ -132,6 +132,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"sdbm", l_sdbm}, {"sdbm_init", l_sdbm_init}, {"sdbm_update", l_sdbm_update}, {"sdbm_final", l_sdbm_final},
       {"sysvchecksum",l_sysvchecksum}, {"sysvchecksum_init",l_sysvchecksum_init}, {"sysvchecksum_update",l_sysvchecksum_update}, {"sysvchecksum_final",l_sysvchecksum_final},
       {"xor8",l_xor8}, {"xor8_init",l_xor8_init}, {"xor8_update",l_xor8_update}, {"xor8_final",l_xor8_final},
+      {"md5",l_md5}, {"md5_init",l_md5_init}, {"md5_update",l_md5_update}, {"md5_final",l_md5_final},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},

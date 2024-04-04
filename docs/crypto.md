@@ -36,7 +36,7 @@ remaining to fix (inc. variants): 16
 | cityhash32 | 32 | nil | does not support updating|
 | cityhash64 | 64 | nil | ^ |
 | cityhash128 | 128 | nil | ^ |
-| md5 | 128 | nil | |
+| % md5 | 128 | nil | |
 | % djb2 | 64 | nil | |
 | farmhash32 | 32 | nil | does not support updating|
 | farmhash64 | 64 | nil | ^|
