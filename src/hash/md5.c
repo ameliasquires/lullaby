@@ -98,7 +98,7 @@ void md5_update(uint8_t* input, size_t len, struct md5_hash* hash){
 void md5_final(struct md5_hash* hash, char out_stream[64]){
   hash->buffer[hash->bufflen] = 0x80;
 
-  if(hash->bufflen > 56) {
+  if(hash->bufflen > 55) {
     //too large, needs another buffer
     md5_round(hash);
   }

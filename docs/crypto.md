@@ -15,8 +15,8 @@ remaining to fix (inc. variants): 15
 |--|--|--|--|--|
 | adler32 | 32 | nil | | y |
 | bsdchecksum | 16 | nil | | y |
-| sha0 | 160 | nil | insecure, use sha1| todo |
-| sha1 | 160 | nil | | todo |
+| sha0 | 160 | nil | insecure, use sha1| y |
+| sha1 | 160 | nil | | y |
 | sha256 | 256 | nil | | todo |
 | sha224 | 224 | nil | | todo |
 | pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255| y |
