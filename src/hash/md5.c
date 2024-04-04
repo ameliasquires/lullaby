@@ -1,5 +1,4 @@
 #include "../crypto.h"
-#include "md5.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -20,85 +19,131 @@ static const uint32_t s[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12,
             4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
             6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21};
 
-void i_md5(char* input, size_t len, char out_stream[64]){
-  uint32_t a0 = 0x67452301;
-  uint32_t b0 = 0xefcdab89;
-  uint32_t c0 = 0x98badcfe;
-  uint32_t d0 = 0x10325476;
+#define bs 64
 
-  int tlen = ((((len + 8) /64) + 1) * 64) - 8;
+struct md5_hash md5_init(){
+  struct md5_hash a = {.a0 = 0x67452301, .b0 = 0xefcdab89, .c0 = 0x98badcfe, .d0 = 0x10325476, .total = 0, .bufflen = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs);
+  return a;
+}
 
-  uint8_t* b = NULL;
-  //set the rest to 0x00 for padding
-  b = calloc(tlen + 64, 1);
-  
-  //add padding (0x80 to the end)
-  memcpy(b, input, len);
-  b[len] = 0x80;
+void md5_round(struct md5_hash* hash){
+  uint32_t* M = (uint32_t *)(hash->buffer); 
 
-  //add length to end
-  uint32_t lhhh = 8*len;
-  memcpy(b + tlen, &lhhh, 1); 
+  uint32_t A = hash->a0;
+  uint32_t B = hash->b0;
+  uint32_t C = hash->c0;
+  uint32_t D = hash->d0;
 
-  for(int z = 0; z < tlen; z+=(512/8)){
-    uint32_t* M = (uint32_t *) (b + z); 
-
-    uint32_t A = a0;
-    uint32_t B = b0;
-    uint32_t C = c0;
-    uint32_t D = d0;
-
-    for(int i = 0; i < 64; i++){
-      uint32_t F, g;
+  for(int i = 0; i < 64; i++){
+    uint32_t F, g;
       
-      if(i < 16){
-        F = (B & C) | ((~B) & D);
-        g = i; 
-      } else if(i < 32){
-        F = (D & B) | ((~D) & C);
-        g = (5*i + 1) % 16;
-      } else if(i < 48){
-        F = B ^ C ^ D;
-        g = (3*i + 5) % 16;
-      } else {
-        F = C ^ (B | (~D));
-        g = (7*i) % 16;
-      }
+    if(i < 16){
+      F = (B & C) | ((~B) & D);
+      g = i; 
+    } else if(i < 32){
+      F = (D & B) | ((~D) & C);
+      g = (5*i + 1) % 16;
+    } else if(i < 48){
+      F = B ^ C ^ D;
+      g = (3*i + 5) % 16;
+    } else {
+      F = C ^ (B | (~D));
+      g = (7*i) % 16;
+    }
  
 
 
-      F = F + A + K[i] + M[g];
+    F = F + A + K[i] + M[g];
 
-      uint32_t temp = D; 
-      D = C;
-      C = B;
-      B = B + rotl32(F, s[i]);
-      A = temp;
-    }
-
-    a0 += A;
-    b0 += B;
-    c0 += C;
-    d0 += D;
-
+    uint32_t temp = D; 
+    D = C;
+    C = B;
+    B = B + rotl32(F, s[i]);
+    A = temp;
   }
 
+  hash->a0 += A;
+  hash->b0 += B;
+  hash->c0 += C;
+  hash->d0 += D;
+}
+
+void md5_update(uint8_t* input, size_t len, struct md5_hash* hash){
+  hash->total += len;
+  size_t total_add = len + hash->bufflen;
+  size_t read = 0;
+  if(total_add < bs){
+    memcpy(hash->buffer + hash->bufflen, input, len);
+    hash->bufflen += len;
+    return;
+  }
+
+  for(; total_add >= bs;){
+    memcpy(hash->buffer + hash->bufflen, input + read, bs - hash->bufflen);
+    total_add -= bs - hash->bufflen;
+    hash->bufflen = 0;
+    read += bs;
+    md5_round(hash);
+  }
+
+  memset(hash->buffer, 0, bs);
+
+  if(read != total_add){
+    memcpy(hash->buffer, input + read, total_add - read);
+    hash->bufflen = total_add - read;
+  }
+}
+
+void md5_final(struct md5_hash* hash, char out_stream[64]){
+  hash->buffer[hash->bufflen] = 0x80;
+
+  if(hash->bufflen > 56) {
+    //too large, needs another buffer
+    md5_round(hash);
+  }
+
+  uint32_t lhhh = 8*hash->total;
+  memcpy(hash->buffer + 56, &lhhh, 1);
+  md5_round(hash);
+
   sprintf(out_stream,"%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x", 
-      ((uint8_t*)&a0)[0], ((uint8_t*)&a0)[1], ((uint8_t*)&a0)[2], ((uint8_t*)&a0)[3],
-      ((uint8_t*)&b0)[0], ((uint8_t*)&b0)[1], ((uint8_t*)&b0)[2], ((uint8_t*)&b0)[3],
-      ((uint8_t*)&c0)[0], ((uint8_t*)&c0)[1], ((uint8_t*)&c0)[2], ((uint8_t*)&c0)[3],
-      ((uint8_t*)&d0)[0], ((uint8_t*)&d0)[1], ((uint8_t*)&d0)[2], ((uint8_t*)&d0)[3]);
- 
-  free(b);
+      ((uint8_t*)&hash->a0)[0], ((uint8_t*)&hash->a0)[1], ((uint8_t*)&hash->a0)[2], ((uint8_t*)&hash->a0)[3],
+      ((uint8_t*)&hash->b0)[0], ((uint8_t*)&hash->b0)[1], ((uint8_t*)&hash->b0)[2], ((uint8_t*)&hash->b0)[3],
+      ((uint8_t*)&hash->c0)[0], ((uint8_t*)&hash->c0)[1], ((uint8_t*)&hash->c0)[2], ((uint8_t*)&hash->c0)[3],
+      ((uint8_t*)&hash->d0)[0], ((uint8_t*)&hash->d0)[1], ((uint8_t*)&hash->d0)[2], ((uint8_t*)&hash->d0)[3]);
+  
+  free(hash->buffer);
+}
+
+common_hash_init_update(md5);
+
+int l_md5_final(lua_State* L){
+  lua_pushstring(L, "ud");
+  lua_gettable(L, 1);
+
+  struct md5_hash* a = (struct md5_hash*)lua_touserdata(L, -1);
+
+  char digest[128];
+  md5_final(a, digest);
+
+  lua_pushstring(L, digest);
+  return 1;
+}
+
+void md5(uint8_t* input, size_t len, char out_stream[64]){
+  struct md5_hash aa = md5_init();
+  md5_update(input, len, &aa);
+  md5_final(&aa, out_stream);
 }
 
 int l_md5(lua_State* L){
-  
+  if(lua_gettop(L) == 0) return l_md5_init(L);
   size_t len = 0;
-  char* a = (char*)luaL_checklstring(L, 1, &len);
+  uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
   char digest[64];
-  i_md5(a, len, digest);
+  md5(a, len, digest);
   lua_pushstring(L, digest);
 
   return 1;
