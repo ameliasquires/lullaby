@@ -93,10 +93,10 @@ int l_##luaname##_update(lua_State* L){\
 
 static const luaL_Reg crypto_function_list [] = {
       {"sha0",l_sha0}, {"sha1",l_sha1}, {"sha256",l_sha256}, {"sha224",l_sha224},
-      {"setpearson",l_setpearson}, {"pearson",l_pearson}, {"xxh64",l_xxh64},
+      {"setpearson",l_setpearson}, {"xxh64",l_xxh64},
       {"xxh32",l_xxh32},  {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
-      {"sysvchecksum",l_sysvchecksum}, {"xor8",l_xor8}, {"setbuzhash",l_setbuzhash},
+      {"setbuzhash",l_setbuzhash},
       {"cityhash32", l_cityhash32},
       {"cityhash64", l_cityhash64}, {"cityhash128", l_cityhash128}, {"md5",l_md5},
       {"farmhash32", l_farmhash32}, {"farmhash64", l_farmhash64},
@@ -104,8 +104,8 @@ static const luaL_Reg crypto_function_list [] = {
       {"loselose", l_loselose},
       {"metrohash64_v1", l_metrohash64_v1}, {"metrohash64_v2", l_metrohash64_v2},
       {"metrohash128_v1", l_metrohash128_v1}, {"metrohash128_v2", l_metrohash128_v2},
-      {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, {"pjw", l_pjw},
-      {"sdbm", l_sdbm}, {"sha512", l_sha512}, {"sha384", l_sha384}, {"sha512_t", l_sha512_t},
+      {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, 
+      {"sha512", l_sha512}, {"sha384", l_sha384}, {"sha512_t", l_sha512_t},
       {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
       {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
       {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
@@ -126,7 +126,13 @@ static const luaL_Reg crypto_function_list [] = {
       {"fnv_1", l_fnv_1}, {"fnv_1_init", l_fnv_1_init}, {"fnv_1_update", l_fnv_1_update}, {"fnv_1_final", l_fnv_1_final},
       {"fnv_a", l_fnv_a}, {"fnv_a_init", l_fnv_a_init}, {"fnv_a_update", l_fnv_a_update}, {"fnv_a_final", l_fnv_a_final},
       {"oaat", l_oaat}, {"oaat_init", l_oaat_init}, {"oaat_update", l_oaat_update}, {"oaat_final", l_oaat_final},
-      
+      {"loselose", l_loselose}, {"loselose_init", l_loselose_init}, {"loselose_update", l_loselose_update}, {"loselose_final", l_loselose_final},
+      {"pearson",l_pearson}, {"pearson_init",l_pearson_init}, {"pearson_update",l_pearson_update}, {"pearson_final",l_pearson_final},
+      {"pjw", l_pjw}, {"pjw_init", l_pjw_init}, {"pjw_update", l_pjw_update}, {"pjw_final", l_pjw_final},
+      {"sdbm", l_sdbm}, {"sdbm_init", l_sdbm_init}, {"sdbm_update", l_sdbm_update}, {"sdbm_final", l_sdbm_final},
+      {"sysvchecksum",l_sysvchecksum}, {"sysvchecksum_init",l_sysvchecksum_init}, {"sysvchecksum_update",l_sysvchecksum_update}, {"sysvchecksum_final",l_sysvchecksum_final},
+      {"xor8",l_xor8}, {"xor8_init",l_xor8_init}, {"xor8_update",l_xor8_update}, {"xor8_final",l_xor8_final},
+
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},
 

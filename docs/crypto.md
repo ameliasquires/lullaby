@@ -10,7 +10,7 @@ but bad for big files. because of this, i decided not to support inputs over 2^6
 insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
 anything marked with % is fixed, 
 
-remaining to fix (inc. variants): 24
+remaining to fix (inc. variants): 16
 
 |name|out len|other args|extra|
 |--|--|--|--|
@@ -20,7 +20,7 @@ remaining to fix (inc. variants): 24
 | sha1 | 160 | nil | |
 | sha256 | 256 | nil | |
 | sha224 | 224 | nil | |
-| pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255|
+| % pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255|
 | xxh64 | 64 | nil | xxhash |
 | xxh32 | 32 | nil | |
 | % crc8 | 8 | nil | |
@@ -29,8 +29,8 @@ remaining to fix (inc. variants): 24
 | % fletcher8 | 8 | nil | |
 | % fletcher16 | 16 | nil | |
 | % fletcher32 | 32 | nil | |
-| sysvchecksum | 32 | nil | |
-| xor8 | 8 | nil | |
+| % sysvchecksum | 32 | nil | |
+| % xor8 | 8 | nil | |
 | buzhash8 | 8 | nil | use setbuzhash(table) to change table (will affect all buzhash functions), does not support updating |
 | buzhash16 | 16 | nil | ^ |
 | cityhash32 | 32 | nil | does not support updating|
@@ -46,15 +46,15 @@ remaining to fix (inc. variants): 24
 | % fnv_1 | 64 | nil | |
 | % fnv_a | 64 | nil | |
 | % oaat | 32 | nil | |
-| loselose | 64 | nil | |
+| % loselose | 64 | nil | |
 | metrohash64_v1 | 64 | *seed | does not support updating|
 | metrohash64_v2 | 64 | *seed | ^|
 | metrohash128_v1 | 128 | *seed | ^|
 | metrohash128_v2 | 128 | *seed | ^|
 | murmur1_32 | 32 | *seed | ^|
 | murmur2_32 | 32 | *seed | ^|
-| pjw | 32 | *seed | |
-| sdbm | 64 | nil | |
+| % pjw | 32 | nil | |
+| % sdbm | 64 | nil | |
 | sha512 | 512 | nil | |
 | sha384 | 384 | nil | |
 | sha512_t | length of arg 2 | t (bit length) | bit length range is 0 < t <= 512 (this isnt checked, and it should accept any value) |

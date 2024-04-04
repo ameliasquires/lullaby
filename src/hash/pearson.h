@@ -1,13 +1,17 @@
 #include "../lua.h"
 #include <stdint.h>
-/**
- * calculates a pearson hash of (len) bytes
- *
- * @param {uint8_t*} input bytes
- * @param {size_t} input length
- * @return {uint8_t} 8 bit hash
-*/
-uint8_t i_pearson(uint8_t*,size_t);
+
+struct pearson_hash {
+    uint8_t ret;
+};
+
+struct pearson_hash pearson_init();
+void pearson_update(uint8_t*, size_t, struct pearson_hash* hash);
+uint8_t pearson_final(struct pearson_hash* hash);
+uint8_t pearson(uint8_t*,size_t);
 
 int l_setpearson(lua_State* L);
 int l_pearson(lua_State* L);
+int l_pearson_init(lua_State* L);
+int l_pearson_update(lua_State* L);
+int l_pearson_final(lua_State* L);

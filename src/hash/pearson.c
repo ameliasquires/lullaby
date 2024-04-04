@@ -19,12 +19,23 @@ static uint8_t pearson_table[256] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,
   252,253,254,255};
 
-uint8_t i_pearson(uint8_t *aa, size_t len){
-    uint8_t ret = 0;
+struct pearson_hash pearson_init(){
+  return (struct pearson_hash){.ret = 0};
+}
 
-    for(int i = 0; i != len; i++) ret = pearson_table[(uint8_t)(ret^aa[i])];
+void pearson_update(uint8_t* aa, size_t len, struct pearson_hash* hash){
+  for(int i = 0; i != len; i++)
+    hash->ret = pearson_table[(uint8_t)(hash->ret^aa[i])];
+}
 
-    return ret;
+uint8_t pearson_final(struct pearson_hash* hash){
+  return hash->ret;
+}
+
+uint8_t pearson(uint8_t* aa, size_t len){
+  struct pearson_hash a = pearson_init();
+  pearson_update(aa, len, &a);
+  return pearson_final(&a);
 }
 
 int l_setpearson(lua_State* L){
@@ -48,13 +59,27 @@ int l_setpearson(lua_State* L){
   return 0;
 }
 
+common_hash_init_update(pearson);
+
+int l_pearson_final(lua_State* L){
+  lua_pushstring(L, "ud");
+  lua_gettable(L, 1);
+
+  struct pearson_hash* a = (struct pearson_hash*)lua_touserdata(L, -1);
+  uint8_t u = pearson_final(a);
+  char digest[8];
+  sprintf(digest,"%x",u);
+  lua_pushstring(L, digest);
+  return 1;
+}
+
 int l_pearson(lua_State* L){
-  
+  if(lua_gettop(L) == 0) return l_pearson_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
-  char digest[3];
-  uint8_t u = i_pearson(a, len);
+  char digest[8];
+  uint8_t u = pearson(a, len);
   
   sprintf(digest,"%x",u);
 
