@@ -12,4 +12,11 @@
 void i_sha01(uint8_t, char*, int, const char*);
 
 int l_sha1(lua_State*);
+int l_sha1_init(lua_State*);
+int l_sha1_update(lua_State*);
+int l_sha1_final(lua_State*);
+
 int l_sha0(lua_State*);
+int l_sha0_init(lua_State*);
+int l_sha0_update(lua_State*);
+int l_sha0_final(lua_State*);

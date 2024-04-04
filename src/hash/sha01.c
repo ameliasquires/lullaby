@@ -3,107 +3,199 @@
 #include <string.h>
 #include <stdint.h>
 
-void i_sha01(uint8_t version, char* out_stream, int len, const char* input){
-    if(!out_stream||version > 2) return;
-    uint32_t h0 = 0x67452301;
-    uint32_t h1 = 0xEFCDAB89;
-    uint32_t h2 = 0x98BADCFE;
-    uint32_t h3 = 0x10325476;
-    uint32_t h4 = 0xC3D2E1F0;
-     
-    int tlen = ((((len + 8) /64) + 1) * 64) - 8;
-    
-    uint8_t* by = NULL;
-    by = calloc(tlen * 80 +  64, 1);
-    
-    memcpy(by, input, len);
-    by[len] = 0x80;
-    
-    size_t blen = 8*len;
-    for(int i = 0; i != 8; i++)
-        by[tlen + 7 - i] = (uint8_t) (blen >> (i * 8) & 0xFF);
+#define bs 64
+
+struct sha01_hash {
+  uint8_t* buffer;
+  uint32_t h0, h1, h2, h3, h4;
+  size_t bufflen;
+  size_t total;
+  uint8_t version;
+};
+
+#define sha0_hash sha01_hash 
+#define sha1_hash sha01_hash
+
+struct sha01_hash sha01_init(uint8_t ver){
+    struct sha01_hash a = {.h0 = 0x67452301, .h1 = 0xEFCDAB89, .h2 = 0x98BADCFE, .h3 = 0x10325476, .h4 = 0xC3D2E1F0,
+        .total = 0, .bufflen = 0, .version = ver};
+    a.buffer = calloc(sizeof * a.buffer, bs);
+    return a;
+}
+
+void sha01_round(struct sha01_hash* hash){
+    int hat = 0;
+    uint32_t W[80] = {0};
         
-    uint32_t hat = 0;
-    for(int z = 0; z < tlen; z+=(512/8)){
-        uint32_t W[80];
-        memset(W, 0, 80 * sizeof (uint32_t));
-        
-        for(int i = 0; i != 16; i++){
-            int t = 24;
-            for(int x = 0;t>=0; x++){
-                W[i] += (((uint32_t)by[hat]) << t);
-                hat++;
-                t-=8;
-            }
+    for(int i = 0; i != 16; i++){
+        int t = 24;
+        for(int x = 0;t>=0; x++){
+            W[i] += (((uint32_t)hash->buffer[hat]) << t);
+            hat++;
+            t-=8;
         }
-        for(int i = 16; i != 80; i++)
-            W[i] = rotl32(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], version);
-            
-        
-        uint32_t a = h0;
-        uint32_t b = h1;
-        uint32_t c = h2;
-        uint32_t d = h3;
-        uint32_t e = h4;
-        
-        for(int i = 0; i != 80; i++){
-            
-            uint32_t f,k;
-            if(0 <= i && i <= 19){
-                f = (b & c) | ((~b) & d);
-                k = 0x5A827999;
-            } else if(20 <= i && i <= 39){
-                f = b ^ c ^ d;
-                k = 0x6ED9EBA1;
-            } else if(40 <= i && i <= 59){
-                f = (b & c) | (b & d) | (c & d);
-                k = 0x8F1BBCDC;
-            } else {
-                f = b ^ c ^ d;
-                k = 0xCA62C1D6;
-            }
-            
-            uint32_t temp = rotl32(a, 5) + f + e + k + W[i];
-            e = d;
-            d = c;
-            c = rotl32(b, 30);
-            b = a;
-            a = temp;
-        }
-        
-        h0 += a;
-        h1 += b;
-        h2 += c;
-        h3 += d;
-        h4 += e;
-        
-        
     }
-    sprintf(out_stream,"%02x%02x%02x%02x%02x",h0,h1,h2,h3,h4);
-    free(by);
+    for(int i = 16; i != 80; i++)
+        W[i] = rotl32(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], hash->version);
+            
+    uint32_t a = hash->h0;
+    uint32_t b = hash->h1;
+    uint32_t c = hash->h2;
+    uint32_t d = hash->h3;
+    uint32_t e = hash->h4;
+        
+    for(int i = 0; i != 80; i++){
+            
+        uint32_t f,k;
+        if(0 <= i && i <= 19){
+            f = (b & c) | ((~b) & d);
+            k = 0x5A827999;
+        } else if(20 <= i && i <= 39){
+            f = b ^ c ^ d;
+            k = 0x6ED9EBA1;
+        } else if(40 <= i && i <= 59){
+            f = (b & c) | (b & d) | (c & d);
+            k = 0x8F1BBCDC;
+        } else {
+            f = b ^ c ^ d;
+            k = 0xCA62C1D6;
+        }
+            
+        uint32_t temp = rotl32(a, 5) + f + e + k + W[i];
+        e = d;
+        d = c;
+        c = rotl32(b, 30);
+        b = a;
+        a = temp;
+    }
+        
+    hash->h0 += a;
+    hash->h1 += b;
+    hash->h2 += c;
+    hash->h3 += d;
+    hash->h4 += e;
+}
+
+void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash){
+  hash->total += len;
+  size_t total_add = len + hash->bufflen;
+  size_t read = 0;
+  if(total_add < bs){
+    memcpy(hash->buffer + hash->bufflen, input, len);
+    hash->bufflen += len;
+    return;
+  }
+
+  for(; total_add >= bs;){
+    memcpy(hash->buffer + hash->bufflen, input + read, bs - hash->bufflen);
+    total_add -= bs - hash->bufflen;
+    hash->bufflen = 0;
+    read += bs;
+    sha01_round(hash);
+  }
+
+  memset(hash->buffer, 0, bs);
+
+  if(read != total_add){
+    memcpy(hash->buffer, input + read, total_add - read);
+    hash->bufflen = total_add - read;
+  }
+}
+
+void sha01_final(struct sha01_hash* hash, char* out_stream){
+  hash->buffer[hash->bufflen] = 0x80;
+
+  if(hash->bufflen > 55) {
+    //too large, needs another buffer
+    sha01_round(hash);
+  }
+
+  size_t lhhh = 8*hash->total;
+  for(int i = 0; i != 8; i++)
+        hash->buffer[63 - i] = (uint8_t) (lhhh >> (i * 8) & 0xFF);
+  sha01_round(hash);
+
+  sprintf(out_stream,"%02x%02x%02x%02x%02x",hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
+  free(hash->buffer);
+}
+
+struct sha01_hash sha0_init(){
+    return sha01_init(0);
+}
+
+struct sha01_hash sha1_init(){
+    return sha01_init(1);
+}
+
+void sha0_update(uint8_t* input, size_t len, struct sha01_hash* hash){
+    sha01_update(input, len, hash);
+}
+
+void sha1_update(uint8_t* input, size_t len, struct sha01_hash* hash){
+    sha01_update(input, len, hash);
+}
+
+void sha0_final(struct sha01_hash* hash, char* out_stream){
+    sha01_final(hash, out_stream);
+}
+
+void sha1_final(struct sha01_hash* hash, char* out_stream){
+    sha01_final(hash, out_stream);
+}
+
+void sha0(uint8_t* a, size_t len, char* out_stream){
+    struct sha01_hash aa = sha0_init();
+    sha0_update(a, len, &aa);
+    sha0_final(&aa, out_stream);
+}
+
+void sha1(uint8_t* a, size_t len, char* out_stream){
+    struct sha01_hash aa = sha1_init();
+    sha1_update(a, len, &aa);
+    sha1_final(&aa, out_stream);
+}
+
+common_hash_init_update(sha1);
+common_hash_init_update(sha0);
+
+int l_sha1_final(lua_State* L){
+  lua_pushstring(L, "ud");
+  lua_gettable(L, 1);
+
+  struct sha01_hash* a = (struct sha01_hash*)lua_touserdata(L, -1);
+
+  char digest[160];
+  sha1_final(a, digest);
+
+  lua_pushstring(L, digest);
+  return 1;
+}
+
+int l_sha0_final(lua_State* L){
+    return l_sha1_final(L);
 }
 
 int l_sha1(lua_State* L){
-  
+  if(lua_gettop(L) == 0) return l_sha1_init(L);
   size_t len = 0;
   char* a = (char*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[160];
 
-  i_sha01(1, digest, len, a);
+  sha1(a, len, digest);
   lua_pushstring(L, digest);
 
   return 1;
 };
 
 int l_sha0(lua_State* L){
-  
+  if(lua_gettop(L) == 0) return l_sha0_init(L);
   size_t len = 0;
   char* a = (char*)luaL_checklstring(L, 1, &len);
   
   char digest[160];
 
-  i_sha01(0, digest, len, a);
+  sha0(a, len, digest);
   lua_pushstring(L, digest);
 
   return 1;
