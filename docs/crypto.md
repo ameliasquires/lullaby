@@ -8,68 +8,67 @@ sadly i didnt think about being able to update hashes, using the common init-upd
 this is a pretty big problem meaning the input must be given at once, this is better for passwords,
 but bad for big files. because of this, i decided not to support inputs over 2^64 characters (which is an
 insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
-anything marked with % is fixed, 
 
-remaining to fix (inc. variants): 16
+remaining to fix (inc. variants): 15
 
-|name|out len|other args|extra|
-|--|--|--|--|
-| % adler32 | 32 | nil | |
-| % bsdchecksum | 16 | nil | |
-| sha0 | 160 | nil | insecure, use sha1|
-| sha1 | 160 | nil | |
-| sha256 | 256 | nil | |
-| sha224 | 224 | nil | |
-| % pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255|
-| xxh64 | 64 | nil | xxhash |
-| xxh32 | 32 | nil | |
-| % crc8 | 8 | nil | |
-| % crc16 | 16 | nil | |
-| % crc32 | 32 | nil | |
-| % fletcher8 | 8 | nil | |
-| % fletcher16 | 16 | nil | |
-| % fletcher32 | 32 | nil | |
-| % sysvchecksum | 32 | nil | |
-| % xor8 | 8 | nil | |
-| buzhash8 | 8 | nil | use setbuzhash(table) to change table (will affect all buzhash functions), does not support updating |
-| buzhash16 | 16 | nil | ^ |
-| cityhash32 | 32 | nil | does not support updating|
-| cityhash64 | 64 | nil | ^ |
-| cityhash128 | 128 | nil | ^ |
-| % md5 | 128 | nil | |
-| % djb2 | 64 | nil | |
-| farmhash32 | 32 | nil | does not support updating|
-| farmhash64 | 64 | nil | ^|
-| fasthash32 | 32 | *seed | ^|
-| fasthash64 | 64 | *seed | ^|
-| % fnv_0 | 64 | nil | |
-| % fnv_1 | 64 | nil | |
-| % fnv_a | 64 | nil | |
-| % oaat | 32 | nil | |
-| % loselose | 64 | nil | |
-| metrohash64_v1 | 64 | *seed | does not support updating|
-| metrohash64_v2 | 64 | *seed | ^|
-| metrohash128_v1 | 128 | *seed | ^|
-| metrohash128_v2 | 128 | *seed | ^|
-| murmur1_32 | 32 | *seed | ^|
-| murmur2_32 | 32 | *seed | ^|
-| % pjw | 32 | nil | |
-| % sdbm | 64 | nil | |
-| sha512 | 512 | nil | |
-| sha384 | 384 | nil | |
-| sha512_t | length of arg 2 | t (bit length) | bit length range is 0 < t <= 512 (this isnt checked, and it should accept any value) |
-| spookyhash128_v1 | 128 | *seed | does not support updating|
-| spookyhash128_v2 | 128 | *seed | ^|
-| spookyhash64_v1 | 64 | *seed | ^|
-| spookyhash64_v2 | 64 | *seed | ^|
-| spookyhash32_v1 | 32 | *seed | ^|
-| spookyhash32_v2 | 32 | *seed | ^|
-| blake2b | length of arg 2 * 8 | *output len (default is 64), *key | |
-| blake2s | length of arg 2 * 8 | *output len (default is 32), *key | |
-| blake256 | 256 | nil | |
-| blake224 | 224 | nil | |
-| blake512 | 512 | nil | |
-| blake384 | 384 | nil | |
+|name|out len|other args|extra|incremental|
+|--|--|--|--|--|
+| adler32 | 32 | nil | | y |
+| bsdchecksum | 16 | nil | | y |
+| sha0 | 160 | nil | insecure, use sha1| todo |
+| sha1 | 160 | nil | | todo |
+| sha256 | 256 | nil | | todo |
+| sha224 | 224 | nil | | todo |
+| pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255| y |
+| xxh64 | 64 | nil | xxhash | todo|
+| xxh32 | 32 | nil | | todo |
+| crc8 | 8 | nil | | y |
+| crc16 | 16 | nil | | y |
+| crc32 | 32 | nil | | y |
+| fletcher8 | 8 | nil | | y |
+| fletcher16 | 16 | nil | | y |
+| fletcher32 | 32 | nil | | y |
+| sysvchecksum | 32 | nil | | y |
+| xor8 | 8 | nil | | y |
+| buzhash8 | 8 | nil | use setbuzhash(table) to change table (will affect all buzhash functions)| n |
+| buzhash16 | 16 | nil | ^ | n |
+| cityhash32 | 32 | nil | | n |
+| cityhash64 | 64 | nil |  | n |
+| cityhash128 | 128 | nil |  | n |
+| md5 | 128 | nil | | y |
+| djb2 | 64 | nil | | y |
+| farmhash32 | 32 | nil | | n |
+| farmhash64 | 64 | nil | | n |
+| fasthash32 | 32 | *seed | | n |
+| fasthash64 | 64 | *seed | | n |
+| fnv_0 | 64 | nil | | y |
+| fnv_1 | 64 | nil | | y |
+| fnv_a | 64 | nil | | y |
+| oaat | 32 | nil | | y |
+| loselose | 64 | nil | | y |
+| metrohash64_v1 | 64 | *seed | | n |
+| metrohash64_v2 | 64 | *seed | | n |
+| metrohash128_v1 | 128 | *seed | | n |
+| metrohash128_v2 | 128 | *seed | | n |
+| murmur1_32 | 32 | *seed | | n |
+| murmur2_32 | 32 | *seed | | n |
+| pjw | 32 | nil | | y |
+| sdbm | 64 | nil | | y |
+| sha512 | 512 | nil | | todo |
+| sha384 | 384 | nil | | todo |
+| sha512_t | length of arg 2 | t (bit length) | bit length range is 0 < t <= 512 (this isnt checked, and it should accept any value) | todo |
+| spookyhash128_v1 | 128 | *seed | | n |
+| spookyhash128_v2 | 128 | *seed | | n |
+| spookyhash64_v1 | 64 | *seed | | n |
+| spookyhash64_v2 | 64 | *seed | | n |
+| spookyhash32_v1 | 32 | *seed | | n |
+| spookyhash32_v2 | 32 | *seed | | n |
+| blake2b | length of arg 2 * 8 | *output len (default is 64), *key | | todo |
+| blake2s | length of arg 2 * 8 | *output len (default is 32), *key | | todo |
+| blake256 | 256 | nil | | todo |
+| blake224 | 224 | nil | | todo |
+| blake512 | 512 | nil | | todo |
+| blake384 | 384 | nil | | todo |
 
 ### usage
 
@@ -92,6 +91,11 @@ hash = obj:final() --043c01b9s (the same)
 
 --and of course, the single function method still works too (will still do init-update-final in the backend)
 hash = llib.crypto.adler32("meow") --043c01b9s (the same)
+
+--for any extra arguments, they should be used in the init function
+llib.crypto.sha512_t_init(224) -- like example above
+--or even (only if the arguments are required)
+llib.crypto.sha512_t(224) -- same as above
 ```
 
 ## en/decoding
