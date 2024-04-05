@@ -23,6 +23,14 @@ struct sha01_hash sha01_init(uint8_t ver){
     return a;
 }
 
+struct sha01_hash sha01_init_l(uint8_t ver, lua_State* L){
+    struct sha01_hash a = {.h0 = 0x67452301, .h1 = 0xEFCDAB89, .h2 = 0x98BADCFE, .h3 = 0x10325476, .h4 = 0xC3D2E1F0,
+        .total = 0, .bufflen = 0, .version = ver};
+    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
+    memset(a.buffer, 0, bs);
+    return a;
+}
+
 void sha01_round(struct sha01_hash* hash){
     int hat = 0;
     uint32_t W[80] = {0};
@@ -118,7 +126,6 @@ void sha01_final(struct sha01_hash* hash, char* out_stream){
   sha01_round(hash);
 
   sprintf(out_stream,"%02x%02x%02x%02x%02x",hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
-  free(hash->buffer);
 }
 
 struct sha01_hash sha0_init(){
@@ -157,8 +164,11 @@ void sha1(uint8_t* a, size_t len, char* out_stream){
     sha1_final(&aa, out_stream);
 }
 
-common_hash_init_update(sha1);
-common_hash_init_update(sha0);
+lua_common_hash_init_ni(sha1, sha1, sha01_init_l(1, L));
+lua_common_hash_update(sha1, sha1);
+
+lua_common_hash_init_ni(sha0, sha0, sha01_init_l(0, L));
+lua_common_hash_update(sha0, sha0);
 
 int l_sha1_final(lua_State* L){
   lua_pushstring(L, "ud");

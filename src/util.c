@@ -59,7 +59,7 @@ char* strnstr(const char *s1, const char *s2, size_t n) {
 
 void _p_fatal(const char* m, int line, const char* file, const char* function){
   fprintf(stderr, "%s[fatal] %s \n"
-                  "\tthread: %i/%i\n"
+                  "\tthread: %zu/%zu\n"
                   "\tat: %s:%s(%i) %s\n",color_red, m, pthread_self(), threads, file, function, line, color_reset);
   exit(EXIT_FAILURE);
 }

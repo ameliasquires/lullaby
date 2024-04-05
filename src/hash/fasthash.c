@@ -62,7 +62,7 @@ int l_fasthash64(lua_State* L){
   char digest[64];
 
   uint64_t u = fasthash64(a, len, seed);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016lx",u);
   lua_pushstring(L, digest);
   return 1;
 }

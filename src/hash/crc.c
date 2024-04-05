@@ -116,8 +116,8 @@ int l_crc32_final(lua_State* L){
 
   struct crc32_hash* a = (struct crc32_hash*)lua_touserdata(L, -1);
   uint32_t u = crc32_final(a);
-  char digest[8];
-  sprintf(digest,"%08lx",u);
+  char digest[32];
+  sprintf(digest,"%08x",u);
   lua_pushstring(L, digest);
   return 1;
 }

@@ -411,7 +411,7 @@ int l_cityhash64(lua_State* L){
   char digest[64];
 
   uint64_t u = cityhash64(a, len);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016lx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -424,7 +424,7 @@ int l_cityhash128(lua_State* L){
 
   uint64_t u1, u2;
   cityhash128(a, len, &u1, &u2);
-  sprintf(digest,"%08llx%08llx",u1, u2);
+  sprintf(digest,"%08lx%08lx",u1, u2);
   lua_pushstring(L, digest);
   return 1;
 }

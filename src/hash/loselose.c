@@ -33,7 +33,7 @@ int l_loselose_final(lua_State* L){
   struct loselose_hash* a = (struct loselose_hash*)lua_touserdata(L, -1);
   uint64_t u = loselose_final(a);
   char digest[64];
-  sprintf(digest,"%08x",u);
+  sprintf(digest,"%08lx",u);
   lua_pushstring(L, digest);
   return 1;
 }
