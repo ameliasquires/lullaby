@@ -27,6 +27,14 @@ struct md5_hash md5_init(){
   return a;
 }
 
+
+struct md5_hash md5_init_l(lua_State* L){
+  struct md5_hash a = {.a0 = 0x67452301, .b0 = 0xefcdab89, .c0 = 0x98badcfe, .d0 = 0x10325476, .total = 0, .bufflen = 0};
+  a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
+  memset(a.buffer, 0, bs);
+  return a;
+}
+
 void md5_round(struct md5_hash* hash){
   uint32_t* M = (uint32_t *)(hash->buffer); 
 
@@ -116,7 +124,9 @@ void md5_final(struct md5_hash* hash, char out_stream[64]){
       ((uint8_t*)&hash->d0)[0], ((uint8_t*)&hash->d0)[1], ((uint8_t*)&hash->d0)[2], ((uint8_t*)&hash->d0)[3]);
 }
 
-common_hash_init_update(md5);
+lua_common_hash_init_ni(md5, md5, md5_init_l(L));
+lua_common_hash_update(md5, md5);
+//common_hash_init_update(md5);
 
 int l_md5_final(lua_State* L){
   lua_pushstring(L, "ud");

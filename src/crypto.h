@@ -41,14 +41,15 @@ uint64_t rotr64(uint64_t, uint64_t);
 
 #define common_hash_init_update(hashname) lua_common_hash_init_update(hashname, hashname)
 #define lua_common_hash_init_update(hashname, luaname) lua_common_hash_init(hashname, luaname) lua_common_hash_update(hashname, luaname)
-#define lua_common_hash_init(hashname, luaname)\
+#define lua_common_hash_init(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init())
+#define lua_common_hash_init_ni(hashname, luaname, initf)\
  int l_##luaname##_init(lua_State* L){\
   lua_newtable(L);\
   int t = lua_gettop(L);\
   \
   struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
   int ud = lua_gettop(L);\
-  *a = hashname##_init();\
+  *a = initf;\
   \
   luaI_tsetv(L, t, "ud", ud);\
   luaI_tsetcf(L, t, "update", l_##luaname##_update);\
@@ -56,7 +57,7 @@ uint64_t rotr64(uint64_t, uint64_t);
   \
   lua_pushvalue(L, t);\
   return 1;\
-}\
+}
 
 #define lua_common_hash_init_warg(hashname, luaname, hcode, arg)\
  int l_##luaname##_init(lua_State* L){\

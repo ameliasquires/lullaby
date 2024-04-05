@@ -108,6 +108,14 @@ struct sha512_hash sha512_t_init(struct iv sha_iv){
     return a;
 }
 
+struct sha512_hash sha512_t_init_l(struct iv sha_iv, lua_State* L){
+    struct sha512_hash a = {.h0 = sha_iv.h0, .h1 = sha_iv.h1, .h2 = sha_iv.h2, .h3 = sha_iv.h3, .h4 = sha_iv.h4, .h5 = sha_iv.h5, .h6 = sha_iv.h6, .h7 = sha_iv.h7,
+        .total = 0, .bufflen = 0};
+    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
+    memset(a.buffer, 0, bs);
+    return a;
+}
+
 struct sha512_hash sha512_init(){
     return sha512_t_init(sha512_iv);
 }
@@ -162,29 +170,25 @@ void _sha512_t_final(struct sha512_hash* hash){
 void sha512_final(struct sha512_hash* hash, char* out_stream){
   _sha512_t_final(hash);
 
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h0);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h2);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h3);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h4);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h5);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h6);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h7);
-
-  free(hash->buffer);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h0);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h1);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h2);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h3);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h4);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h5);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h6);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h7);
 }
 
 void sha384_final(struct sha512_hash* hash, char* out_stream){
   _sha512_t_final(hash);
 
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h0);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h2);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h3);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h4);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h5);
-
-  free(hash->buffer);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h0);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h1);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h2);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h3);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h4);
+  sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h5);
 }
 
 void sha512(uint8_t* in, size_t len, char* out){
@@ -215,11 +219,12 @@ struct iv sha_iv_gen(int i){
     sprintf((char*)in, "SHA-512/%i",i);
     struct sha512_hash a = sha512_t_init(oh);
     sha512_update(in, strlen((char*)in), &a);
-    sha512_final(&a, nh);
+    sha512_final(&a, (char*)nh);
     return (struct iv){.h0 = a.h0, .h1 = a.h1, .h2 = a.h2, .h3 = a.h3, .h4 = a.h4, .h5 = a.h5, .h6 = a.h6, .h7 = a.h7};
 }
 
-common_hash_init_update(sha512);
+lua_common_hash_init_ni(sha512, sha512, sha512_t_init_l(sha512_iv, L));
+lua_common_hash_update(sha512, sha512);
 
 int l_sha512_final(lua_State* L){
   lua_pushstring(L, "ud");
@@ -234,7 +239,8 @@ int l_sha512_final(lua_State* L){
   return 1;
 }
 
-common_hash_init_update(sha384);
+lua_common_hash_init_ni(sha384, sha384, sha512_t_init_l(sha384_iv, L));
+lua_common_hash_update(sha384, sha384);
 
 int l_sha384_final(lua_State* L){
   lua_pushstring(L, "ud");
@@ -256,7 +262,7 @@ int l_sha512_t_init(lua_State* L){
   
   struct sha512_hash* a = (struct sha512_hash*)lua_newuserdata(L, sizeof * a);\
   int ud = lua_gettop(L);
-  *a = sha512_t_init(sha_iv_gen(tt));
+  *a = sha512_t_init_l(sha_iv_gen(tt), L);
   a->t = tt;
   
   luaI_tsetv(L, t, "ud", ud);
