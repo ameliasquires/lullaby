@@ -20,41 +20,53 @@ function test(name,b,exp,oargs)
   end
 
   if(llib.crypto[name.."_init"] ~= nil) then
-    hash2 = llib.crypto[name]():update(b):final()
+    if(oargs == nil) then
+      hash2 = llib.crypto[name]():update(b):final()
+    else 
+      hash2 = llib.crypto[name](table.unpack(oargs)):update(b):final()
+    end
 
-    hash3 = llib.crypto[name]()
+    if(oargs == nil) then
+      hash3 = llib.crypto[name]()
+    else 
+      hash3 = llib.crypto[name](table.unpack(oargs))
+    end
     b:gsub(".", function(c) hash3:update(c) end)
     hash3 = hash3:final()
     
-    hash4 = llib.crypto[name.."_init"]()
+    if(oargs == nil) then
+      hash4 = llib.crypto[name.."_init"]()
+    else 
+      hash4 = llib.crypto[name.."_init"](table.unpack(oargs))
+    end
     llib.crypto[name.."_update"](hash4, b)
     hash4 = llib.crypto[name.."_final"](hash4)
 
-    if(hash2 ~= hash) then
+    if(hash2 ~= exp) then
       fail = true
       functions_failed=functions_failed + 1
-      llib.io.error(name.." alt method not working, got:\n\t"..hash2.." other was:\n\t"..hash)
+      llib.io.error(name.." alt method not working, got:\n\t"..hash2.." other was:\n\t"..exp)
     else 
       functions_working=functions_working + 1
-      llib.io.log(name.." alt method working "..hash2.." == "..hash)
+      llib.io.log(name.." alt method working "..hash2.." == "..exp)
     end
 
-    if(hash4 ~= hash) then
+    if(hash4 ~= exp) then
       fail = true
       functions_failed=functions_failed + 1
-      llib.io.error(name.." alt method 2 not working, got:\n\t"..hash4.." other was:\n\t"..hash)
+      llib.io.error(name.." alt method 2 not working, got:\n\t"..hash4.." other was:\n\t"..exp)
     else 
       functions_working=functions_working + 1
-      llib.io.log(name.." alt method 2 working "..hash4.." == "..hash)
+      llib.io.log(name.." alt method 2 working "..hash4.." == "..exp)
     end
 
-    if(hash3 ~= hash) then
+    if(hash3 ~= exp) then
       fail = true
       functions_failed=functions_failed + 1
-      llib.io.error(name.." alt char-b-char method not working, got:\n\t"..hash3.." other was:\n\t"..hash)
+      llib.io.error(name.." alt char-b-char method not working, got:\n\t"..hash3.." other was:\n\t"..exp)
     else 
       functions_working=functions_working + 1
-      llib.io.log(name.." alt char-b-char method working "..hash3.." == "..hash)
+      llib.io.log(name.." alt char-b-char method working "..hash3.." == "..exp)
     end
 
   end
@@ -112,6 +124,7 @@ test("pjw","meow","00073c67")
 test("sdbm","meow","006d50f201921b00")
 test("sha512","meow","e88348269bad036160f0d9558b7c5de68163b50e1a6ce46e85ee64692eba074529a4a2b48db4d5c36496e845001e13e6d07c585eacd564defcbf719ec9033e17");
 test("sha384","meow","f0bb848a382b5ed5e2f49a46252f6b738c933dc20bb29dc4a5d312e310b395c4fa07f30a8a7380b4a5d367445e0ea8cb")
+test("sha512_t", "meow", "ad5e403e0d74532187f4e1665c7e705ab5eb3c2fe07ae73a3ff998b2", {224})
 test("fasthash64","meow","7b9e494cf11ee113")
 test("fasthash32","meow","758097c7")
 test("metrohash64_v1", "meow", "7435945e80261ed1")
@@ -129,5 +142,18 @@ test("blake224", "meow", "0a099d692027cfbe69d2424a5b2520a7398fa4945e0878f6c541f5
 test("blake512", "meow", "09d5abe166c4ad855d4527d0be21df2b1a01c3d7c5637572561ebc247908fd7db30bf342391dd0a834fd35f391807480fb31e8a7ee3b1098e46d996d5601948f")
 test("blake384", "meow", "7edb2ff04616f5551a789217029496c3c8601ac7aba2d40d7fcd1ec85fc63f37514e5884f2ebc807b11854247620446c")
 
+test("md5", "meow meow mrrp meow meow!! mrrp ", "900df0c6e7df499615d588b6e83caf10")
+test("md5", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@", "900bc8ffba6262b4d1dd09b2518c23bd")
+
+test("sha1", "meow meow mrrp meow meow!! mrrp ", "3ea97f1835830d4be6ec86f5382f66f3e0d2f973")
+test("sha1", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@", "d635d131ca7fd03c4c5d0cb5ca9707c3f5494427")
+
+test("sha512", "meow meow mrrp meow meow!! mrrp meow meow mrrp meow meow!! mrrp ", "faecf93fc69a194c3433f179f4d643bfbc30e03cf97ec0bae097b2bfe9f58bf8c96978f551635905862ffcad1c1e92588788dfad99cfad951770226110fbd2fb")
+test("sha512", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@", "8ea73a99c1d773605ac958996ca30b1214f475851d0dc897547a68a3da0cbdfd449344352e8f3c4c96477e5c4d6aa7e54e86f566da0f299899e56a445ccbf5c1")
+--test("sha1", "meow meow mrrp meow meow!! mrrp ", "3ea97f1835830d4be6ec86f5382f66f3e0d2f973")
+--test("sha1", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "014842d480b571495a4a0363793f7367")
+--test("sha512", "meow meow mrrp meow meow!! mrrp ", "eda9416e9bf4b2557279140cf03331d26f30b8294b0296112ec8094811df296b17393b8fb42cd6a84c52a9dcb7b8b4cb699a797aae8726ba306c3b3b79fba9c1")
+--test("sha512", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "014842d480b571495a4a0363793f7367")
+--print(llib.crypto.md5("meow meow mrrp meow meow!! mrrp "))
 print(hashes_working.."/"..hashes_failed.." hashes working/failed")
 print(functions_working.."/"..functions_failed.." functions working/failed")

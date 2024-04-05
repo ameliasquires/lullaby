@@ -105,7 +105,6 @@ static const luaL_Reg crypto_function_list [] = {
       {"metrohash64_v1", l_metrohash64_v1}, {"metrohash64_v2", l_metrohash64_v2},
       {"metrohash128_v1", l_metrohash128_v1}, {"metrohash128_v2", l_metrohash128_v2},
       {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, 
-      {"sha512", l_sha512}, {"sha384", l_sha384}, {"sha512_t", l_sha512_t},
       {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
       {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
       {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
@@ -135,6 +134,9 @@ static const luaL_Reg crypto_function_list [] = {
       {"md5",l_md5}, {"md5_init",l_md5_init}, {"md5_update",l_md5_update}, {"md5_final",l_md5_final},
       {"sha0",l_sha0}, {"sha0_init",l_sha0_init}, {"sha0_update",l_sha0_update}, {"sha0_final",l_sha0_final},
       {"sha1",l_sha1}, {"sha1_init",l_sha1_init}, {"sha1_update",l_sha1_update}, {"sha1_final",l_sha1_final},
+      {"sha512", l_sha512}, {"sha512_init", l_sha512_init}, {"sha512_update", l_sha512_update}, {"sha512_final", l_sha512_final},
+      {"sha384", l_sha384}, {"sha384_init", l_sha384_init}, {"sha384_update", l_sha384_update}, {"sha384_final", l_sha384_final},
+      {"sha512_t", l_sha512_t}, {"sha512_t_init", l_sha512_t_init}, {"sha512_t_update", l_sha512_t_update}, {"sha512_t_final", l_sha512_t_final},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},

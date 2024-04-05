@@ -81,17 +81,17 @@ void md5_update(uint8_t* input, size_t len, struct md5_hash* hash){
 
   for(; total_add >= bs;){
     memcpy(hash->buffer + hash->bufflen, input + read, bs - hash->bufflen);
-    total_add -= bs - hash->bufflen;
-    hash->bufflen = 0;
+    
+    total_add -= bs;
     read += bs;
+    hash->bufflen = 0;
     md5_round(hash);
   }
 
   memset(hash->buffer, 0, bs);
-
-  if(read != total_add){
-    memcpy(hash->buffer, input + read, total_add - read);
-    hash->bufflen = total_add - read;
+  if(total_add != 0){
+    memcpy(hash->buffer, input + read, total_add);
+    hash->bufflen = total_add;
   }
 }
 
@@ -100,11 +100,13 @@ void md5_final(struct md5_hash* hash, char out_stream[64]){
 
   if(hash->bufflen > 55) {
     //too large, needs another buffer
+    memset(hash->buffer + hash->bufflen + 1, 0, 64 - hash->bufflen);
     md5_round(hash);
+    memset(hash->buffer, 0, 64);
   }
 
   uint32_t lhhh = 8*hash->total;
-  memcpy(hash->buffer + 56, &lhhh, 1);
+  memcpy(hash->buffer + 56, &lhhh, sizeof(lhhh));
   md5_round(hash);
 
   sprintf(out_stream,"%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x", 
@@ -112,8 +114,6 @@ void md5_final(struct md5_hash* hash, char out_stream[64]){
       ((uint8_t*)&hash->b0)[0], ((uint8_t*)&hash->b0)[1], ((uint8_t*)&hash->b0)[2], ((uint8_t*)&hash->b0)[3],
       ((uint8_t*)&hash->c0)[0], ((uint8_t*)&hash->c0)[1], ((uint8_t*)&hash->c0)[2], ((uint8_t*)&hash->c0)[3],
       ((uint8_t*)&hash->d0)[0], ((uint8_t*)&hash->d0)[1], ((uint8_t*)&hash->d0)[2], ((uint8_t*)&hash->d0)[3]);
-  
-  free(hash->buffer);
 }
 
 common_hash_init_update(md5);
@@ -124,9 +124,8 @@ int l_md5_final(lua_State* L){
 
   struct md5_hash* a = (struct md5_hash*)lua_touserdata(L, -1);
 
-  char digest[128];
+  char digest[128] = {0};
   md5_final(a, digest);
-
   lua_pushstring(L, digest);
   return 1;
 }
@@ -142,7 +141,7 @@ int l_md5(lua_State* L){
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
-  char digest[64];
+  char digest[128] = {0};
   md5(a, len, digest);
   lua_pushstring(L, digest);
 
