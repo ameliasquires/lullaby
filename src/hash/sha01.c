@@ -88,7 +88,7 @@ void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash){
 
   for(; total_add >= bs;){
     memcpy(hash->buffer + hash->bufflen, input + read, bs - hash->bufflen);
-    total_add -= bs - hash->bufflen;
+    total_add -= bs;
     hash->bufflen = 0;
     read += bs;
     sha01_round(hash);
@@ -96,9 +96,9 @@ void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash){
 
   memset(hash->buffer, 0, bs);
 
-  if(read != total_add){
-    memcpy(hash->buffer, input + read, total_add - read);
-    hash->bufflen = total_add - read;
+  if(0 != total_add){
+    memcpy(hash->buffer, input + read, total_add);
+    hash->bufflen = total_add;
   }
 }
 
@@ -107,7 +107,9 @@ void sha01_final(struct sha01_hash* hash, char* out_stream){
 
   if(hash->bufflen > 55) {
     //too large, needs another buffer
+    memset(hash->buffer + hash->bufflen + 1, 0, 64 - hash->bufflen);
     sha01_round(hash);
+    memset(hash->buffer, 0, 64);
   }
 
   size_t lhhh = 8*hash->total;
@@ -182,7 +184,7 @@ int l_sha1(lua_State* L){
 
   char digest[160];
 
-  sha1(a, len, digest);
+  sha1((uint8_t*)a, len, digest);
   lua_pushstring(L, digest);
 
   return 1;
@@ -195,7 +197,7 @@ int l_sha0(lua_State* L){
   
   char digest[160];
 
-  sha0(a, len, digest);
+  sha0((uint8_t*)a, len, digest);
   lua_pushstring(L, digest);
 
   return 1;

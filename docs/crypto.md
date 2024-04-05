@@ -9,8 +9,6 @@ this is a pretty big problem meaning the input must be given at once, this is be
 but bad for big files. because of this, i decided not to support inputs over 2^64 characters (which is an
 insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
 
-remaining to fix (inc. variants): 15
-
 |name|out len|other args|extra|incremental|
 |--|--|--|--|--|
 | adler32 | 32 | nil | | y |
@@ -54,9 +52,9 @@ remaining to fix (inc. variants): 15
 | murmur2_32 | 32 | *seed | | n |
 | pjw | 32 | nil | | y |
 | sdbm | 64 | nil | | y |
-| sha512 | 512 | nil | | todo |
-| sha384 | 384 | nil | | todo |
-| sha512_t | length of arg 2 | t (bit length) | bit length range is 0 < t <= 512 (this isnt checked, and it should accept any value) | todo |
+| sha512 | 512 | nil | | y |
+| sha384 | 384 | nil | | y |
+| sha512_t | length of arg 2 | t (bit length) | bit length range is 0 < t <= 512 (this isnt checked, and it should accept any value) | y |
 | spookyhash128_v1 | 128 | *seed | | n |
 | spookyhash128_v2 | 128 | *seed | | n |
 | spookyhash64_v1 | 64 | *seed | | n |
