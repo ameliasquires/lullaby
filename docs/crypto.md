@@ -87,6 +87,11 @@ obj = llib.crypto.adler32()
 obj:update("meow")
 hash = obj:final() --043c01b9s (the same)
 
+--along with the + operator being overloaded to work as obj:update and returning the current final
+obj = llib.crypto.adler32()
+hash = obj + meow -- (the same again)
+hash = obj:final() -- (the same, again)
+
 --and of course, the single function method still works too (will still do init-update-final in the backend)
 hash = llib.crypto.adler32("meow") --043c01b9s (the same)
 

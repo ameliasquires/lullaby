@@ -62,10 +62,7 @@ int l_setpearson(lua_State* L){
 common_hash_init_update(pearson);
 
 int l_pearson_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct pearson_hash* a = (struct pearson_hash*)lua_touserdata(L, -1);
+  struct pearson_hash* a = (struct pearson_hash*)lua_touserdata(L, 1);
   uint8_t u = pearson_final(a);
   char digest[8];
   sprintf(digest,"%x",u);

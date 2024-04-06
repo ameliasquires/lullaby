@@ -168,6 +168,11 @@ void _sha512_t_final(struct sha512_hash* hash){
 }
 
 void sha512_final(struct sha512_hash* hash, char* out_stream){
+  uint8_t old[bs];
+  struct sha512_hash old_hash;
+  memcpy(&old_hash, hash, sizeof * hash);
+  memcpy(old, hash->buffer, bs);
+
   _sha512_t_final(hash);
 
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h0);
@@ -178,10 +183,18 @@ void sha512_final(struct sha512_hash* hash, char* out_stream){
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h5);
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h6);
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h7);
+
+  memcpy(hash, &old_hash, sizeof * hash);
+  memcpy(hash->buffer, old, bs);
 }
 
 void sha384_final(struct sha512_hash* hash, char* out_stream){
+  uint8_t old[bs];
+  struct sha512_hash old_hash;
+  memcpy(&old_hash, hash, sizeof * hash);
+  memcpy(old, hash->buffer, bs);
   _sha512_t_final(hash);
+
 
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h0);
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h1);
@@ -189,6 +202,9 @@ void sha384_final(struct sha512_hash* hash, char* out_stream){
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h3);
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h4);
   sprintf((char*)out_stream, "%s%016lx", out_stream, hash->h5);
+
+  memcpy(hash, &old_hash, sizeof * hash);
+  memcpy(hash->buffer, old, bs);
 }
 
 void sha512(uint8_t* in, size_t len, char* out){
@@ -219,7 +235,7 @@ struct iv sha_iv_gen(int i){
     sprintf((char*)in, "SHA-512/%i",i);
     struct sha512_hash a = sha512_t_init(oh);
     sha512_update(in, strlen((char*)in), &a);
-    sha512_final(&a, (char*)nh);
+    _sha512_t_final(&a);
     return (struct iv){.h0 = a.h0, .h1 = a.h1, .h2 = a.h2, .h3 = a.h3, .h4 = a.h4, .h5 = a.h5, .h6 = a.h6, .h7 = a.h7};
 }
 
@@ -227,10 +243,7 @@ lua_common_hash_init_ni(sha512, sha512, sha512_t_init_l(sha512_iv, L));
 lua_common_hash_update(sha512, sha512);
 
 int l_sha512_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, -1);
+  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, 1);
 
   char digest[512] = {0};
   sha512_final(a, digest);
@@ -243,10 +256,7 @@ lua_common_hash_init_ni(sha384, sha384, sha512_t_init_l(sha384_iv, L));
 lua_common_hash_update(sha384, sha384);
 
 int l_sha384_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, -1);
+  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, 1);
 
   char digest[384] = {0};
   sha384_final(a, digest);
@@ -255,6 +265,7 @@ int l_sha384_final(lua_State* L){
   return 1;
 }
 
+lua_common_hash_meta(sha512_t);
 int l_sha512_t_init(lua_State* L){
   int tt = luaL_checkinteger(L, 1);
   lua_newtable(L);
@@ -265,21 +276,16 @@ int l_sha512_t_init(lua_State* L){
   *a = sha512_t_init_l(sha_iv_gen(tt), L);
   a->t = tt;
   
-  luaI_tsetv(L, t, "ud", ud);
-  luaI_tsetcf(L, t, "update", l_sha512_t_update);
-  luaI_tsetcf(L, t, "final", l_sha512_t_final);
-  
-  lua_pushvalue(L, t);
+  lua_common_hash_meta_def(sha512_t);
+
+  lua_pushvalue(L, ud);
   return 1;
 }
 
 lua_common_hash_update(sha512, sha512_t);
 
 int l_sha512_t_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, -1);
+  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, 1);
 
   char digest[512] = {0};
   sha512_final(a, digest);
@@ -313,7 +319,7 @@ int l_sha384(lua_State* L){
 }
 
 int l_sha512_t(lua_State* L){ 
-    if(lua_gettop(L) == 1) return l_sha512_t_init(L);
+  if(lua_gettop(L) == 1) return l_sha512_t_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
   uint64_t t = luaL_checkinteger(L, 2);

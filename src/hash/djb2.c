@@ -26,10 +26,7 @@ uint32_t djb2(uint8_t * in, size_t len){
 common_hash_init_update(djb2);
 
 int l_djb2_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct djb2_hash* a = (struct djb2_hash*)lua_touserdata(L, -1);
+  struct djb2_hash* a = (struct djb2_hash*)lua_touserdata(L, 1);
   uint32_t u = djb2_final(a);
   char digest[64];
   sprintf(digest,"%08x",u);

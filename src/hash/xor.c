@@ -24,10 +24,7 @@ uint8_t xor8(uint8_t* aa, size_t len){
 common_hash_init_update(xor8);
 
 int l_xor8_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct xor8_hash* a = (struct xor8_hash*)lua_touserdata(L, -1);
+  struct xor8_hash* a = (struct xor8_hash*)lua_touserdata(L, 1);
   uint8_t u = xor8_final(a);
   char digest[8];
   sprintf(digest,"%02x",u);

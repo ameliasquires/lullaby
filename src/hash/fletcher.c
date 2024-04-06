@@ -70,10 +70,7 @@ common_hash_init_update(fletcher16);
 common_hash_init_update(fletcher32);
 
 int l_fletcher8_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct fletcher8_hash* a = (struct fletcher8_hash*)lua_touserdata(L, -1);
+  struct fletcher8_hash* a = (struct fletcher8_hash*)lua_touserdata(L, 1);
   uint8_t u = fletcher8_final(a);
   char digest[8];
   sprintf(digest,"%02x",u);
@@ -82,10 +79,7 @@ int l_fletcher8_final(lua_State* L){
 }
 
 int l_fletcher16_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct fletcher16_hash* a = (struct fletcher16_hash*)lua_touserdata(L, -1);
+  struct fletcher16_hash* a = (struct fletcher16_hash*)lua_touserdata(L, 1);
   uint16_t u = fletcher16_final(a);
   char digest[16];
   sprintf(digest,"%04x",u);
@@ -94,10 +88,7 @@ int l_fletcher16_final(lua_State* L){
 }
 
 int l_fletcher32_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct fletcher32_hash* a = (struct fletcher32_hash*)lua_touserdata(L, -1);
+  struct fletcher32_hash* a = (struct fletcher32_hash*)lua_touserdata(L, 1);
   uint32_t u = fletcher32_final(a);
   char digest[32];
   sprintf(digest,"%08x",u);

@@ -28,10 +28,7 @@ uint16_t bsdchecksum(uint8_t* a, size_t len){
 common_hash_init_update(bsdchecksum);
 
 int l_bsdchecksum_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct bsdchecksum_hash* a = (struct bsdchecksum_hash*)lua_touserdata(L, -1);
+  struct bsdchecksum_hash* a = (struct bsdchecksum_hash*)lua_touserdata(L, 1);
   uint32_t u = bsdchecksum_final(a);
   char digest[32];
   sprintf(digest,"%i",u);

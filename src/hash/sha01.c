@@ -111,6 +111,11 @@ void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash){
 }
 
 void sha01_final(struct sha01_hash* hash, char* out_stream){
+  uint8_t old[bs];
+  struct sha01_hash old_hash;
+  memcpy(&old_hash, hash, sizeof * hash);
+  memcpy(old, hash->buffer, bs);
+
   hash->buffer[hash->bufflen] = 0x80;
 
   if(hash->bufflen > 55) {
@@ -126,6 +131,9 @@ void sha01_final(struct sha01_hash* hash, char* out_stream){
   sha01_round(hash);
 
   sprintf(out_stream,"%02x%02x%02x%02x%02x",hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
+
+  memcpy(hash, &old_hash, sizeof * hash);
+  memcpy(hash->buffer, old, bs);
 }
 
 struct sha01_hash sha0_init(){
@@ -171,10 +179,7 @@ lua_common_hash_init_ni(sha0, sha0, sha01_init_l(0, L));
 lua_common_hash_update(sha0, sha0);
 
 int l_sha1_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct sha01_hash* a = (struct sha01_hash*)lua_touserdata(L, -1);
+  struct sha01_hash* a = (struct sha01_hash*)lua_touserdata(L, 1);
 
   char digest[160];
   sha1_final(a, digest);

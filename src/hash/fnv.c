@@ -39,16 +39,13 @@ lua_common_hash_update(fnv_1, fnv_1);
 lua_common_hash_update(fnv_1, fnv_0);
 lua_common_hash_update(fnv_1, fnv_a);
 
-lua_common_hash_init_warg(fnv_1, fnv_1, ;, v_1);
-lua_common_hash_init_warg(fnv_1, fnv_0, ;, v_0);
-lua_common_hash_init_warg(fnv_1, fnv_a, ;, v_a);
+lua_common_hash_init_ni(fnv_1, fnv_1, fnv_1_init(v_1));
+lua_common_hash_init_ni(fnv_1, fnv_0, fnv_1_init(v_0));
+lua_common_hash_init_ni(fnv_1, fnv_a, fnv_1_init(v_a));
 
 #define aaa(v)\
 int l_fnv_##v##_final(lua_State* L){\
-  lua_pushstring(L, "ud");\
-  lua_gettable(L, 1);\
-\
-  struct fnv_1_hash* a = (struct fnv_1_hash*)lua_touserdata(L, -1);\
+  struct fnv_1_hash* a = (struct fnv_1_hash*)lua_touserdata(L, 1);\
   uint64_t u = fnv_1_final(a);\
   char digest[64];\
   sprintf(digest,"%16lx",u);\

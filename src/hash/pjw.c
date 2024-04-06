@@ -30,10 +30,7 @@ uint32_t pjw(uint8_t* in, size_t len){
 common_hash_init_update(pjw);
 
 int l_pjw_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct pjw_hash* a = (struct pjw_hash*)lua_touserdata(L, -1);
+  struct pjw_hash* a = (struct pjw_hash*)lua_touserdata(L, 1);
   uint32_t u = pjw_final(a);
   char digest[32];
   sprintf(digest,"%08x",u);

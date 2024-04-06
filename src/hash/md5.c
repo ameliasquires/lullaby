@@ -104,6 +104,11 @@ void md5_update(uint8_t* input, size_t len, struct md5_hash* hash){
 }
 
 void md5_final(struct md5_hash* hash, char out_stream[64]){
+  uint8_t old[bs];
+  struct md5_hash old_hash;
+  memcpy(&old_hash, hash, sizeof * hash);
+  memcpy(old, hash->buffer, bs);
+
   hash->buffer[hash->bufflen] = 0x80;
 
   if(hash->bufflen > 55) {
@@ -122,6 +127,10 @@ void md5_final(struct md5_hash* hash, char out_stream[64]){
       ((uint8_t*)&hash->b0)[0], ((uint8_t*)&hash->b0)[1], ((uint8_t*)&hash->b0)[2], ((uint8_t*)&hash->b0)[3],
       ((uint8_t*)&hash->c0)[0], ((uint8_t*)&hash->c0)[1], ((uint8_t*)&hash->c0)[2], ((uint8_t*)&hash->c0)[3],
       ((uint8_t*)&hash->d0)[0], ((uint8_t*)&hash->d0)[1], ((uint8_t*)&hash->d0)[2], ((uint8_t*)&hash->d0)[3]);
+
+  memcpy(hash->buffer, old, bs);
+  memcpy(hash, &old_hash, sizeof * hash);
+
 }
 
 lua_common_hash_init_ni(md5, md5, md5_init_l(L));
@@ -129,10 +138,7 @@ lua_common_hash_update(md5, md5);
 //common_hash_init_update(md5);
 
 int l_md5_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct md5_hash* a = (struct md5_hash*)lua_touserdata(L, -1);
+  struct md5_hash* a = (struct md5_hash*)lua_touserdata(L, 1);
 
   char digest[128] = {0};
   md5_final(a, digest);

@@ -27,10 +27,7 @@ uint64_t loselose(uint8_t* in, size_t len){
 common_hash_init_update(loselose);
 
 int l_loselose_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct loselose_hash* a = (struct loselose_hash*)lua_touserdata(L, -1);
+  struct loselose_hash* a = (struct loselose_hash*)lua_touserdata(L, 1);
   uint64_t u = loselose_final(a);
   char digest[64];
   sprintf(digest,"%08lx",u);

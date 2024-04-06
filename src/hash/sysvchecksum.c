@@ -26,10 +26,7 @@ uint32_t sysvchecksum(uint8_t* aa, size_t len){
 common_hash_init_update(sysvchecksum);
 
 int l_sysvchecksum_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct sysvchecksum_hash* a = (struct sysvchecksum_hash*)lua_touserdata(L, -1);
+  struct sysvchecksum_hash* a = (struct sysvchecksum_hash*)lua_touserdata(L, 1);
   uint32_t u = sysvchecksum_final(a);
   char digest[32];
   sprintf(digest,"%x",u);
