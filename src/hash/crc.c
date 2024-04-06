@@ -82,6 +82,10 @@ uint8_t crc8(uint8_t *aa, size_t len){
     return crc8_final(&a);
 }
 
+common_hash_clone(crc32);
+common_hash_clone(crc16);
+common_hash_clone(crc8);
+
 common_hash_init_update(crc32);
 common_hash_init_update(crc16);
 common_hash_init_update(crc8);

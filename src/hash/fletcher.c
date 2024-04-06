@@ -65,6 +65,10 @@ uint32_t fletcher32(uint8_t *aa, size_t len){
   return fletcher32_final(&a);
 }
 
+common_hash_clone(fletcher32);
+common_hash_clone(fletcher16);
+common_hash_clone(fletcher8);
+
 common_hash_init_update(fletcher8);
 common_hash_init_update(fletcher16);
 common_hash_init_update(fletcher32);

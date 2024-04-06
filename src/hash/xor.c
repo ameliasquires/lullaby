@@ -21,6 +21,7 @@ uint8_t xor8(uint8_t* aa, size_t len){
   return xor8_final(&a);
 }
 
+common_hash_clone(xor8)
 common_hash_init_update(xor8);
 
 int l_xor8_final(lua_State* L){

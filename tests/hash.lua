@@ -13,6 +13,7 @@ function test(name,b,exp,oargs)
   local hash4
   local hash5
   local hash6
+  local hash7
   local add = ""
   if oargs == nil then
     hash = llib.crypto[name](b)
@@ -26,12 +27,14 @@ function test(name,b,exp,oargs)
       hash2 = llib.crypto[name]():update(b):final()
       hash5 = llib.crypto[name]()
       hash6 = hash5 + b;
-      hash5 = hash5:final()
+      hash6 = hash6:final()
+      hash5 = hash5:update(b):final()
     else
       hash2 = llib.crypto[name](table.unpack(oargs)):update(b):final()
       hash5 = llib.crypto[name](table.unpack(oargs))
       hash6 = hash5 + b;
-      hash5 = hash5:final()
+      hash6 = hash6:final()
+      hash5 = hash5:update(b):final()
     end
 
     if(hash5 ~= exp) then

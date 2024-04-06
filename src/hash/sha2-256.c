@@ -239,6 +239,7 @@ struct iv sha_iv_gen(int i){
     return (struct iv){.h0 = a.h0, .h1 = a.h1, .h2 = a.h2, .h3 = a.h3, .h4 = a.h4, .h5 = a.h5, .h6 = a.h6, .h7 = a.h7};
 }
 
+common_hash_clone(sha512);
 lua_common_hash_init_ni(sha512, sha512, sha512_t_init_l(sha512_iv, L));
 lua_common_hash_update(sha512, sha512);
 
@@ -252,6 +253,7 @@ int l_sha512_final(lua_State* L){
   return 1;
 }
 
+common_hash_clone(sha384);
 lua_common_hash_init_ni(sha384, sha384, sha512_t_init_l(sha384_iv, L));
 lua_common_hash_update(sha384, sha384);
 
@@ -265,9 +267,18 @@ int l_sha384_final(lua_State* L){
   return 1;
 }
 
+int l_sha512_t_clone(lua_State* L){
+  struct sha512_hash* a = (struct sha512_hash*)lua_touserdata(L, -1);
+  lua_pushinteger(L, a->t);
+  l_sha512_t_init(L);
+  struct sha512_hash* b = (struct sha512_hash*)lua_touserdata(L, -1);
+  *b = *a;
+  return 1;
+}
+
 lua_common_hash_meta(sha512_t);
 int l_sha512_t_init(lua_State* L){
-  int tt = luaL_checkinteger(L, 1);
+  int tt = luaL_checkinteger(L, -1);
   lua_newtable(L);
   int t = lua_gettop(L);
   

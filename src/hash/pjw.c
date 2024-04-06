@@ -27,6 +27,7 @@ uint32_t pjw(uint8_t* in, size_t len){
     return pjw_final(&a);
 }
 
+common_hash_clone(pjw);
 common_hash_init_update(pjw);
 
 int l_pjw_final(lua_State* L){

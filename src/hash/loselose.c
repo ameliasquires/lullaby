@@ -24,6 +24,7 @@ uint64_t loselose(uint8_t* in, size_t len){
   return loselose_final(&a);
 }
 
+common_hash_clone(loselose);
 common_hash_init_update(loselose);
 
 int l_loselose_final(lua_State* L){

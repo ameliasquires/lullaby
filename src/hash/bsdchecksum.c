@@ -25,6 +25,8 @@ uint16_t bsdchecksum(uint8_t* a, size_t len){
   return bsdchecksum_final(&b);
 }
 
+common_hash_clone(bsdchecksum);
+
 common_hash_init_update(bsdchecksum);
 
 int l_bsdchecksum_final(lua_State* L){

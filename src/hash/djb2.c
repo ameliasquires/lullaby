@@ -23,6 +23,8 @@ uint32_t djb2(uint8_t * in, size_t len){
   return djb2_final(&a);
 }
 
+common_hash_clone(djb2);
+
 common_hash_init_update(djb2);
 
 int l_djb2_final(lua_State* L){
