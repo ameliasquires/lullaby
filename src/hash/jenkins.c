@@ -31,6 +31,7 @@ uint32_t jenkins_oaat(uint8_t* in, size_t len){
   return jenkins_oaat_final(&a);
 }
 
+lua_common_hash_clone(jenkins_oaat, oaat);
 lua_common_hash_init_update(jenkins_oaat, oaat);
 
 int l_oaat_final(lua_State* L){

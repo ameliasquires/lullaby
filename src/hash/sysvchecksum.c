@@ -23,6 +23,7 @@ uint32_t sysvchecksum(uint8_t* aa, size_t len){
   return sysvchecksum_final(&a);
 }
 
+common_hash_clone(sysvchecksum);
 common_hash_init_update(sysvchecksum);
 
 int l_sysvchecksum_final(lua_State* L){

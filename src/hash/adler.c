@@ -23,6 +23,8 @@ uint32_t adler32(uint8_t* aa, size_t len){
   return adler32_final(&dig);
 }
 
+common_hash_clone(adler32);
+
 common_hash_init_update(adler32);
 
 int l_adler32_final(lua_State* L){

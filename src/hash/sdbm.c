@@ -23,6 +23,7 @@ uint64_t sdbm(uint8_t* in, size_t len){
   return sdbm_final(&a);
 }
 
+common_hash_clone(sdbm);
 common_hash_init_update(sdbm);
 
 int l_sdbm_final(lua_State* L){

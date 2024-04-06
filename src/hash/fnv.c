@@ -35,6 +35,10 @@ uint64_t fnv_1(uint8_t* in, size_t len, enum fnv_version A){
   return fnv_1_final(&a);
 }
 
+lua_common_hash_clone(fnv_1, fnv_0);
+lua_common_hash_clone(fnv_1, fnv_1);
+lua_common_hash_clone(fnv_1, fnv_a);
+
 lua_common_hash_update(fnv_1, fnv_1);
 lua_common_hash_update(fnv_1, fnv_0);
 lua_common_hash_update(fnv_1, fnv_a);

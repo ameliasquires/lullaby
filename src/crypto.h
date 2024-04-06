@@ -45,11 +45,24 @@ int tp(lua_State*);
 #define lua_common_hash_init_update(hashname, luaname) lua_common_hash_init(hashname, luaname) lua_common_hash_update(hashname, luaname)
 #define lua_common_hash_init(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init())
 
+#define common_hash_clone(hashname) lua_common_hash_clone(hashname, hashname)
+#define lua_common_hash_clone(hashname, luaname) lua_common_hash_clone_oargs(hashname, luaname, l_##luaname##_init(L))
+#define lua_common_hash_clone_oargs(hashname, luaname, oinit)\
+int l_##luaname##_clone(lua_State* L){\
+  struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, -1);\
+  oinit;\
+  struct hashname##_hash* b = (struct hashname##_hash*)lua_touserdata(L, -1);\
+  *b = *a;\
+  return 1;\
+}
+
 #define lua_common_hash_meta(luaname)\
 int _##luaname##_hash_add(lua_State*L){\
-    l_##luaname##_update(L);\
     lua_pushvalue(L, 1);\
-    return l_##luaname##_final(L);\
+    l_##luaname##_clone(L);\
+    lua_pushvalue(L, -1);\
+    lua_pushvalue(L, 2);\
+    return l_##luaname##_update(L);\
   }\
 int _##luaname##_common_hash(lua_State* L){\
     lua_newtable(L);\
@@ -84,13 +97,13 @@ int _##luaname##_common_hash(lua_State* L){\
 
 #define lua_common_hash_update(hashname, luaname)\
 int l_##luaname##_update(lua_State* L){\
-  struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, 1);\
+  struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, -2);\
   size_t len = 0;\
-  uint8_t* b = (uint8_t*)luaL_checklstring(L, 2, &len);\
+  uint8_t* b = (uint8_t*)luaL_checklstring(L, -1, &len);\
   \
   hashname##_update(b, len, a);\
   \
-  lua_pushvalue(L, 1);\
+  lua_pushvalue(L, -2);\
   return 1;\
 }
 

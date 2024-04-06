@@ -59,6 +59,7 @@ int l_setpearson(lua_State* L){
   return 0;
 }
 
+common_hash_clone(pearson);
 common_hash_init_update(pearson);
 
 int l_pearson_final(lua_State* L){
