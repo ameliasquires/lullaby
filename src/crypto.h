@@ -39,50 +39,52 @@ unsigned rotr32(unsigned, unsigned);
 uint64_t rotl64(uint64_t, uint64_t);
 uint64_t rotr64(uint64_t, uint64_t);
 
+int tp(lua_State*);
+
 #define common_hash_init_update(hashname) lua_common_hash_init_update(hashname, hashname)
 #define lua_common_hash_init_update(hashname, luaname) lua_common_hash_init(hashname, luaname) lua_common_hash_update(hashname, luaname)
 #define lua_common_hash_init(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init())
-#define lua_common_hash_init_ni(hashname, luaname, initf)\
- int l_##luaname##_init(lua_State* L){\
+
+#define lua_common_hash_meta(luaname)\
+int _##luaname##_hash_add(lua_State*L){\
+    l_##luaname##_update(L);\
+    lua_pushvalue(L, 1);\
+    return l_##luaname##_final(L);\
+  }\
+int _##luaname##_common_hash(lua_State* L){\
+    lua_newtable(L);\
+    int ti = lua_gettop(L);\
+    luaI_tsetcf(L, ti, "update", l_##luaname##_update);\
+    luaI_tsetcf(L, ti, "final", l_##luaname##_final);\
+    \
+    lua_pushvalue(L, 2);\
+    lua_gettable(L, ti);\
+    return 1;\
+  }
+
+#define lua_common_hash_meta_def(luaname)\
   lua_newtable(L);\
-  int t = lua_gettop(L);\
+  int mt = lua_gettop(L);\
+  luaI_tsetcf(L, mt, "__index", _##luaname##_common_hash);\
+  luaI_tsetcf(L, mt, "__add", _##luaname##_hash_add);\
+  lua_pushvalue(L, mt);\
+  lua_setmetatable(L, ud);\
+
+#define lua_common_hash_init_ni(hashname, luaname, initf)\
+ lua_common_hash_meta(luaname);\
+ int l_##luaname##_init(lua_State* L){\
   \
   struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
   int ud = lua_gettop(L);\
   *a = initf;\
-  \
-  luaI_tsetv(L, t, "ud", ud);\
-  luaI_tsetcf(L, t, "update", l_##luaname##_update);\
-  luaI_tsetcf(L, t, "final", l_##luaname##_final);\
-  \
-  lua_pushvalue(L, t);\
+  lua_common_hash_meta_def(luaname);\
+  lua_pushvalue(L, ud);\
   return 1;\
 }
 
-#define lua_common_hash_init_warg(hashname, luaname, hcode, arg)\
- int l_##luaname##_init(lua_State* L){\
-  hcode;\
-  lua_newtable(L);\
-  int t = lua_gettop(L);\
-  \
-  struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
-  int ud = lua_gettop(L);\
-  *a = hashname##_init(arg);\
-  \
-  luaI_tsetv(L, t, "ud", ud);\
-  luaI_tsetcf(L, t, "update", l_##luaname##_update);\
-  luaI_tsetcf(L, t, "final", l_##luaname##_final);\
-  \
-  lua_pushvalue(L, t);\
-  return 1;\
-}\
-
 #define lua_common_hash_update(hashname, luaname)\
 int l_##luaname##_update(lua_State* L){\
-  lua_pushstring(L, "ud");\
-  lua_gettable(L, 1);\
-  \
-  struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, -1);\
+  struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, 1);\
   size_t len = 0;\
   uint8_t* b = (uint8_t*)luaL_checklstring(L, 2, &len);\
   \

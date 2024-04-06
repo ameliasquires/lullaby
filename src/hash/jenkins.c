@@ -16,11 +16,12 @@ void jenkins_oaat_update(uint8_t* in, size_t len, struct jenkins_oaat_hash* hash
 }
 
 uint32_t jenkins_oaat_final(struct jenkins_oaat_hash* hash){
-  hash->hash += hash->hash << 3;
-  hash->hash ^= hash->hash >> 11;
-  hash->hash += hash->hash << 15;
+  uint32_t h = hash->hash;
+  h += h << 3;
+  h ^= h >> 11;
+  h += h << 15;
 
-  return hash->hash;
+  return h;
 }
 
 
@@ -33,10 +34,7 @@ uint32_t jenkins_oaat(uint8_t* in, size_t len){
 lua_common_hash_init_update(jenkins_oaat, oaat);
 
 int l_oaat_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct jenkins_oaat_hash* a = (struct jenkins_oaat_hash*)lua_touserdata(L, -1);
+  struct jenkins_oaat_hash* a = (struct jenkins_oaat_hash*)lua_touserdata(L, 1);
   uint32_t u = jenkins_oaat_final(a);
   char digest[64];
   sprintf(digest,"%04x",u);

@@ -26,10 +26,7 @@ uint32_t adler32(uint8_t* aa, size_t len){
 common_hash_init_update(adler32);
 
 int l_adler32_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, -1);
+  struct adler32_hash* a = (struct adler32_hash*)lua_touserdata(L, 1);
   uint32_t u = adler32_final(a);
   char digest[32];
   sprintf(digest,"%08x",u);

@@ -87,10 +87,7 @@ common_hash_init_update(crc16);
 common_hash_init_update(crc8);
 
 int l_crc8_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct crc8_hash* a = (struct crc8_hash*)lua_touserdata(L, -1);
+  struct crc8_hash* a = (struct crc8_hash*)lua_touserdata(L, 1);
   uint32_t u = crc8_final(a);
   char digest[8];
   sprintf(digest,"%x",u);
@@ -99,10 +96,7 @@ int l_crc8_final(lua_State* L){
 }
 
 int l_crc16_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct crc16_hash* a = (struct crc16_hash*)lua_touserdata(L, -1);
+  struct crc16_hash* a = (struct crc16_hash*)lua_touserdata(L, 1);
   uint32_t u = crc16_final(a);
   char digest[16];
   sprintf(digest,"%04x",u);
@@ -111,10 +105,7 @@ int l_crc16_final(lua_State* L){
 }
 
 int l_crc32_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct crc32_hash* a = (struct crc32_hash*)lua_touserdata(L, -1);
+  struct crc32_hash* a = (struct crc32_hash*)lua_touserdata(L, 1);
   uint32_t u = crc32_final(a);
   char digest[32];
   sprintf(digest,"%08x",u);

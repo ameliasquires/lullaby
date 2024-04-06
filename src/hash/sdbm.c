@@ -26,10 +26,7 @@ uint64_t sdbm(uint8_t* in, size_t len){
 common_hash_init_update(sdbm);
 
 int l_sdbm_final(lua_State* L){
-  lua_pushstring(L, "ud");
-  lua_gettable(L, 1);
-
-  struct sdbm_hash* a = (struct sdbm_hash*)lua_touserdata(L, -1);
+  struct sdbm_hash* a = (struct sdbm_hash*)lua_touserdata(L, 1);
   uint64_t u = sdbm_final(a);
   char digest[64];
   sprintf(digest,"%016lx",u);

@@ -11,6 +11,8 @@ function test(name,b,exp,oargs)
   local hash2
   local hash3
   local hash4
+  local hash5
+  local hash6
   local add = ""
   if oargs == nil then
     hash = llib.crypto[name](b)
@@ -22,8 +24,32 @@ function test(name,b,exp,oargs)
   if(llib.crypto[name.."_init"] ~= nil) then
     if(oargs == nil) then
       hash2 = llib.crypto[name]():update(b):final()
-    else 
+      hash5 = llib.crypto[name]()
+      hash6 = hash5 + b;
+      hash5 = hash5:final()
+    else
       hash2 = llib.crypto[name](table.unpack(oargs)):update(b):final()
+      hash5 = llib.crypto[name](table.unpack(oargs))
+      hash6 = hash5 + b;
+      hash5 = hash5:final()
+    end
+
+    if(hash5 ~= exp) then
+      fail = true
+      functions_failed = functions_failed + 1
+      llib.io.error(name.." + then final method not working, got:\n\t"..hash5.." other was:\n\t"..exp)
+    else 
+      functions_working = functions_working + 1
+      llib.io.log(name.." + then final method working "..hash5.." == "..exp)
+    end
+    
+    if(hash6 ~= exp) then
+      fail = true 
+      functions_failed = functions_failed + 1 
+      llib.io.error(name.." + method not working, got:\n\t"..hash6.." other was:\n\t"..exp)
+    else 
+      functions_working = functions_working + 1
+      llib.io.log(name.." + method working "..hash6.." == "..exp)
     end
 
     if(oargs == nil) then
@@ -85,7 +111,6 @@ function test(name,b,exp,oargs)
   else 
     hashes_working=hashes_working + 1
   end
-
 end
 
 test("adler32","meow","043c01b9")
