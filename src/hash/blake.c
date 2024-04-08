@@ -210,7 +210,7 @@ void blake512(char *out, char *in, uint64_t inlen, enum blake512_v v){
     }
 
     for(int i = 0; i != (v==b512?8:6); i++){
-        sprintf(out, "%s%016lx",out, (hash)[i]);
+        sprintf(out, "%s%016llx",out, (hash)[i]);
     }
 }
 

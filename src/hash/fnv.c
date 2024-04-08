@@ -52,7 +52,7 @@ int l_fnv_##v##_final(lua_State* L){\
   struct fnv_1_hash* a = (struct fnv_1_hash*)lua_touserdata(L, 1);\
   uint64_t u = fnv_1_final(a);\
   char digest[64];\
-  sprintf(digest,"%16lx",u);\
+  sprintf(digest,"%16llx",u);\
   lua_pushstring(L, digest);\
   return 1;\
 }
@@ -69,7 +69,7 @@ int l_fnv_0(lua_State* L){
   char digest[64];
 
   uint64_t u = fnv_1(a, len, v_0);
-  sprintf(digest,"%16lx",u);
+  sprintf(digest,"%16llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -82,7 +82,7 @@ int l_fnv_1(lua_State* L){
   char digest[64];
 
   uint64_t u = fnv_1(a, len, v_1);
-  sprintf(digest,"%16lx",u);
+  sprintf(digest,"%16llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -95,7 +95,7 @@ int l_fnv_a(lua_State* L){
   char digest[64];
 
   uint64_t u = fnv_1(a, len, v_a);
-  sprintf(digest,"%16lx",u);
+  sprintf(digest,"%16llx",u);
   lua_pushstring(L, digest);
   return 1;
 }

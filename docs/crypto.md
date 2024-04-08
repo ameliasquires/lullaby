@@ -15,8 +15,8 @@ insane amount anyways). i likely will go back and rewrite all of these to fix bo
 | bsdchecksum | 16 | nil | | y |
 | sha0 | 160 | nil | insecure, use sha1| y |
 | sha1 | 160 | nil | | y |
-| sha256 | 256 | nil | | todo |
-| sha224 | 224 | nil | | todo |
+| sha256 | 256 | nil | | y |
+| sha224 | 224 | nil | | y |
 | pearson | 8 | nil | use setpearson(table) to change the table, initial is 0..255| y |
 | xxh64 | 64 | nil | xxhash | todo|
 | xxh32 | 32 | nil | | todo |
