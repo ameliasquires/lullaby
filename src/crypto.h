@@ -108,7 +108,6 @@ int l_##luaname##_update(lua_State* L){\
 }
 
 static const luaL_Reg crypto_function_list [] = {
-      {"sha256",l_sha256}, {"sha224",l_sha224},
       {"setpearson",l_setpearson}, {"xxh64",l_xxh64},
       {"xxh32",l_xxh32},  {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
@@ -153,6 +152,8 @@ static const luaL_Reg crypto_function_list [] = {
       {"sha512", l_sha512}, {"sha512_init", l_sha512_init}, {"sha512_update", l_sha512_update}, {"sha512_final", l_sha512_final},
       {"sha384", l_sha384}, {"sha384_init", l_sha384_init}, {"sha384_update", l_sha384_update}, {"sha384_final", l_sha384_final},
       {"sha512_t", l_sha512_t}, {"sha512_t_init", l_sha512_t_init}, {"sha512_t_update", l_sha512_t_update}, {"sha512_t_final", l_sha512_t_final},
+      {"sha256",l_sha256}, {"sha256_init",l_sha256_init}, {"sha256_update",l_sha256_update}, {"sha256_final",l_sha256_final},
+      {"sha224",l_sha224}, {"sha224_init",l_sha224_init}, {"sha224_update",l_sha224_update}, {"sha224_final",l_sha224_final},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},

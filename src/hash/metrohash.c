@@ -169,7 +169,7 @@ int l_metrohash64_v1(lua_State* L){
   char digest[64];
 
   uint64_t u = metrohash64(a, len, seed, v1);
-  sprintf(digest,"%016lx",u);
+  sprintf(digest,"%016llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -184,7 +184,7 @@ int l_metrohash64_v2(lua_State* L){
   char digest[64];
 
   uint64_t u = metrohash64(a, len, seed, v2);
-  sprintf(digest,"%016lx",u);
+  sprintf(digest,"%016llx",u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -200,7 +200,7 @@ int l_metrohash128_v1(lua_State* L){
 
   uint64_t u1, u2;
   metrohash128(a, len, seed, &u1, &u2, v1);
-  sprintf(digest,"%016lx%016lx",u1,u2);
+  sprintf(digest,"%016llx%016llx",u1,u2);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -216,7 +216,7 @@ int l_metrohash128_v2(lua_State* L){
 
   uint64_t u1, u2;
   metrohash128(a, len, seed, &u1, &u2, v2);
-  sprintf(digest,"%016lx%016lx",u1,u2);
+  sprintf(digest,"%016llx%016llx",u1,u2);
   lua_pushstring(L, digest);
   return 1;
 }
