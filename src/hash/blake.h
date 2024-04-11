@@ -27,6 +27,21 @@ enum blake512_v {
 };
 
 int l_blake256(lua_State* L);
+int l_blake256_init(lua_State* L);
+int l_blake256_update(lua_State* L);
+int l_blake256_final(lua_State* L);
+
 int l_blake224(lua_State* L);
+int l_blake224_init(lua_State* L);
+int l_blake224_update(lua_State* L);
+int l_blake224_final(lua_State* L);
+
 int l_blake512(lua_State* L);
+int l_blake512_init(lua_State* L);
+int l_blake512_update(lua_State* L);
+int l_blake512_final(lua_State* L);
+
 int l_blake384(lua_State* L);
+int l_blake384_init(lua_State* L);
+int l_blake384_update(lua_State* L);
+int l_blake384_final(lua_State* L);

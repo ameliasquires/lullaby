@@ -63,10 +63,10 @@ insane amount anyways). i likely will go back and rewrite all of these to fix bo
 | spookyhash32_v2 | 32 | *seed | | n |
 | blake2b | length of arg 2 * 8 | *output len (default is 64), *key | | todo |
 | blake2s | length of arg 2 * 8 | *output len (default is 32), *key | | todo |
-| blake256 | 256 | nil | | todo |
-| blake224 | 224 | nil | | todo |
-| blake512 | 512 | nil | | todo |
-| blake384 | 384 | nil | | todo |
+| blake256 | 256 | nil | | y |
+| blake224 | 224 | nil | | y |
+| blake512 | 512 | nil | | y |
+| blake384 | 384 | nil | | y |
 
 ### usage
 
@@ -75,7 +75,7 @@ llib.crypto.sha512("meow") -- e88348269bad036160f0d9558b7c5de68163b50e1a6ce46e85
 llib.crypto.sha512_t("meow", 224) -- would be sha512/224 - ad5e403e0d74532187f4e1665c7e705ab5eb3c2fe07ae73a3ff998b2
 ```
 
-functions supporting updates (listed with %, see note above) can be used like so:
+functions supporting updates (see above) can be used like so:
 
 ```lua
 obj = llib.crypto.adler32() --adler32_init is equivilant to adler32 with no params
