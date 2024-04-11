@@ -123,8 +123,8 @@ static const luaL_Reg crypto_function_list [] = {
       {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
       {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
       {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
-      {"blake2b", l_blake2b}, {"blake2s", l_blake2s}, {"blake256", l_blake256},
-      {"blake224", l_blake224}, {"blake512", l_blake512}, {"blake384", l_blake384},
+      {"blake2b", l_blake2b}, {"blake2s", l_blake2s}, 
+      {"blake512", l_blake512}, {"blake384", l_blake384},
 
       {"adler32",l_adler32}, {"adler32_init",l_adler32_init}, {"adler32_update",l_adler32_update}, {"adler32_final",l_adler32_final},
       {"bsdchecksum",l_bsdchecksum}, {"bsdchecksum_init",l_bsdchecksum_init}, {"bsdchecksum_update",l_bsdchecksum_update}, {"bsdchecksum_final",l_bsdchecksum_final},
@@ -154,6 +154,10 @@ static const luaL_Reg crypto_function_list [] = {
       {"sha512_t", l_sha512_t}, {"sha512_t_init", l_sha512_t_init}, {"sha512_t_update", l_sha512_t_update}, {"sha512_t_final", l_sha512_t_final},
       {"sha256",l_sha256}, {"sha256_init",l_sha256_init}, {"sha256_update",l_sha256_update}, {"sha256_final",l_sha256_final},
       {"sha224",l_sha224}, {"sha224_init",l_sha224_init}, {"sha224_update",l_sha224_update}, {"sha224_final",l_sha224_final},
+      {"blake256", l_blake256}, {"blake256_init", l_blake256_init}, {"blake256_update", l_blake256_update}, {"blake256_final", l_blake256_final},
+      {"blake224", l_blake224}, {"blake224_init", l_blake224_init}, {"blake224_update", l_blake224_update}, {"blake224_final", l_blake224_final},
+      {"blake512", l_blake512}, {"blake512_init", l_blake512_init}, {"blake512_update", l_blake512_update}, {"blake512_final", l_blake512_final},
+      {"blake384", l_blake384}, {"blake384_init", l_blake384_init}, {"blake384_update", l_blake384_update}, {"blake384_final", l_blake384_final},
 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},
