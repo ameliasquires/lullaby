@@ -123,7 +123,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
       {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
       {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
-      {"blake2b", l_blake2b}, {"blake2s", l_blake2s}, 
+      {"blake2b", l_blake2b}, 
       {"blake512", l_blake512}, {"blake384", l_blake384},
 
       {"adler32",l_adler32}, {"adler32_init",l_adler32_init}, {"adler32_update",l_adler32_update}, {"adler32_final",l_adler32_final},
@@ -158,7 +158,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"blake224", l_blake224}, {"blake224_init", l_blake224_init}, {"blake224_update", l_blake224_update}, {"blake224_final", l_blake224_final},
       {"blake512", l_blake512}, {"blake512_init", l_blake512_init}, {"blake512_update", l_blake512_update}, {"blake512_final", l_blake512_final},
       {"blake384", l_blake384}, {"blake384_init", l_blake384_init}, {"blake384_update", l_blake384_update}, {"blake384_final", l_blake384_final},
-
+      {"blake2s", l_blake2s}, {"blake2s_init", l_blake2s_init}, {"blake2s_update", l_blake2s_update}, {"blake2s_final", l_blake2s_final}, 
       {"uuencode",l_uuencode},
       {"uudecode",l_uudecode},
 

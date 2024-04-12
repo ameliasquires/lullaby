@@ -87,14 +87,6 @@ void compress256(uint32_t* hash, char *block, uint64_t compressed){
   //printf("\n");
 }
 
-struct blake256_hash {
-    uint8_t* buffer;
-    size_t bufflen;
-    uint32_t total, *hash;
-    uint64_t compressed;
-};
-#define blake224_hash blake256_hash
-
 #define bs 64
 struct blake256_hash blake256_init(){
     struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
@@ -307,13 +299,6 @@ void compress512(uint64_t* hash, uint8_t *block, uint64_t compressed){
   for(int i = 0; i < 16; i++)  hash[i % 8] ^= v[i];
 }
 
-struct blake512_hash {
-    uint8_t* buffer;
-    size_t bufflen;
-    uint64_t total, *hash;
-    uint64_t compressed;
-};
-#define blake384_hash blake512_hash
 //#undef bs
 #define bs_2 128
 

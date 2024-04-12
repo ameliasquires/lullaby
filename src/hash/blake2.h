@@ -14,8 +14,12 @@ static const uint8_t blake2b_sigma[10][16] = {
   { 10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0 },
 };
 
-void blake2s(char*, int, char*, int, int, char*);
+//void blake2s(char*, int, char*, int, int, char*);
 void blake2b(char*, int, char*, int, int, char*);
 
 int l_blake2s(lua_State*);
+int l_blake2s_init(lua_State*);
+int l_blake2s_update(lua_State*);
+int l_blake2s_final(lua_State*);
+
 int l_blake2b(lua_State*);
