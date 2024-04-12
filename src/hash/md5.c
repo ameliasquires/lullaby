@@ -151,6 +151,7 @@ void md5(uint8_t* input, size_t len, char out_stream[64]){
   struct md5_hash aa = md5_init();
   md5_update(input, len, &aa);
   md5_final(&aa, out_stream);
+  free(aa.buffer);
 }
 
 int l_md5(lua_State* L){

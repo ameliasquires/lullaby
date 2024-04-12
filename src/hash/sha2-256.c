@@ -211,12 +211,14 @@ void sha512(uint8_t* in, size_t len, char* out){
     struct sha512_hash a = sha512_init();
     sha512_update(in, len, &a);
     sha512_final(&a, out);
+    free(a.buffer);
 }
 
 void sha384(uint8_t* in, size_t len, char* out){
     struct sha512_hash a = sha384_init();
     sha384_update(in, len, &a);
     sha384_final(&a, out);
+    free(a.buffer);
 }
 
 void sha512_t(uint8_t* in, size_t len, int t, char* out){
@@ -224,7 +226,9 @@ void sha512_t(uint8_t* in, size_t len, int t, char* out){
     sha512_update(in, len, &a);
     sha512_final(&a, out);
     out[t/4] = '\0';
+    free(a.buffer);
 }
+
 struct iv sha_iv_gen(int i){
     struct iv oh = {.h0 = sha512_iv.h0 ^ 0xa5a5a5a5a5a5a5a5, .h1 = sha512_iv.h1 ^ 0xa5a5a5a5a5a5a5a5, .h2 = sha512_iv.h2 ^ 0xa5a5a5a5a5a5a5a5,
         .h3 = sha512_iv.h3 ^ 0xa5a5a5a5a5a5a5a5, .h4 = sha512_iv.h4 ^ 0xa5a5a5a5a5a5a5a5, .h5 = sha512_iv.h5 ^ 0xa5a5a5a5a5a5a5a5,
@@ -236,6 +240,7 @@ struct iv sha_iv_gen(int i){
     struct sha512_hash a = sha512_t_init(oh);
     sha512_update(in, strlen((char*)in), &a);
     _sha512_t_final(&a);
+    free(a.buffer);
     return (struct iv){.h0 = a.h0, .h1 = a.h1, .h2 = a.h2, .h3 = a.h3, .h4 = a.h4, .h5 = a.h5, .h6 = a.h6, .h7 = a.h7};
 }
 
