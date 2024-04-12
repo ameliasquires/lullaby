@@ -164,12 +164,14 @@ void sha0(uint8_t* a, size_t len, char* out_stream){
     struct sha01_hash aa = sha0_init();
     sha0_update(a, len, &aa);
     sha0_final(&aa, out_stream);
+    free(aa.buffer);
 }
 
 void sha1(uint8_t* a, size_t len, char* out_stream){
     struct sha01_hash aa = sha1_init();
     sha1_update(a, len, &aa);
     sha1_final(&aa, out_stream);
+    free(aa.buffer);
 }
 
 common_hash_clone(sha1);

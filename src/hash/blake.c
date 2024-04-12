@@ -253,12 +253,16 @@ void blake256(char *out, char *in, uint64_t inlen){
   struct blake256_hash a = blake256_init();
   blake256_update((uint8_t*)in, inlen, &a);
   blake256_final(&a, out);
+  free(a.buffer);
+  free(a.hash);
 }
 
 void blake224(char *out, char *in, uint64_t inlen){
   struct blake224_hash a = blake224_init();
   blake224_update((uint8_t*)in, inlen, &a);
   blake224_final(&a, out);
+  free(a.buffer);
+  free(a.hash);
 }
 
 #define blake_round_512(a,b,c,d,e)          \
@@ -449,6 +453,8 @@ void blake512(uint8_t* in, size_t len, char* out){
   struct blake512_hash a = blake512_init();
   blake512_update(in, len, &a);
   blake512_final(&a, out);
+  free(a.buffer);
+  free(a.hash);
 }
 
 void blake384_final(struct blake384_hash* hash, char* out_stream){
@@ -474,6 +480,8 @@ void blake384(uint8_t* in, size_t len, char* out){
   struct blake384_hash a = blake384_init();
   blake384_update(in, len, &a);
   blake384_final(&a, out);
+  free(a.buffer);
+  free(a.hash);
 }
 
 int l_blake256_clone(lua_State* L){
