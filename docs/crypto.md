@@ -62,7 +62,7 @@ insane amount anyways). i likely will go back and rewrite all of these to fix bo
 | spookyhash32_v1 | 32 | *seed | | n |
 | spookyhash32_v2 | 32 | *seed | | n |
 | blake2b | length of arg 2 * 8 | *output len (default is 64), *key | | todo |
-| blake2s | length of arg 2 * 8 | *output len (default is 32), *key | | todo |
+| blake2s | length of arg 2 * 8 | *output len (default is 32), *key | | y |
 | blake256 | 256 | nil | | y |
 | blake224 | 224 | nil | | y |
 | blake512 | 512 | nil | | y |
