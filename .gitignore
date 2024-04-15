@@ -8,3 +8,6 @@ a.out
 test
 test2
 *.py
+
+src/*.o
+src/*/*.o
