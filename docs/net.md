@@ -10,6 +10,15 @@ the function will be ran on initilization, the argument has info on the server a
 **
 right now everything within a server:GET function is partially global, it can read global variables (by making a copy),
 it can not read/copy local variables or modify globals
+
+also, (for now) all globals must be refrenced as _G,
+ie:
+function foo()
+    ...
+end
+
+_G.foo()
+_G.llib.crypto.md5("hewwo purr")
 **
 
 ```lua

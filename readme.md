@@ -1,6 +1,6 @@
-build with `clang -shared src/{*.c,*/*.c} -o llib.so -fPIC`
+build with `make`, output is `./llib.dll`
 
-or `clang -shared src/{*.c,*/*.c} -o llib.dll -L/mingw64/lib -llua -lws2_32 -fPIC` for my msys2 build
+windows works through msys2
 
 [some docs](docs/)
 
@@ -24,10 +24,11 @@ todo:
 
     * connection limit
 
+    * allow choosing what to copy over to the thread, or not to copy the global state at all
+
 * more doxygen like docs, everywhere
 
-* make parray_t hash based
-
+* thread-safe wrapper object
 
 ----
 

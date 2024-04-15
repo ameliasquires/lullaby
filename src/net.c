@@ -68,7 +68,6 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
   //printf("&_\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
-    printf("hi");
     if(n < 0){
       *_buffer = buffer;
       printf("%s %i\n",strerror(errno),errno);
