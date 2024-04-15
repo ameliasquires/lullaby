@@ -86,9 +86,6 @@ void compress2b(uint64_t* hash, uint8_t* inp, uint64_t compressed, int final){
 }
 
 void compress2s(uint32_t* hash, uint8_t* inp, uint32_t compressed, int final){
-    printf("block:\n");
-    for(int i = 0; i != 64; i++) printf("%x ", inp[i]);
-    printf("\n");
     uint32_t v[16], s[16], m[16];
 
     #pragma unroll
@@ -302,49 +299,6 @@ void blake2s(uint8_t* inp, int len, char* key, int key_len, int dig_len, char* o
     free(aa.buffer);
     free(aa.hash);
     free(aa.key);
-}
-
-void _blake2s(char* inp, int inp_len, char* key, int key_len, int dig_len, char* buffer){
-    uint32_t hash[8];
-    
-    uint32_t iv0 = hash[0] = sha512_iv.h0 >> 32;
-    uint32_t iv1 = hash[1] = sha512_iv.h1 >> 32;
-    uint32_t iv2 = hash[2] = sha512_iv.h2 >> 32;
-    uint32_t iv3 = hash[3] = sha512_iv.h3 >> 32;
-    uint32_t iv4 = hash[4] = sha512_iv.h4 >> 32;
-    uint32_t iv5 = hash[5] = sha512_iv.h5 >> 32;
-    uint32_t iv6 = hash[6] = sha512_iv.h6 >> 32;
-    uint32_t iv7 = hash[7] = sha512_iv.h7 >> 32;
-
-    uint32_t alen = inter(inp_len, 64) + 64;
-
-    //add padding
-    char* padded = calloc(alen + (64 * (key_len > 0)), sizeof * padded);
-    if(key_len > 0){
-        memcpy(padded, key, key_len);
-        inp_len += 64;
-    }
-    memcpy(padded + (64 * (key_len > 0)), inp, inp_len - (64 * (key_len > 0)));
-
-    hash[0] ^= dig_len;
-    hash[0] ^= key_len << 8;
-    hash[0] ^= 0x01010000;
-
-    uint64_t compressed = 0, bytes_remaining = inp_len;
-
-    int i = 0;
-    for(;bytes_remaining > 64; i += 2){
-        bytes_remaining -= 64;
-        compressed += 64;
-
-        compress2s(hash, (uint8_t*)padded, compressed, 0);
-        padded += 64;
-    }
-
-    compressed += bytes_remaining;
-
-    compress2s(hash, (uint8_t*)padded, compressed, 1);
-    for(int i = 0; i != dig_len; i++)sprintf(buffer, "%s%02x", buffer, (((uint8_t*)hash)[i]));
 }
 
 int l_blake2b(lua_State* L){

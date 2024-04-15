@@ -3,12 +3,17 @@
 CC := clang
 CFLAGS := -fPIC
 LFLAGS := -lm -shared
-
-SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
-
-OBJS := $(SRCS:.c=.o)
+LINKER := clang 
 
 TARGET := llib.so
+
+SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
+OBJS := $(SRCS:.c=.o)
+
+ifeq ($(OS),Windows_NT)
+	LFLAGS += -llua -lws2_32
+	TARGET := $(TARGET:.so=.dll)
+endif
 
 all: $(TARGET)
 
@@ -16,7 +21,7 @@ all: $(TARGET)
 	$(CC) -c $< -o $@ $(CFLAGS)
 
 $(TARGET): $(OBJS)
-	ld $(LFLAGS) $(OBJS) -o $(TARGET)
+	$(LINKER) $(OBJS) -o $(TARGET) $(LFLAGS) 
 
 clean: 
 	rm -f $(OBJS)
