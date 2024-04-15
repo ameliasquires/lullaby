@@ -4,11 +4,6 @@
 
 \* is optional
 
-sadly i didnt think about being able to update hashes, using the common init-update-final.
-this is a pretty big problem meaning the input must be given at once, this is better for passwords,
-but bad for big files. because of this, i decided not to support inputs over 2^64 characters (which is an
-insane amount anyways). i likely will go back and rewrite all of these to fix both of these issues.
-
 |name|out len|other args|extra|incremental|
 |--|--|--|--|--|
 | adler32 | 32 | nil | | y |
