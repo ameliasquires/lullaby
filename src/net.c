@@ -466,6 +466,12 @@ enum file_status {
   _ignore, BARRIER_READ, FILE_HEADER, FILE_BODY, NORMAL
 };
 
+struct file_parse {
+  enum file_status status;
+  str *current, *old, *boundary, *boundary_id;
+  int dash_count, table_idx;
+};
+
 /**
  * @brief parses all files in response buffer into a lua table
  *
@@ -474,48 +480,48 @@ enum file_status {
  * @param {str*} response header Content-Type value
  * @return {int} lua index of table
 */
-int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer, str* content_type, size_t blen, parray_t** _content){
-  parray_t* content = *_content;
-  enum file_status* status = (enum file_status*)parray_get(content, "_status");
+int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer, str* content_type, size_t blen, struct file_parse* _content){
+  struct file_parse content = *_content;
+  /*enum file_status* status = (enum file_status*)parray_get(content, "_status");
   str* current = (str*)parray_get(content, "_current");
   str* old = (str*)parray_get(content, "_old");
   str* boundary = (str*)parray_get(content, "_boundary");
   str* boundary_id = (str*)parray_get(content, "_boundary_id");
   int* dash_count = (int*)parray_get(content, "_dash_count");
-  int* table_idx = (int*)parray_get(content, "_table_idx");
+  int* table_idx = (int*)parray_get(content, "_table_idx");*/
   int override = 0;
 
 
-  if(status == NULL){
-    boundary = str_init(""); //usually add + 2 to the length when using
+  if(content.status == _ignore){
+    content.boundary = str_init(""); //usually add + 2 to the length when using
     int state = 0;
     for(int i = 0; content_type->c[i] != '\0'; i++){
-      if(state == 2 && content_type->c[i] != '-') str_pushl(boundary, content_type->c + i, 1);
+      if(state == 2 && content_type->c[i] != '-') str_pushl(content.boundary, content_type->c + i, 1);
       if(content_type->c[i] == ';') state = 1;
       if(content_type->c[i] == '=' && state == 1) state = 2;
     }
     if(state == 2){
-      str_pushl(boundary, "\r\n\r\n", 4);
+      str_pushl(content.boundary, "\r\n\r\n", 4);
     }
 
-    status = malloc(sizeof * status); *status = state==2?BARRIER_READ:NORMAL;
-    dash_count = malloc(sizeof * dash_count); *dash_count = 0;
-    current = str_init(boundary->c);
+    content.status = state==2?BARRIER_READ:NORMAL;//malloc(sizeof * status); content.status = state==2?BARRIER_READ:NORMAL;
+    content.dash_count = 0;//malloc(sizeof * dash_count); *dash_count = 0;
+    content.current = str_init(content.boundary->c);
 
-    table_idx = malloc(sizeof * table_idx); *table_idx = lua_gettop(L);
-    parray_set(content, "_table_idx", (void*)(table_idx));
-    parray_set(content, "_status", (void*)(status));
-    parray_set(content, "_dash_count", (void*)(dash_count));
-    parray_set(content, "_current", (void*)(current));
+    content.table_idx = lua_gettop(L);//malloc(sizeof * table_idx); *table_idx = lua_gettop(L);
+    //parray_set(content, "_table_idx", (void*)(table_idx));
+    //parray_set(content, "_status", (void*)(status));
+    //parray_set(content, "_dash_count", (void*)(dash_count));
+    //parray_set(content, "_current", (void*)(current));
     
-    boundary_id = str_init("");
-    str_popb(boundary, 4);
-    parray_set(content, "_boundary", (void*)boundary);
-    parray_set(content, "_boundary_id", (void*)boundary_id);
+    content.boundary_id = str_init("");
+    str_popb(content.boundary, 4);
+    //parray_set(content, "_boundary", (void*)boundary);
+    //parray_set(content, "_boundary_id", (void*)boundary_id);
     
   }
 
-  if(*status == NORMAL){
+  if(content.status == NORMAL){
     //strnstr(buffer, )
     //if(override) str_clear(current);
     //str_pushl(current, buffer, blen);
@@ -526,85 +532,85 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
     *body_idx = lua_gettop(L);
   } else {
   file_start:
-    if(*status == BARRIER_READ){
+    if(content.status == BARRIER_READ){
       for(int i = 0; i != blen; i++){
         if(*buffer == '\r'){
-          *status = FILE_HEADER;
+          content.status = FILE_HEADER;
           buffer+=2;
           blen-=i+2;
 
-          str_clear(current);
+          str_clear(content.current);
           
-          *table_idx = lua_rawlen(L, *files_idx) + 1;
-          lua_pushinteger(L, *table_idx);
+          content.table_idx = lua_rawlen(L, *files_idx) + 1;
+          lua_pushinteger(L, content.table_idx);
           lua_newtable(L);
           lua_settable(L, *files_idx);
           break;
         }
-        str_pushl(boundary_id, buffer, 1);
+        str_pushl(content.boundary_id, buffer, 1);
         buffer++;
       }
     }
 
     lua_pushvalue(L, *files_idx);
-    lua_pushinteger(L, *table_idx);
+    lua_pushinteger(L, content.table_idx);
     lua_gettable(L, -2);
     int rfiles_idx = lua_gettop(L);
 
-    if(*status == FILE_HEADER){
+    if(content.status == FILE_HEADER){
       for(int i = 0; i < blen; i++){
 
         if(buffer[i] == ':'){
-          old = current;
-          current = str_init("");
+          content.old = content.current;
+          content.current = str_init("");
         } else if(buffer[i] == '\n'){
-          if(current->len == 0){
-            *status = FILE_BODY;
+          if(content.current->len == 0){
+            content.status = FILE_BODY;
             buffer += i;
             blen -= i;
-            old = NULL;
-            str_free(current);
-            current = str_init("");
+            content.old = NULL;
+            str_free(content.current);
+            content.current = str_init("");
             break;
           }
           //printf("%i '%s' : '%s'\n",*table_idx, old->c, current->c);
 
-          luaI_tsets(L, rfiles_idx, old->c, current->c);
+          luaI_tsets(L, rfiles_idx, content.old->c, content.current->c);
           
-          old = NULL;
-          str_clear(current);
-        } else if(buffer[i] != '\r' && !(buffer[i] == ' ' && current->len == 0)) str_pushl(current, buffer + i, 1);
+          content.old = NULL;
+          str_clear(content.current);
+        } else if(buffer[i] != '\r' && !(buffer[i] == ' ' && content.current->len == 0)) str_pushl(content.current, buffer + i, 1);
       }
     } 
-    if(*status == FILE_BODY){
-      if(old==NULL) old = str_init("");
+    if(content.status == FILE_BODY){
+      if(content.old==NULL) content.old = str_init("");
 
       for(int i = 0; i < blen; i++){
         //printf("%c",buffer[i]);
-        if(boundary->c[old->len - *dash_count] == buffer[i] || buffer[i] == '-'){
-          str_pushl(old, buffer + i, 1);
-          if(buffer[i] == '-') (*dash_count)++;
+        if(content.boundary->c[content.old->len - content.dash_count] == buffer[i] || buffer[i] == '-'){
+          str_pushl(content.old, buffer + i, 1);
+          if(buffer[i] == '-') (content.dash_count)++;
 
-          if(old->len - *dash_count >= boundary->len){
+          if(content.old->len - content.dash_count >= content.boundary->len){
             
-            luaI_tsetsl(L, rfiles_idx, "content", current->c, current->len);
+            luaI_tsetsl(L, rfiles_idx, "content", content.current->c, content.current->len);
 
             for(; i < blen; i++) if(buffer[i] == '\n') break;
-            str_clear(current);
-            *status = BARRIER_READ;
+            str_clear(content.current);
+            content.status = BARRIER_READ;
             buffer+=i;
             blen-=i;
-            *dash_count = 0;
+            content.dash_count = 0;
             goto file_start;
             break;
           };
         } else {
-          if(old->len != 0 || *dash_count != 0){
-            str_pushl(current, old->c, old->len);
-            str_clear(old);
-            *dash_count = 0;
+          if(content.old->len != 0 || content.dash_count != 0){
+            str_pushl(content.current, content.old->c, content.old->len);
+            str_clear(content.old);
+            content.dash_count = 0;
           }
-          str_pushl(current, buffer + i, 1);
+          str_pushl(content.current, buffer + i, 1);
 
         }
 
@@ -612,12 +618,12 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
       
     }
   }
-  parray_set(content, "_dash_count", dash_count);
+  /*parray_set(content, "_dash_count", dash_count);
   parray_set(content, "_boundary_id", boundary_id);
   parray_set(content, "_boundary", boundary);
   parray_set(content, "_status", status);
   parray_set(content, "_current", current);
-  parray_set(content, "_old", old);
+  parray_set(content, "_old", old);*/
 
   *_content = content;
 
@@ -628,7 +634,7 @@ int l_roll(lua_State* L){
   lua_pushvalue(L, 1);
   lua_pushstring(L, "_data");
   lua_gettable(L, -2);
-  parray_t* data = (void*)lua_topointer(L, -1); 
+  struct file_parse* data = (void*)lua_topointer(L, -1); 
 
   lua_pushvalue(L, 1);
   lua_pushstring(L, "client_fd");
@@ -661,7 +667,7 @@ int l_roll(lua_State* L){
   lua_gettable(L, 1);
   int files_idx = lua_gettop(L);
 
-  rolling_file_parse(L, &files_idx, &body_idx, buffer, NULL, r, &data);
+  rolling_file_parse(L, &files_idx, &body_idx, buffer, NULL, r, data);
 
   luaI_tsetv(L, 1, "Body", body_idx);
   luaI_tsetv(L, 1, "files", files_idx);
@@ -721,7 +727,7 @@ void* handle_client(void *_arg){
       str* sT = (str*)parray_get(table, "Content-Type");
       str* sC = (str*)parray_get(table, "Cookie");
       int some = bytes_received - header_eof - 10;
-      parray_t* file_cont = parray_init();
+      struct file_parse* file_cont = calloc(1, sizeof * file_cont);
       //printf("'%s'\n\n",buffer);
       lua_newtable(L);
       int files_idx = lua_gettop(L);
@@ -729,7 +735,7 @@ void* handle_client(void *_arg){
       int body_idx = lua_gettop(L);
       //printf("before\n");
       if(sT != NULL)
-        rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, &file_cont);
+        rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, file_cont);
       //printf("after\n");
       //printf("&");
       //rolling_file_parse(L, buffer + header_eof + 4 + 1200, sT, 300, &file_cont);
@@ -868,14 +874,15 @@ void* handle_client(void *_arg){
       }
 
       void* awa;
-      if((awa = parray_get(file_cont, "_current")) != NULL) str_free(awa);
+      /*if((awa = parray_get(file_cont, "_current")) != NULL) str_free(awa);
       if((awa = parray_get(file_cont, "_boundary")) != NULL) str_free(awa);
       if((awa = parray_get(file_cont, "_boundary_id")) != NULL) str_free(awa);
       if((awa = parray_get(file_cont, "_table_idx")) != NULL) free(awa);
       if((awa = parray_get(file_cont, "_status")) != NULL) free(awa);
       if((awa = parray_get(file_cont, "_dash_count")) != NULL) free(awa);
 
-      parray_clear(file_cont, NONE);
+      parray_clear(file_cont, NONE);*/
+      free(file_cont);
     }
     //printf("end anyways\n");
     parray_clear(table, STR);

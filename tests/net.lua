@@ -52,10 +52,10 @@ llib.net.listen(
                 a = req:roll(100000)
                 --print(a)
             end
-            print(req.files[1].content)
+            --_G.llib.io.pprint(req)
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint("hi")
-            --res:send("")
+            res:send("done")
         end)
 
         server:GET("/aa", function(res, req)

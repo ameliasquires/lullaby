@@ -4,11 +4,7 @@
 
 #define alloc_buffer 64
 
-str* str_initl(char* init, size_t len){
-  if(init == NULL){
-    char cc = '\0';
-    init = &cc;
-  }
+str* str_initl(const char* init, size_t len){
 
   str* s = malloc(sizeof * s);
   s->_bytes = len + 1 + alloc_buffer;
@@ -20,7 +16,7 @@ str* str_initl(char* init, size_t len){
   return s;
 }
 
-str* str_init(char* init){
+str* str_init(const char* init){
   return str_initl(init, strlen(init));
 }
 
@@ -29,14 +25,14 @@ void str_free(str* s){
   return free(s);
 }
 
-void str_push(str* s, char* insert){
+void str_push(str* s, const char* insert){
   s->len += strlen(insert);
   if(s->len + 1 >= s->_bytes)
     s->c = realloc(s->c, s->_bytes = s->len + 1 + alloc_buffer);
   strcat(s->c, insert);
 }
 
-void str_pushl(str* s, char* insert, size_t l){
+void str_pushl(str* s, const char* insert, size_t l){
   if(s->len + l >= s->_bytes)
     s->c = realloc(s->c, s->_bytes = s->len + l + alloc_buffer);
   //strcat(s->c, insert);
