@@ -580,17 +580,15 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
       if(old==NULL) old = str_init("");
 
       for(int i = 0; i < blen; i++){
-
+        //printf("%c",buffer[i]);
         if(boundary->c[old->len - *dash_count] == buffer[i] || buffer[i] == '-'){
           str_pushl(old, buffer + i, 1);
           if(buffer[i] == '-') (*dash_count)++;
 
           if(old->len - *dash_count >= boundary->len){
             
-            luaI_tsets(L, rfiles_idx, "content", current->c);
-            /*lua_pushinteger(L, lua_rawlen(L, *files_idx) + 1);
-            lua_pushvalue(L, *table_idx);
-            lua_settable(L, *files_idx);*/
+            luaI_tsetsl(L, rfiles_idx, "content", current->c, current->len);
+
             for(; i < blen; i++) if(buffer[i] == '\n') break;
             str_clear(current);
             *status = BARRIER_READ;

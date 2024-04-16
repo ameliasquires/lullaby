@@ -52,7 +52,7 @@ llib.net.listen(
                 a = req:roll(100000)
                 --print(a)
             end
-            --_G.llib.io.pprint(req)
+            print(req.files[1].content)
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint("hi")
             --res:send("")
