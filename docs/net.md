@@ -130,17 +130,17 @@ res:serve("./html/")
 
 ### req:roll
 
-'takes an integer of bytes to read & parse
+'takes an integer of bytes to read & parse (optional, otherwise the max amount of bytes will be read)
 
 will update req according to how the bytes needed to be parsed, returns the number of bytes read (not necessarily parsed), 0 if there
-is no more data, and any other values \< 0 is a recv error
+is no more ready data, -1 if all data has been read, and any other values \< -1 is a recv error (add 1 to the error code)
 
 ```lua
 --when a request contains "hello world"
 req.Body --"hello"
 req:roll(30) --does not matter if you go over, returns 7 (probably)
 req.Body --"hello world"
-req:roll(50) --returns 0, no more to read 
+req:roll(50) --returns -1, no more to read 
 --req.Body has not been updated
 ```
 

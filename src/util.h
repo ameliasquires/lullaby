@@ -25,6 +25,12 @@
 #define i_swap(A,B) double temp = A; A = B; B = temp;
 #define lesser(A,B) ((A)>(B)?(B):(A))
 #define inter(V,I) (I * ceil((double)V / I))
+#define time_start(name)\
+    clock_t _begin##name = clock();
+#define time_end(desc, name)\
+    clock_t _end##name = clock();\
+    printf("%s took %f\n",desc, (double)(_end##name - _begin##name) / CLOCKS_PER_SEC);
+
 int gen_parse(char*,int, parray_t**);
 
 #define p_fatal(M) _p_fatal(M, __LINE__, __FILE__, __func__ );

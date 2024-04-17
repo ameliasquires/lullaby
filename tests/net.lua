@@ -46,13 +46,15 @@ llib.net.listen(
             --_G.llib.io.pprint(_G.llib.crypto.md5(_G.llib.io.readfile(".gitignore")))
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint(req)
-            a = req:roll(100000)
+            --print("start")
+            a = req:roll()
             --print(a)
-            while a > 0 do 
-                a = req:roll(100000)
+            while a > -1 do 
+                a = req:roll()
+                print(req._bytes .. "/" .. req["Content-Length"])
                 --print(a)
             end
-            --_G.llib.io.pprint(req)
+            --_G.llib.io.pprint(req.files)
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint("hi")
             res:send("done")
