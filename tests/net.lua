@@ -19,7 +19,7 @@ llib.net.listen(
         --llib.io.pprint(_G)
         llib.io.pprint("online")
         _G.server = server
-        server:all("/*", function(res, req)
+        server:all("/", function(res, req)
             --llib.io.pprint(res)
             --llib.io.pprint(res)
             --print(res.send)
@@ -71,7 +71,7 @@ llib.net.listen(
             res:send(_G.llib.io.readfile("tests/net.lua"))
         end)
 
-        server:GET("/test", function(res, req)
+        server:GET("/test55", function(res, req)
             res.Code = 403
             res:send("<h2>you would never</h2>")
         end)

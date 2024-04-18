@@ -9,5 +9,7 @@ test
 test2
 *.py
 
+vgcore.*
+
 src/*.o
 src/*/*.o

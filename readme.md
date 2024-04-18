@@ -14,9 +14,9 @@ todo:
 
     * <res>:serve()
 
-    * check memory saftey
+    * ~~check memory saftey~~ (*should* be good)
 
-    * memory optimizations
+    * memory optimizations (its getting there)
 
     * settings (parse/read files, etc..)
 
