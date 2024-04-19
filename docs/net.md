@@ -118,13 +118,13 @@ res.header["test"] = "wowa"
 ...
 ```
 
-### res:serve **
+### res:sendfile
 
-'takes one string, which is a path that will be served, file or dir
+'takes one string, which is a path that will be served, must be a file
 
 ```lua
 ...
-res:serve("./html/")
+res:sendfile("./html/index.html")
 ...
 ```
 
