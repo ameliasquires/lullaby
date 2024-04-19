@@ -61,20 +61,15 @@ llib.net.listen(
         end)
 
         server:GET("/aa", function(res, req)
-            --[[res.header["Content-Type"] = "text/plain"
-            _G.server:lock()
-            res:write("hi\n")
-            res:write("next")
-            _G.server:unlock()
-            res:close()]]
             res.header["Content-Type"] = "text/plain"
-            res:send(_G.llib.io.readfile("tests/net.lua"))
+            res:sendfile("llib.dll")
         end)
 
         server:GET("/test55", function(res, req)
             res.Code = 403
             res:send("<h2>you would never</h2>")
         end)
+
 
         
     end,

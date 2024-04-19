@@ -1,15 +1,5 @@
 #include "lua5.4/lauxlib.h"
 #include "lua5.4/lua.h"
-#ifdef _WIN32 //add -lws2_32
-  #include <winsock2.h>
-  //#define socklen_t __socklen_t
-  //#define close closesocket
-  typedef int socklen_t;
-#else
-  #include <sys/socket.h>
-  #include <arpa/inet.h>
-#define closesocket close
-#endif
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -22,7 +12,6 @@
 
 #include "net.h"
 #include "lua.h"
-
 #include "io.h"
 #include "table.h"
 #include "types/str.h"
@@ -423,22 +412,6 @@ int l_close(lua_State* L){
   return 0;
 }
 
-int l_serve(lua_State* L){
-  int res_idx = 1;
-  
-  lua_pushvalue(L, res_idx);
-  lua_pushstring(L, "client_fd");
-  lua_gettable(L, res_idx);
-  int client_fd = luaL_checkinteger(L, -1);
-  client_fd_errors(client_fd);
-
-  char* path = (char*)luaL_checkstring(L, 2);
-
-  //continue here
-
-  return 0;
-}
-
 int content_disposition(str* src, parray_t** _dest){
 
   char* end = strnstr(src->c, ";", src->len);
@@ -714,6 +687,52 @@ int l_roll(lua_State* L){
   return 1;
 }
 
+#define bsize 512
+int l_sendfile(lua_State* L){
+  int res_idx = 1;
+  
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "client_fd");
+  lua_gettable(L, res_idx);
+  int client_fd = luaL_checkinteger(L, -1);
+  client_fd_errors(client_fd);
+
+  lua_pushvalue(L, res_idx);
+  lua_pushstring(L, "header");
+  lua_gettable(L, -2);
+  int header = lua_gettop(L);
+
+  char* path = (char*)luaL_checkstring(L, 2);
+
+  if(access(path, F_OK)) {
+    p_fatal("file not found"); //TODO: use diff errors here
+  }
+  if(access(path, R_OK)){
+    p_fatal("missing permissions");
+  }
+
+  str* r;
+  i_write_header(L, header, &r, "", 0);
+  send(client_fd, r->c, r->len, 0);
+  free(r);
+
+  char* buffer = calloc(sizeof* buffer, bsize + 1);
+  FILE* fp = fopen(path, "rb");
+  fseek(fp, 0L, SEEK_END);
+  size_t sz = ftell(fp);
+  fseek(fp, 0L, SEEK_SET);
+
+  for(int i = 0; i < sz; i += bsize){
+    fread(buffer, sizeof * buffer, bsize, fp);
+    send(client_fd, buffer, bsize > sz - i ? sz - i : bsize, 0);
+  }
+
+  free(buffer);
+  fclose(fp);
+
+  return 0;
+}
+
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
   //printf("--\n");
@@ -855,7 +874,7 @@ void* handle_client(void *_arg){
         
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
-        //luaI_tsetcf(L, res_idx, "serve", l_serve);
+        luaI_tsetcf(L, res_idx, "sendfile", l_sendfile);
         luaI_tsetcf(L, res_idx, "write", l_write);
         luaI_tsetcf(L, res_idx, "close", l_close);
 
