@@ -714,7 +714,7 @@ int l_sendfile(lua_State* L){
   str* r;
   i_write_header(L, header, &r, "", 0);
   send(client_fd, r->c, r->len, 0);
-  free(r);
+  str_free(r);
 
   char* buffer = calloc(sizeof* buffer, bsize + 1);
   FILE* fp = fopen(path, "rb");
@@ -819,7 +819,7 @@ void* handle_client(void *_arg){
         int res_idx = lua_gettop(L);
 
         //handle cookies
-        if(sC != NULL){
+        if(0 && sC != NULL){
           lua_newtable(L);
           int lcookie = lua_gettop(L);
 
@@ -893,7 +893,6 @@ void* handle_client(void *_arg){
         //the function(s)
         //get all function that kinda match
         parray_t* owo = (parray_t*)v;
-        uint64_t passes = 0;
         for(int i = 0; i != owo->len; i++){
           //though these are arrays of arrays we have to iterate *again*
           struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
@@ -903,8 +902,6 @@ void* handle_client(void *_arg){
             struct lchar* wowa = awa->cs[z];
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
                 (strcmp(sR->c, "HEAD") && strcmp(wowa->req, "GET"))){
-                  luaI_tseti(L, res_idx, "passes", passes);
-                  passes++;
 
                   luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
 
@@ -1038,15 +1035,12 @@ int l_req_com(lua_State* L, char* req){
   str* uwu = str_init("");
   lua_pushvalue(L, 3);
   lua_dump(L, writer, (void*)uwu, 0);
-  lua_pushlstring(L, uwu->c, uwu->len);
-  str_free(uwu);
-
-  size_t len;
-  char* a = (char*)luaL_checklstring(L, -1, &len);
-  awa = malloc(len + 1);
-  awa->c = a;
-  awa->len = len;
+  
+  awa = malloc(sizeof * awa);
+  awa->c = uwu->c;
+  awa->len = uwu->len;
   strcpy(awa->req, req);
+  free(uwu); //yes this *should* be str_free but awa kinda owns it now:p 
 
   if(paths == NULL)
     paths = parray_init();
@@ -1057,11 +1051,11 @@ int l_req_com(lua_State* L, char* req){
   if(v_old_paths == NULL){
     old_paths = malloc(sizeof * old_paths);
     old_paths->len = 0;
-    old_paths->cs = malloc(sizeof * old_paths->cs);
+    old_paths->cs = malloc(sizeof old_paths->cs);
   } else old_paths = (struct sarray_t*)v_old_paths;
 
   old_paths->len++;
-  old_paths->cs = realloc(old_paths->cs, sizeof * old_paths->cs * old_paths->len);
+  old_paths->cs = realloc(old_paths->cs, sizeof old_paths->cs * old_paths->len);
   old_paths->cs[old_paths->len - 1] = awa;
 
   parray_set(paths, portss->c, (void*)old_paths);
@@ -1096,9 +1090,6 @@ int l_unlock(lua_State* L){
 }
 
 int l_listen(lua_State* L){
-  lua_State* src = luaL_newstate();
-  lua_State* dest = luaL_newstate();
-
 
   if(lua_gettop(L) != 2) {
     p_fatal("not enough args");

@@ -14,7 +14,7 @@ todo:
 
     * <res>:serve()
 
-    * ~~check memory saftey~~ (*should* be good)
+    * ~~check memory saftey~~ (*should* be good) (now work on indirect & more lifetime stuff)
 
     * memory optimizations (its getting there)
 
@@ -25,6 +25,8 @@ todo:
     * connection limit
 
     * allow choosing what to copy over to the thread, or not to copy the global state at all
+
+    * allow stopping the server
 
 * more doxygen like docs, everywhere
 

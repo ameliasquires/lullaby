@@ -8,6 +8,7 @@ a.out
 test
 test2
 *.py
+*.sh
 
 vgcore.*
 

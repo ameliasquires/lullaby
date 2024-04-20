@@ -74,11 +74,13 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
                 
                 return;
             }
+            int *sp = malloc(sizeof * sp);
+
             //lua_pushinteger(dest, 55);
             int r = luaL_ref(dest, LUA_REGISTRYINDEX);
             lua_rawgeti(dest, LUA_REGISTRYINDEX, r);
-            //*sp = r;
-            parray_set(seen, aauwu, (void*)&r);
+            *sp = r;
+            parray_set(seen, aauwu, sp);
             //printf("saved %i\n", *sp);
 
             //for(int i = 0; i != seen->len; i++){
@@ -126,7 +128,7 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             lua_pushnil(dest);
             break;
     }
-    if(wnull) parray_clear(seen, NONE);
+    if(wnull) parray_clear(seen, FREE);
     //lua_settop(src, old_top);
     _seen = seen;
 }
