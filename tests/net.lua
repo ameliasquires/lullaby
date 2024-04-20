@@ -62,7 +62,7 @@ llib.net.listen(
 
         server:GET("/aa", function(res, req)
             res.header["Content-Type"] = "text/plain"
-            res:sendfile("llib.dll")
+            res:sendfile("readme.md")
         end)
 
         server:GET("/test55", function(res, req)

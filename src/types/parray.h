@@ -18,6 +18,7 @@ enum free_type {
 
 parray_t* parray_init();
 void parray_set(parray_t*, char*, void*);
+void parray_push(parray_t*, char*, void*);
 void* parray_get(parray_t* , char*);
 int parray_geti(parray_t* , char*);
 void parray_remove(parray_t* p, char* key, enum free_type free);

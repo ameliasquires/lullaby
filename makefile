@@ -15,6 +15,9 @@ endif
 
 all: $(TARGET)
 
+debug: CFLAGS += -g
+debug: all
+
 %.o: %.c 
 	$(CC) -c $< -o $@ $(CFLAGS)
 
