@@ -819,6 +819,7 @@ void* handle_client(void *_arg){
         int res_idx = lua_gettop(L);
 
         //handle cookies
+        //TODO: enable and test with valgrind
         if(0 && sC != NULL){
           lua_newtable(L);
           int lcookie = lua_gettop(L);
