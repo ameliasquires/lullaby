@@ -1,4 +1,4 @@
-build with `make`, output is `./llib.dll`
+build with `make`, output is `./llib.so` or (win)`./llib.dll`
 
 windows works through msys2
 
@@ -10,9 +10,7 @@ todo:
 
 * finish up http server
 
-    * https 
-
-    * <res>:serve()
+    * https
 
     * ~~check memory saftey~~ (*should* be good) (now work on indirect & more lifetime stuff)
 

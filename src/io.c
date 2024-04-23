@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include "lua5.4/lua.h"
 #include "types/str.h"
 #include "io.h"
 #include "stdlib.h"
@@ -137,6 +138,14 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
     case LUA_TFUNCTION:
       if(!skip_indent) print_indentation(indent);
       printf(color_yellow"(%p)"color_reset, lua_topointer(L, -1));
+      break;
+    case LUA_TUSERDATA:
+      if(!skip_indent) print_indentation(indent);
+      printf(color_yellow"(ud,%p)"color_reset, lua_touserdata(L,-1));
+      break;
+    case LUA_TLIGHTUSERDATA:
+      if(!skip_indent) print_indentation(indent);
+      printf(color_yellow"(lud,%p)"color_reset, lua_topointer(L,-1));
       break;
     default:
       if(!skip_indent) print_indentation(indent);
