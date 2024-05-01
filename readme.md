@@ -30,6 +30,8 @@ todo:
 
 * thread-safe wrapper object
 
+* threads
+
 ----
 
 # credits

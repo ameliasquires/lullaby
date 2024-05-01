@@ -14,11 +14,11 @@ which makes a global llib table
 > llib = require "llib"
 > ```
 
-the table has many subtables, with related function in them, you can view them like so
+the table has many subtables and functions, with related function in them, you can view them like so
 
 ```lua
 llib.io.pprint(llib) --pprint is a part of the io module, pprint meaning pretty print
 ```
 
-all subtables have a corresponding file in this directory, with info on its functions
+all subtables and functions have a corresponding file in this directory on usage
 
