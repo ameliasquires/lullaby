@@ -1,6 +1,6 @@
 # net
 
-## listen (PARTIALLY IMPLEMENTED)
+## listen (mostly IMPLEMENTED)
 
 'takes a function with 1 argument and a integer for a port
 
