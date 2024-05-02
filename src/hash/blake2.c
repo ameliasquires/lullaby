@@ -231,7 +231,7 @@ void blake2b_final(struct blake2b_hash* hash, char* out_stream){
 
   blake2b_round(hash, 1);
 
-  for(int i = 0; i != hash->digest_len; i++)sprintf(out_stream, "%s%02x", out_stream, (((uint8_t*)hash->hash)[i]));
+  for(int i = 0; i != hash->digest_len; i++)sprintf(out_stream + i * 2, "%02x", (((uint8_t*)hash->hash)[i]));
     
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs_2);
@@ -363,7 +363,7 @@ void blake2s_final(struct blake2s_hash* hash, char* out_stream){
 
   blake2s_round(hash, 1);
 
-  for(int i = 0; i != hash->digest_len; i++)sprintf(out_stream, "%s%02x", out_stream, (((uint8_t*)hash->hash)[i]));
+  for(int i = 0; i != hash->digest_len; i++)sprintf(out_stream + i * 2, "%02x", (((uint8_t*)hash->hash)[i]));
     
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs);

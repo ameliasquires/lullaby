@@ -215,7 +215,7 @@ void blake256_final(struct blake256_hash* hash, char* out_stream){
   _blake256_final(hash, out_stream);
 
   for(int i = 0; i != 8; i++){
-    sprintf(out_stream, "%s%08x",out_stream,(hash->hash)[i]);
+    sprintf(out_stream + i * 8, "%08x",(hash->hash)[i]);
   }
 
   memcpy(hash, &old_hash, sizeof * hash);
@@ -234,7 +234,7 @@ void blake224_final(struct blake256_hash* hash, char* out_stream){
   _blake256_final(hash, out_stream);
 
   for(int i = 0; i != 7; i++){
-    sprintf(out_stream, "%s%08x",out_stream,(hash->hash)[i]);
+    sprintf(out_stream + i * 8, "%08x",(hash->hash)[i]);
   }
   
   memcpy(hash, &old_hash, sizeof * hash);
@@ -427,8 +427,8 @@ void blake512_final(struct blake512_hash* hash, char* out_stream){
   _blake512_final(hash, out_stream);
 
   for(int i = 0; i != 8; i++){
-        sprintf(out_stream, "%s%016llx",out_stream, (hash->hash)[i]);
-    }
+    sprintf(out_stream + 16 * i, "%016llx", (hash->hash)[i]);
+  }
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs_2);
@@ -454,8 +454,8 @@ void blake384_final(struct blake384_hash* hash, char* out_stream){
   _blake512_final(hash, out_stream);
 
   for(int i = 0; i != 6; i++){
-        sprintf(out_stream, "%s%016llx",out_stream, (hash->hash)[i]);
-    }
+    sprintf(out_stream + 16 * i, "%016llx", (hash->hash)[i]);
+  }
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs_2);

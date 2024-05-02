@@ -175,14 +175,14 @@ void sha512_final(struct sha512_hash* hash, char* out_stream){
 
   _sha512_t_final(hash);
 
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h0);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
+  sprintf((char*)out_stream, "%016llx%016llx%016llx%016llx%016llx%016llx%016llx%016llx", hash->h0, hash->h1, hash->h2, hash->h3, hash->h4, hash->h5, hash->h6, hash->h7);
+  /*sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h2);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h3);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h4);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h5);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h6);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h7);
+  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h7);*/
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs);
@@ -196,12 +196,12 @@ void sha384_final(struct sha512_hash* hash, char* out_stream){
   _sha512_t_final(hash);
 
 
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h0);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
+  sprintf((char*)out_stream, "%016llx%016llx%016llx%016llx%016llx%016llx", hash->h0, hash->h1, hash->h2, hash->h3, hash->h4, hash->h5);
+  /*sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h2);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h3);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h4);
-  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h5);
+  sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h5);*/
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs);
@@ -236,7 +236,7 @@ struct iv sha_iv_gen(int i){
     
     uint8_t nh[512] = {0};
     uint8_t in[12];
-    sprintf((char*)in, "SHA-512/%i",i);
+    sprintf((char*)in, "SHA-512/%i", i);
     struct sha512_hash a = sha512_t_init(oh);
     sha512_update(in, strlen((char*)in), &a);
     _sha512_t_final(&a);
