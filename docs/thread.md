@@ -14,11 +14,11 @@ local thread = llib.thread(function(info)
 end)
 ```
 
-### thread function parameters
+### thread function parameters **
 
 as used with "info" above
 
-#### info:send()
+#### info:send() **
 
 'takes "any" value
 
@@ -29,13 +29,13 @@ info:send(5)
 info:send("hello")
 ```
 
-#### info:pause()
+#### info:pause() **
 
 pauses the thread (must be resumed from outside)
 
-### thread return object
+### thread return object **
 
-#### thread:await()
+#### thread:await() **
 
 'optional timeout
 
@@ -45,7 +45,7 @@ waits for the thread to return, and returns whatever it returned, if timeout is 
 thread:await() -- value of N (above)
 ```
 
-#### thread:next()
+#### thread:next() **
 
 gets the most oldest value sent using info:send() and pops it
 
@@ -55,10 +55,10 @@ thread:next() -- 5
 thread:next() -- "hello"
 ```
 
-#### thread:kill()
+#### thread:kill() **
 
 kills the thread
 
-#### thread:pause() thread:resume()
+#### thread:pause() thread:resume() **
 
 stops or continues the thread

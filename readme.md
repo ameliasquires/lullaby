@@ -32,6 +32,8 @@ todo:
 
 * threads
 
+* encode tests (and fix sprintf ub)
+
 ----
 
 # credits
