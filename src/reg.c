@@ -5,6 +5,7 @@
 #include "io.h"
 #include "math.h"
 #include "net.h"
+#include "thread.h"
 #include <signal.h>
 #include <stdlib.h>
 
@@ -44,6 +45,7 @@ int luaopen_llib(lua_State* L) {
     lreg("math", math_function_list);
     lreg("config", config_function_list);
     lreg("net", net_function_list);
+    lreg("thread", thread_function_list);
 
     //make llib global
     lua_setglobal(L, "llib");
