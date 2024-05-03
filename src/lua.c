@@ -3,6 +3,7 @@
 #include "io.h"
 #include <stdlib.h>
 #include <string.h>
+#include "lua5.4/lua.h"
 #include "types/str.h"
 #include "types/parray.h"
 
@@ -32,6 +33,14 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
     
     return 0;
 }
+
+/**
+ * @brief copy top element from src to dest
+ *
+ * @param {lua_State*} source
+ * @param {lua_State*} dest
+ * @param {void*} items already visited, use NULL
+*/
 void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
     parray_t* seen = (parray_t*)_seen;
     int wnull = seen == NULL;
@@ -100,6 +109,7 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
                 lua_settable(dest, at);
                 lua_pop(src, 3);
             }
+            //printf("done\n");
             //lua_settop(dest, at);
             break;
         case LUA_TFUNCTION:
@@ -119,9 +129,25 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
             //lua_pushvalue(dest, -1);
             break;
         case LUA_TUSERDATA:
+        case LUA_TLIGHTUSERDATA:
+            lua_pushlightuserdata(dest, lua_touserdata(src, -1));
+            int tidx = lua_gettop(dest);
+
+            if(lua_getmetatable(src, -1)){
+                //int a = lua_gettop(src);
+                //l_pprint(src);
+                //lua_settop(src, a);
+                //printf("**--**\n");
+                i_dcopy(src, dest, seen);
+                //int a = lua_gettop(dest);
+                //l_pprint(dest);
+                //lua_settop(dest, a);
+                lua_setmetatable(dest, tidx);
+                lua_pop(src, 1);
+            }
+            lua_settop(dest, tidx);
             //printf("aww\n");
             //lua_pushnumber(dest, 8);
-            lua_pushlightuserdata(dest, lua_touserdata(src, -1));
             break;
         default:
             printf("%i\n",lua_type(src, -1));

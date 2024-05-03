@@ -31,7 +31,9 @@ void i_dcopy(lua_State* src, lua_State* dest, void*);
     _tset_b(L, Tidx, K, V, lua_pushvalue)
 #define luaI_tsetcf(L, Tidx, K, V)\
     _tset_b(L, Tidx, K, V, lua_pushcfunction)
-
+#define luaI_tsetlud(L, Tidx, K, V)\
+    _tset_b(L, Tidx, K, V, lua_pushlightuserdata)
+    
 int writer(lua_State*, const void*, size_t, void*);
 
 #if LUA_VERSION_NUM == 504

@@ -1,16 +1,43 @@
 # threads **
 
-## llib.thread **
+## lock, unlock**
+
+'takes an integer
+
+locks any other thread reaching this lock id until a corresponding unlock is met
+
+```lua
+llib.thread.lock(5)
+...
+llib.thread.unlock(5)
+```
+
+more indepth
+
+```lua
+local t = llib.thread.async(function(info)
+    ...
+    llib.thread.lock(5)
+    ...
+    return N
+end)
+
+...
+llib.thread.unlock(5)
+t:await()
+```
+
+## aync **
 
 'takes a function which will be ran in a separate thread with a single parameter with thread info
 
 these have the same backend (and limitations) of network threads
 
 ```lua
-local thread = llib.thread(function(info)
+local thread = llib.thread.async(function(info)
     local N = 0
     ...
-    return N;
+    return N
 end)
 ```
 
