@@ -7,6 +7,7 @@ void* __malloc_(size_t);
 void __free_(void*);
 
 void i_dcopy(lua_State* src, lua_State* dest, void*);
+void lua_set_global_table(lua_State*);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
@@ -33,7 +34,7 @@ void i_dcopy(lua_State* src, lua_State* dest, void*);
     _tset_b(L, Tidx, K, V, lua_pushcfunction)
 #define luaI_tsetlud(L, Tidx, K, V)\
     _tset_b(L, Tidx, K, V, lua_pushlightuserdata)
-    
+
 int writer(lua_State*, const void*, size_t, void*);
 
 #if LUA_VERSION_NUM == 504

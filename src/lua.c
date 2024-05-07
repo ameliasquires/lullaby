@@ -158,3 +158,16 @@ void i_dcopy(lua_State* src, lua_State* dest, void* _seen){
     //lua_settop(src, old_top);
     _seen = seen;
 }
+
+/**
+ * @brief extracts a table to be global
+ *
+ * @param {lua_State*} source
+*/
+void lua_set_global_table(lua_State* L){
+  lua_pushnil(L);
+  for(;lua_next(L, -2) != 0;){
+    lua_setglobal(L, lua_tostring(L, -2));
+  }
+}
+

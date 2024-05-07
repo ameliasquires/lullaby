@@ -759,7 +759,8 @@ void* handle_client(void *_arg){
 //time_end("copy", copy)
   lua_settop(args->L, old_top);
   //l_pprint(L);
-  lua_setglobal(L, "_G");
+  //lua_setglobal(L, "_G");
+  lua_set_global_table(L);
   pthread_mutex_unlock(&mutex);
   //printf("start: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   //read full request

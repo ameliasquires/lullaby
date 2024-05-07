@@ -1,16 +1,18 @@
 require "llib"
 
-local th = llib.thread.async(function (res)
-    _G.llib.io.pprint(res)
-    _G.llib.io.pprint({aa=45})
-    res:res(_G.llib.crypto.md5())
+local thread_a = llib.thread.async(function (res)    
+    --os.execute("sleep 1")
+    --print((_G.ll + "hi"):final())
+    res:res(_G.llib.crypto.md5("meow"))
     print("after")
 end)
 
-os.execute("sleep 1")
+local thread_b = llib.thread.async(function (res)    
+    --os.execute("sleep 1")
+    --print((_G.ll + "hi"):final())
+    res:res(_G.llib.crypto.sha512("meow"))
+    print("after")
+end)
 
-print("out:")
-a = th:res();
-print((a + "hi"):final())
-
-while true do end
+print(thread_a:await())
+print(thread_b:await())

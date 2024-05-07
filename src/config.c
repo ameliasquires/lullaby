@@ -7,6 +7,7 @@ int _max_depth = 2;
 int _start_nl_at = 3;
 int _collapse_all = 0;
 int _collapse_to_memory = 1;
+int _print_meta = 0;
 
 int _file_malloc_chunk = 512;
 
