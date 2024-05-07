@@ -19,7 +19,7 @@ local t = llib.thread.async(function(info)
     ...
     llib.thread.lock(5)
     ...
-    return N
+    res(N)
 end)
 
 ...
@@ -46,6 +46,8 @@ end)
 as used with "res" above
 
 #### res:res() **
+
+> will be eventually used as just res()
 
 'takes any amount of "any" values
 
