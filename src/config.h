@@ -6,6 +6,7 @@ extern int _max_depth;
 extern int _start_nl_at;
 extern int _collapse_all;
 extern int _collapse_to_memory;
+extern int _print_meta;
 
 extern int _file_malloc_chunk;
 
@@ -21,6 +22,7 @@ static struct str_to_int config_map[] = {
   {"collapse_all", &_collapse_all},
   {"start_nl_at", &_start_nl_at},
   {"collapse_to_memory", &_collapse_to_memory},
+  {"print_meta", &_print_meta},
   {NULL,NULL}
 };
 

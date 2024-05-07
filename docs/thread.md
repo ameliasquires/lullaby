@@ -34,18 +34,23 @@ t:await()
 these have the same backend (and limitations) of network threads
 
 ```lua
-local thread = llib.thread.async(function(info)
+local thread = llib.thread.async(function(res, rej)
     local N = 0
     ...
-    return N
+    res(N)
 end)
 ```
 
 ### thread function parameters **
 
-as used with "info" above
+as used with "res" above
 
-#### info:send() **
+#### res:res() **
+
+'takes any amount of "any" values
+
+send a value(s) to thread:await() call then stalls the thread until cleaned
+#### res:send() **
 
 'takes "any" value
 
@@ -56,20 +61,27 @@ info:send(5)
 info:send("hello")
 ```
 
-#### info:pause() **
-
-pauses the thread (must be resumed from outside)
-
 ### thread return object **
 
 #### thread:await() **
 
-'optional timeout
+'optional timeout in ms and boolean whether to keep or not
 
-waits for the thread to return, and returns whatever it returned, if timeout is exceeded nil
+waits for the thread to return, and returns whatever it returned then closes it, or nil if timeout was exceeded
+if the input is the boolean value true, it will keep the thread alive (otherwise await() can not be called again)
 
 ```lua
 thread:await() -- value of N (above)
+```
+
+```lua
+thread:await(20) -- value of N (above) or nil
+```
+
+```lua
+thread:await(true) -- value of N (above)
+thread:await() -- same
+thread:await() -- error, function above performed cleanup
 ```
 
 #### thread:next() **
@@ -85,7 +97,3 @@ thread:next() -- "hello"
 #### thread:kill() **
 
 kills the thread
-
-#### thread:pause() thread:resume() **
-
-stops or continues the thread

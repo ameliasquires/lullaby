@@ -157,6 +157,14 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
     else printf(color_gray" : <%s>"color_reset,type);
   }
 
+  if(_print_meta && lua_getmetatable(L, -1) != 0){
+    printf(color_lblue" (metatable "color_reset);
+    int c = lua_gettop(L) - 1;
+    i_pprint(L,indent+1,1);
+    printf(color_lblue")"color_reset);
+    lua_settop(L, c);
+  }
+
 }
 
 int l_pprint(lua_State* L){
