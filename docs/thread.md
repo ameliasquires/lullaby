@@ -1,6 +1,6 @@
 # threads **
 
-## lock, unlock**
+## lock, unlock
 
 'takes an integer
 
@@ -15,6 +15,7 @@ llib.thread.unlock(5)
 more indepth
 
 ```lua
+llib.thread.lock(5)
 local t = llib.thread.async(function(info)
     ...
     llib.thread.lock(5)
@@ -45,13 +46,12 @@ end)
 
 as used with "res" above
 
-#### res:res() **
-
-> will be eventually used as just res()
+#### res()
 
 'takes any amount of "any" values
 
 send a value(s) to thread:await() call then stalls the thread until cleaned
+
 #### res:send() **
 
 'takes "any" value
@@ -59,8 +59,8 @@ send a value(s) to thread:await() call then stalls the thread until cleaned
 send a value which can be retrieved from outside the thread with thread:next()
 
 ```lua
-info:send(5)
-info:send("hello")
+res:send(5)
+res:send("hello")
 ```
 
 ### thread return object **

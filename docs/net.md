@@ -10,15 +10,6 @@ the function will be ran on initilization, the argument has info on the server a
 **
 right now everything within a server:GET function is partially global, it can read global variables (by making a copy),
 it can not read/copy local variables or modify globals
-
-also, (for now) all globals must be refrenced as _G,
-ie:
-function foo()
-    ...
-end
-
-_G.foo()
-_G.llib.crypto.md5("hewwo purr")
 **
 
 ```lua
@@ -53,14 +44,14 @@ the second (req) contains info on the request, the path allows for wildcards, mu
 the actual name of the function will change based on what request method you want to accept, all requests are treated the exact same on the backend, besides HEAD requests which will also use all GET requets, and the 'all' variant will get everything
 
 ```lua
-server:all("*", function(res, req, next) 
+server:all("*", function(res, req) 
    if(req['Version'] ~= "HTTP/1.1") then 
       res:close()
    end
 end)
 
 ...
-server:GET("/", function(res, req) do
+server:GET("/", function(res, req)
     --version will always be 1.1, as per the middleware
     ...
 end)

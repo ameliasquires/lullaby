@@ -18,6 +18,11 @@ all: $(TARGET)
 debug: CFLAGS += -g
 debug: all
 
+reg: 
+	rm src/reg.o 
+
+reg: all
+
 %.o: %.c 
 	$(CC) -c $< -o $@ $(CFLAGS)
 
