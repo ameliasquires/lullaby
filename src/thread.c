@@ -8,6 +8,8 @@
 #include "types/str.h"
 #include "util.h"
 
+#include "types/larray.h"
+
 struct thread_info {
     str* function;
     lua_State* L;
@@ -18,6 +20,48 @@ struct thread_info {
 };
 
 #include "io.h"
+
+pthread_mutex_t thread_lock_lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
+larray_t* thread_locks = NULL;
+
+int l_tlock(lua_State* L){
+    int idx = luaL_checkinteger(L, 1);
+
+    pthread_mutex_lock(&thread_lock_lock);
+    pthread_mutex_t mutex;
+    if(thread_locks == NULL) thread_locks = larray_init();
+    int i = 0;
+    if((i = larray_geti(thread_locks, idx)) == -1){
+        pthread_mutex_init(&mutex, NULL);
+        pthread_mutex_lock(&mutex);
+        larray_set(&thread_locks, idx, (void*)mutex);
+    } else {
+        pthread_mutex_t m = (pthread_mutex_t)thread_locks->arr[i].value;
+        pthread_mutex_unlock(&thread_lock_lock);
+        pthread_mutex_lock(&m);
+        pthread_mutex_lock(&thread_lock_lock);
+        thread_locks->arr[i].value = (void*)m;
+
+    }
+    
+    pthread_mutex_unlock(&thread_lock_lock);
+    return 0;
+}
+
+int l_tunlock(lua_State* L){
+    int idx = luaL_checkinteger(L, 1);
+
+    pthread_mutex_lock(&thread_lock_lock);
+    int i = 0;
+    if(thread_locks != NULL && (i = larray_geti(thread_locks, idx)) != -1){
+        pthread_mutex_t m = (pthread_mutex_t)thread_locks->arr[i].value;
+        pthread_mutex_unlock(&m);
+        thread_locks->arr[i].value = (void*)m;
+    }
+
+    pthread_mutex_unlock(&thread_lock_lock);
+    return 0;
+}
 
 int l_res(lua_State* L){
     int return_count = lua_gettop(L) - 1;
@@ -49,8 +93,13 @@ void* handle_thread(void* _args){
 
   lua_newtable(L);
   int res_idx = lua_gettop(L);
-  luaI_tsetcf(L, res_idx, "res", l_res);
   luaI_tsetlud(L, res_idx, "_", args);
+
+  lua_newtable(L);
+  int meta_idx = lua_gettop(L);
+  luaI_tsetcf(L, meta_idx, "__call", l_res);
+  lua_pushvalue(L, meta_idx);
+  lua_setmetatable(L, res_idx);
 
   luaL_loadbuffer(L, args->function->c, args->function->len, "thread");
   str_free(args->function);
