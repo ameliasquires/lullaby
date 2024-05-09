@@ -28,11 +28,13 @@ llib.thread.unlock(5)
 t:await()
 ```
 
-## aync **
+## aync
 
 'takes a function which will be ran in a separate thread with a single parameter with thread info
 
 these have the same backend (and limitations) of network threads
+
+the rej (2nd param) is currently unused
 
 ```lua
 local thread = llib.thread.async(function(res, rej)
@@ -42,7 +44,7 @@ local thread = llib.thread.async(function(res, rej)
 end)
 ```
 
-### thread function parameters **
+### thread function parameters
 
 as used with "res" above
 
@@ -52,17 +54,6 @@ as used with "res" above
 
 send a value(s) to thread:await() call then stalls the thread until cleaned
 
-#### res:send() **
-
-'takes "any" value
-
-send a value which can be retrieved from outside the thread with thread:next()
-
-```lua
-res:send(5)
-res:send("hello")
-```
-
 ### thread return object **
 
 #### thread:await() **
@@ -70,31 +61,20 @@ res:send("hello")
 'optional timeout in ms and boolean whether to keep or not
 
 waits for the thread to return, and returns whatever it returned then closes it, or nil if timeout was exceeded
-if the input is the boolean value true, it will keep the thread alive (otherwise await() can not be called again)
 
 ```lua
 thread:await() -- value of N (above)
 ```
 
 ```lua
-thread:await(20) -- value of N (above) or nil
+thread:await(20) -- value of N (above) or nil and preserves the thread
 ```
 
-```lua
-thread:await(true) -- value of N (above)
-thread:await() -- same
-thread:await() -- error, function above performed cleanup
-```
+#### thread:clean() **
 
-#### thread:next() **
+frees everything related to the thread (including userdata allocated in it!), thread:await() can not be called again, all lua values will still be usable
 
-gets the most oldest value sent using info:send() and pops it
-
-```lua
---(continued from above)
-thread:next() -- 5
-thread:next() -- "hello"
-```
+not required to be called, lua gc should call it on its own via __gc
 
 #### thread:kill() **
 
