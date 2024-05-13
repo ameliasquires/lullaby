@@ -18,22 +18,20 @@ void sigHandle(int s){
 
 static int lua_exit(lua_State* L){
 
-  sigHandle(0);
+  lib_thread_clean();
+  //sigHandle(0);
   return 0;
 }
 
 int luaopen_llib(lua_State* L) { 
-    lua_newuserdata(L, sizeof(void*));
-    luaL_newmetatable(L, "gc");
-		lua_pushstring(L, "__gc");
-		lua_pushcfunction(L, &lua_exit);
-		lua_settable(L, -3);
-
-    lua_setmetatable(L, -2);				
-		lua_setfield(L, LUA_REGISTRYINDEX, "grr");
-    signal(SIGTERM, sigHandle);
-		signal(SIGINT, sigHandle);
-
+    lua_newuserdata(L, 1);
+    int ud = lua_gettop(L);
+    lua_newtable(L);
+    int meta = lua_gettop(L);
+    luaI_tsetcf(L, meta, "__gc", lua_exit);
+    lua_pushvalue(L, meta);
+    lua_setmetatable(L, ud);
+    
     //create <lib>.array functions
     lua_newtable(L);
 

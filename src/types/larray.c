@@ -29,7 +29,7 @@ void larray_expand(larray_t** _l){
     *_l = remade;
 }
 
-void larray_set(larray_t** _l, uint64_t idx, void* value){
+int larray_set(larray_t** _l, uint64_t idx, void* value){
     larray_t* l = *_l;
 
     if(l->len + 1 >= l->size){
@@ -51,6 +51,7 @@ void larray_set(larray_t** _l, uint64_t idx, void* value){
     l->len++;
 
     *_l = l;
+    return ind;
 }
 
 int larray_geti(larray_t* l, uint64_t idx){

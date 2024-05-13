@@ -25,25 +25,39 @@ pthread_mutex_t thread_priority_lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZE
 pthread_mutex_t thread_lock_lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 larray_t* thread_locks = NULL;
 
+void lib_thread_clean(){
+  if(thread_locks == NULL) return;
+
+  for(int i = 0; i != thread_locks->size; i++){
+    if(thread_locks->arr[i].used){
+      //pthread_mutex_destroy(thread_locks->arr[i].value);
+      free(thread_locks->arr[i].value);
+    }
+  }
+      
+  larray_clear(thread_locks);
+}
 int l_tlock(lua_State* L){
     int idx = luaL_checkinteger(L, 1);
 
     pthread_mutex_lock(&thread_lock_lock);
-    pthread_mutex_lock(&thread_priority_lock);
-    pthread_mutex_unlock(&thread_priority_lock);
+    //pthread_mutex_lock(&thread_priority_lock);
+    //pthread_mutex_unlock(&thread_priority_lock);
     pthread_mutex_t mutex;
     if(thread_locks == NULL) thread_locks = larray_init();
     int i = 0;
     if((i = larray_geti(thread_locks, idx)) == -1){
         pthread_mutex_init(&mutex, NULL);
         pthread_mutex_lock(&mutex);
-        larray_set(&thread_locks, idx, (void*)mutex);
+        pthread_mutex_t* mp = malloc(sizeof * mp);
+        *mp = mutex;
+        int id = larray_set(&thread_locks, idx, (void*)mp);
     } else {
-        pthread_mutex_t m = (pthread_mutex_t)thread_locks->arr[i].value;
+        pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
         pthread_mutex_lock(&thread_priority_lock);
     
         pthread_mutex_unlock(&thread_lock_lock);
-        pthread_mutex_lock(&m);
+        pthread_mutex_lock(m);
         pthread_mutex_lock(&thread_lock_lock);
 
         pthread_mutex_unlock(&thread_priority_lock);
@@ -61,8 +75,9 @@ int l_tunlock(lua_State* L){
     pthread_mutex_lock(&thread_lock_lock);
     int i = 0;
     if(thread_locks != NULL && (i = larray_geti(thread_locks, idx)) != -1){
-        pthread_mutex_t m = (pthread_mutex_t)thread_locks->arr[i].value;
-        pthread_mutex_unlock(&m);
+        pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
+
+        pthread_mutex_unlock(m);
         thread_locks->arr[i].value = (void*)m;
     }
 
@@ -145,13 +160,16 @@ int l_clean(lua_State* L){
     lua_pushstring(L, "_");
     lua_gettable(L, 1);
     struct thread_info* info = lua_touserdata(L, -1);
-    if(info->L != NULL){
-        lua_gc(info->L, LUA_GCRESTART);
-        lua_gc(info->L, LUA_GCCOLLECT);
-        lua_close(info->L);
-        info->L = NULL;
-        pthread_mutex_destroy(&info->lock);
-        free(info);
+    if(info != NULL && info->L != NULL){
+      
+      lua_gc(info->L, LUA_GCRESTART);
+      lua_gc(info->L, LUA_GCCOLLECT);
+      lua_close(info->L);
+      info->L = NULL;
+      pthread_mutex_destroy(&info->lock);
+      free(info);
+
+      luaI_tsetlud(L, 1, "_", NULL);
     }
     return 0;
 }
