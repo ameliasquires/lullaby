@@ -979,6 +979,10 @@ int start_serv(lua_State* L, int port){
   server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(port);
 
+
+  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&(int){1}, sizeof(int)) < 0)
+    p_fatal("SO_REUSEADDR refused\n");
+
   //bind to port
   if(bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
     p_fatal("failed to bind to port\n");
@@ -988,9 +992,6 @@ int start_serv(lua_State* L, int port){
 
   if (pthread_mutex_init(&mutex, NULL) != 0)
     p_fatal("mutex init failed\n");
-
-  if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&(int){1}, sizeof(int)) < 0)
-    p_fatal("SO_REUSEADDR refused\n");
 
   for(;;){
     struct sockaddr_in client_addr;
