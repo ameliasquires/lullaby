@@ -9,6 +9,7 @@
 #include "util.h"
 
 #include "types/larray.h"
+#include "hash/fnv.h"
 
 struct thread_info {
     str* function;
@@ -96,7 +97,7 @@ int l_res(lua_State* L){
         int ot = lua_gettop(L);
 
         lua_pushvalue(L, 2 + i);
-        i_dcopy(L, info->L, NULL);
+        luaI_deepcopy(L, info->L, NULL, 0);
 
         lua_settop(L, ot);
     }
@@ -148,7 +149,7 @@ int l_await(lua_State* L){
         int ot = lua_gettop(info->L);
 
         lua_pushvalue(info->L, ot - info->return_count + i);
-        i_dcopy(info->L, L, NULL);
+        luaI_deepcopy(info->L, L, NULL, 0);
         
         lua_settop(info->L, ot);
     }
@@ -177,10 +178,10 @@ int l_clean(lua_State* L){
 int l_async(lua_State* oL){
    lua_State* L = luaL_newstate(); 
 
-  luaL_openlibs(L);
+  //luaL_openlibs(L);
 
   lua_getglobal(oL, "_G");
-  i_dcopy(oL, L, NULL);
+  luaI_deepcopy(oL, L, NULL, 0);
   lua_set_global_table(L);
 
   struct thread_info* args = calloc(1, sizeof * args);
@@ -209,5 +210,93 @@ int l_async(lua_State* oL){
   lua_pushvalue(oL, meta_idx);
   lua_setmetatable(oL, res_idx);
   lua_pushvalue(oL, res_idx);
+  return 1;
+}
+
+struct thread_buffer {
+  lua_State* L;
+  pthread_mutex_t lock;
+};
+
+int _buffer_get(lua_State* L){
+  struct thread_buffer *buffer = lua_touserdata(L, 1);
+  pthread_mutex_lock(&buffer->lock);
+  luaI_deepcopy(buffer->L, L, NULL, 0);
+  pthread_mutex_unlock(&buffer->lock);
+  return 1;
+}
+
+int _buffer_set(lua_State* L){
+  struct thread_buffer *buffer = lua_touserdata(L, 1);
+  pthread_mutex_lock(&buffer->lock);
+  lua_settop(buffer->L, 0);
+  luaI_deepcopy(L, buffer->L, NULL, 0);
+  pthread_mutex_unlock(&buffer->lock);
+  return 1;
+}
+
+int _buffer_mod(lua_State* L){
+  struct thread_buffer *buffer = lua_touserdata(L, 1);
+  pthread_mutex_lock(&buffer->lock);
+  luaI_deepcopy(buffer->L, L, NULL, 0);
+  int item = lua_gettop(L);
+  lua_pushvalue(L, 2);
+  lua_pushvalue(L, item);
+  lua_call(L, 1, 1);
+
+  if(lua_type(L, -1) != LUA_TNIL){
+    lua_settop(buffer->L, 0);
+    luaI_deepcopy(L, buffer->L, NULL, 0);
+  }
+  pthread_mutex_unlock(&buffer->lock);
+  return 1;
+}
+
+
+int l_buffer_index(lua_State* L){
+  uint64_t len, hash;
+  const char* str = luaL_tolstring(L, 2, &len);
+
+  hash = fnv_1((uint8_t*)str, len, v_1);
+
+  switch(hash){
+    case 0xd8c8ad186b9ed323: //get
+      lua_pushcfunction(L, _buffer_get);
+      break;
+    case 0xd89f9d186b7bb367: //set
+      lua_pushcfunction(L, _buffer_set);
+      break;
+    case 0xd8b3c7186b8ca31f: //mod
+      lua_pushcfunction(L, _buffer_mod);
+      break;
+    default:
+      lua_pushnil(L);
+      break;
+  }
+  return 1;
+}
+
+int l_buffer(lua_State* L){
+  struct thread_buffer *buffer = malloc(sizeof * buffer);
+  buffer->L = luaL_newstate();
+  pthread_mutex_init(&buffer->lock, NULL);
+  luaI_deepcopy(L, buffer->L, NULL, 0);
+
+  lua_newtable(L);
+  int meta_idx = lua_gettop(L);
+  luaI_tsetcf(L, meta_idx, "__index", l_buffer_index);
+
+  lua_pushlightuserdata(L, buffer);
+  lua_pushvalue(L, meta_idx);
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+int l_testcopy(lua_State* L){
+  lua_State* temp = luaL_newstate();
+  luaI_deepcopy(L, temp, NULL, 0);
+  luaI_deepcopy(temp, L, NULL, 0);
+
   return 1;
 }

@@ -754,7 +754,7 @@ void* handle_client(void *_arg){
   lua_getglobal(args->L, "_G");
 
 //time_start(copy)
-  i_dcopy(args->L, L, NULL);
+  luaI_deepcopy(args->L, L, NULL, 0);
  
 //time_end("copy", copy)
   lua_settop(args->L, old_top);

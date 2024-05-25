@@ -6,7 +6,7 @@
 void* __malloc_(size_t);
 void __free_(void*);
 
-void i_dcopy(lua_State* src, lua_State* dest, void*);
+void luaI_deepcopy(lua_State* src, lua_State* dest, void* _seen, int);
 void lua_set_global_table(lua_State*);
 
 //generic macro that takes other macros (see below)

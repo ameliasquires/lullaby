@@ -1,5 +1,50 @@
 # threads **
 
+## buffer
+
+'takes 'anything'
+
+a thread-safe object buffer to easily transfer things between threads 
+
+full example:
+
+```lua
+buffer = llib.thread.buffer({2, 3, 4})
+buffer:get() --{2, 3, 4}
+...
+buffer:set({3, 4, 5}) --get is now {3, 4, 5}
+...
+buffer:mod(function(obj)
+    for i=1,#obj do
+        obj[i] = obj[i] + 1
+    end
+    return obj 
+end) --is now {4, 5, 6}
+...
+buffer:clean() -- calls __gc early
+```
+
+### get 
+
+returns copy of the value in the buffer 
+
+### set 
+
+'takes 'anything'
+
+sets the value in the buffer 
+
+### mod
+
+'takes a function, one parameter, one returns
+
+passes a copy of the value of the buffer, and sets the buffer to the value returned
+
+```lua
+buffer:mod(function(obj) return 5) 
+--is the same as 
+buffer:set(5)
+```
 ## lock, unlock
 
 'takes an integer
