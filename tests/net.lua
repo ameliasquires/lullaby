@@ -12,7 +12,7 @@ local wowa = 5
 _G._llib = _G.llib
 --_G.ww = llib
 --llib.io.pprint(_G)
-
+a = llib.crypto.md5
 llib.net.listen(
     function(server)
         --llib = nil
@@ -20,6 +20,10 @@ llib.net.listen(
         llib.io.pprint("online")
         _G.server = server
         server:all("/", function(res, req)
+            b = a("hello")
+
+            --llib.io.pprint(a + '5')
+            res:send(b)
             --llib.io.pprint(res)
             --llib.io.pprint(res)
             --print(res.send)
@@ -57,7 +61,7 @@ llib.net.listen(
             --_G.llib.io.pprint(req.files)
             --_G.llib.io.pprint(req)
             --_G.llib.io.pprint("hi")
-            res:send("done")
+            --res:send("done")
         end)
 
         server:GET("/aa", function(res, req)
