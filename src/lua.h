@@ -3,11 +3,21 @@
 #include <lua5.4/lauxlib.h>
 #include <stdlib.h>
 
+#ifndef __lua_h
+#define __lua_h
+enum deep_copy_flags {
+  SKIP_META = (1 << 0),
+  SKIP_GC = (1 << 1),
+  IS_META = (1 << 2)
+};
+#endif 
+
 void* __malloc_(size_t);
 void __free_(void*);
 
-void luaI_deepcopy(lua_State* src, lua_State* dest, void* _seen, int);
+void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags);
 void lua_set_global_table(lua_State*);
+//todo: char* _luaL_tolstring(lua_State*, int, size_t*);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
@@ -50,6 +60,8 @@ int writer(lua_State*, const void*, size_t, void*);
     #define lua_objlen(L,i) lua_rawlen(L,(i))
     #define luaL_register(L, M, F) luaL_newlib(L, F);
 #else
+    //todo: #define luaL_tolstring(L, idx, n) _luaL_tolstring(L, idx, n)
+
     #define lreg(N, FN)\
         lua_newtable(L);\
         luaL_register(L, NULL, FN);\
@@ -80,6 +92,8 @@ int writer(lua_State*, const void*, size_t, void*);
         lua_pop(L, 1);\
       }\
     }
+
+    
 #endif
 
 
