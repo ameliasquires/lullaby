@@ -31,7 +31,7 @@ int luaopen_llib(lua_State* L) {
     luaI_tsetcf(L, meta, "__gc", lua_exit);
     lua_pushvalue(L, meta);
     lua_setmetatable(L, ud);
-    
+ 
     //create <lib>.array functions
     lua_newtable(L);
 

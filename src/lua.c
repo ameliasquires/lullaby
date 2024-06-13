@@ -42,10 +42,7 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
  * @param {void*} items already visited, use NULL
  * @param {int} whether or not to skip meta data
 */
-void luaI_deepcopy(lua_State* src, lua_State* dest, void* _seen, int skip_meta){
-    parray_t* seen = (parray_t*)_seen;
-    int wnull = seen == NULL;
-    if(wnull) seen = parray_init();
+void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     size_t len;
     //printf("%i\n",seen->len);
     int at, at2;
@@ -57,46 +54,63 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, void* _seen, int skip_meta){
     int old_top = lua_gettop(src);
     int modi = 0;
 
+#define q lua_pushnumber(dest, 5); break;
     switch(lua_type(src, -1)){
         case LUA_TNUMBER:
-            n = luaL_checknumber(src, -1);
+            n = lua_tonumber(src, -1);
             if(n == (int)n) lua_pushinteger(dest, (int)n);
             else lua_pushnumber(dest, n);
             break;
-        case LUA_TSTRING:
-            s = (char*)luaL_checklstring(src, -1, &len);
-            lua_pushlstring(dest, s, len);
+        case LUA_TSTRING:;
+            //seems to have some "ub" here, lua_pushlstring can overrite arbitrary data?
+            //has a chance to override other userdata, still testing this
+            size_t slen;
+            const char* ss = lua_tolstring(src, -1, &slen);
+            lua_pushlstring(dest, ss, slen);
             break;
         case LUA_TTABLE:
             modi = 1;
             lua_newtable(dest);
             at = lua_gettop(dest);
             at2 = lua_gettop(src);
-            char aauwu[50] = {0};
+            //printf("before\n"); 
+            char* aauwu = calloc(sizeof * aauwu, 50);
             sprintf(aauwu, "%p", lua_topointer(src, at2));
-
-            whar = parray_get(seen, aauwu);
-            if(whar != NULL){
-                lua_pop(dest, 1);
-                lua_rawgeti(dest, LUA_REGISTRYINDEX, *(int*)whar);
-                return;
+            //lua_pushstring(dest, aauwu);
+            //lua_gettable(dest, LUA_REGISTRYINDEX);
+            lua_getfield(dest, LUA_REGISTRYINDEX, aauwu);
+            if(lua_type(dest, -1) == LUA_TNIL){
+              //printf("new %p\n", lua_topointer(src, at2));
+              lua_pushstring(dest, aauwu);
+              lua_pushvalue(dest, at);
+              lua_settable(dest, LUA_REGISTRYINDEX);
+              lua_pop(dest, 1);
+            } else {
+              //printf("use %p\n", lua_topointer(src, at2));
+              //lua_pop(dest, 1);
+              lua_remove(dest, -2);
+              return;
             }
-            int *sp = malloc(sizeof * sp);
-
-            int r = luaL_ref(dest, LUA_REGISTRYINDEX);
-            lua_rawgeti(dest, LUA_REGISTRYINDEX, r);
-            *sp = r;
-            parray_set(seen, aauwu, sp);
+            free(aauwu);
+            //printf("after %i:%i\n", at, lua_gettop(dest));
 
             lua_pushnil(src);
             for(;lua_next(src, at2) != 0;){
                 int first, second = first = lua_gettop(src);
                 first -= 1;
+                if((flags & SKIP_GC) && lua_type(src, first) == LUA_TSTRING 
+                  && strcmp("__gc", lua_tostring(src, first)) == 0){
+                  //printf("found %s\n", lua_tostring(src, first));
+                  lua_pop(src, 1);
+                  continue;
+                }
                 lua_pushvalue(src, first);
-                luaI_deepcopy(src, dest, seen, 0);
+                //l_pprint(src);
+                //lua_pop(src, 1);
+                luaI_deepcopy(src, dest, flags);
          
                 lua_pushvalue(src, second);
-                luaI_deepcopy(src, dest, seen, 0);
+                luaI_deepcopy(src, dest, flags);
                 lua_settable(dest, at);
 
                 lua_pop(src, 3);
@@ -111,10 +125,9 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, void* _seen, int skip_meta){
             
           str* awa = str_init("");
           lua_dump(src, writer, (void*)awa, 0);
-          lua_pushlstring(dest, awa->c, awa->len);
 
           luaL_loadbuffer(dest, awa->c, awa->len, awa->c);
-          lua_remove(dest, -2);
+          //lua_remove(dest, -2);
           str_free(awa);
           break;
         case LUA_TUSERDATA:
@@ -135,16 +148,13 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, void* _seen, int skip_meta){
     int tidx = lua_gettop(dest);
     int aa = lua_gettop(src);
 
-    if(modi&&!skip_meta&&lua_getmetatable(src, -1)){
-      luaI_deepcopy(src, dest, seen, 1);
+    if(modi && !(flags & SKIP_META) && lua_getmetatable(src, -1)){
+      luaI_deepcopy(src, dest, flags | IS_META | SKIP_META);
       lua_setmetatable(dest, tidx);
 
       lua_settop(dest, tidx);
     }
     lua_settop(src, aa);
-    
-    if(wnull) parray_clear(seen, FREE);
-    _seen = seen;
 }
 
 /**

@@ -147,6 +147,10 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
       if(!skip_indent) print_indentation(indent);
       printf(color_yellow"(lud,%p)"color_reset, lua_topointer(L,-1));
       break;
+    //case LUA_TNUMBER:
+      if(!skip_indent) print_indentation(indent);
+      printf(color_yellow"%i"color_reset, (int)lua_tonumber(L,-1));
+      break;
     default:
       if(!skip_indent) print_indentation(indent);
       printf(color_yellow"%s"color_reset, lua_tostring(L,-1));

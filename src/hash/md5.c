@@ -106,6 +106,7 @@ void md5_update(uint8_t* input, size_t len, struct md5_hash* hash){
 void md5_final(struct md5_hash* hash, char out_stream[64]){
   uint8_t old[bs];
   struct md5_hash old_hash;
+
   memcpy(&old_hash, hash, sizeof * hash);
   memcpy(old, hash->buffer, bs);
 
@@ -119,7 +120,8 @@ void md5_final(struct md5_hash* hash, char out_stream[64]){
   }
 
   uint32_t lhhh = 8*hash->total;
-  memcpy(hash->buffer + 56, &lhhh, sizeof(lhhh));
+  memcpy(hash->buffer + 56, &lhhh, 4);
+  
   md5_round(hash);
 
   sprintf(out_stream,"%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x", 
