@@ -3,7 +3,7 @@ CFLAGS := -fPIC
 LFLAGS := -lm -shared
 LINKER := clang 
 
-TARGET := llib.so
+TARGET := lullaby.so
 
 SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:.c=.o)

@@ -1,4 +1,37 @@
-build with `make`, output is `./llib.so` or (win)`./llib.dll`
+## lullaby
+
+> a large multi-purpose library for lua (primarily 5.4) revolving around threading and cryptography, and including network, math, io, and table functions
+
+heres an example of a webserver to return a sha0 hash of an input
+
+<blockquote>
+
+```lua
+llib = require "lullaby"
+local port = 8080
+MAX_LENGTH = 2048
+
+llib.net.listen(function(server)
+
+  --listen to post requests at localhost:8080 (root directory)
+  server:POST("/", function(res, req)
+    --creates a sha0 hash object
+    local hash = llib.crypto.sha0()
+    --loads an extra 2048 characters from the request body (the body is not guaranteed to be >= 2048 characters, reasoning in docs)
+    req:roll(MAX_LENGTH)
+
+    --incremental hashes allow updating via addition, in this case adding the body and getting a string from it
+    hash = (hash + req.Body):final()
+    --send the hash to the client, closes connection, but thread is live until it ends
+    res:send(hash)
+  end)
+
+end, port)
+```
+
+</blockquote>
+
+build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
 windows works through msys2
 
