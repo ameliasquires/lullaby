@@ -2,7 +2,7 @@
 
 > a large multi-purpose library for lua (primarily 5.4) revolving around threading and cryptography, and including network, math, io, and table functions
 
-heres an example of a webserver to return a sha0 hash of an input
+heres an example of a webserver to return a [sha0](https://en.wikipedia.org/wiki/SHA-0) hash of an input
 
 <blockquote>
 
