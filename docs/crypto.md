@@ -70,16 +70,20 @@ llib.crypto.sha512("meow") -- e88348269bad036160f0d9558b7c5de68163b50e1a6ce46e85
 llib.crypto.sha512_t("meow", 224) -- would be sha512/224 - ad5e403e0d74532187f4e1665c7e705ab5eb3c2fe07ae73a3ff998b2
 ```
 
+the + operator clones the hash and returns it so the orignal is not modified,
+when using a non-cloning method, make sure to redefine the hash object to the updated value.
+not doing this can ruin the sync in the hash
+
 functions supporting updates (see above) can be used like so:
 
 ```lua
 obj = llib.crypto.adler32() --adler32_init is equivilant to adler32 with no params
-llib.crypto.adler32_update(obj, "meow")
+obj = llib.crypto.adler32_update(obj, "meow")
 local hash = llib.crypto.adler32_final(obj) --043c01b9
 
 --or you can chain them!
 obj = llib.crypto.adler32()
-obj:update("meow")
+obj = obj:update("meow")
 hash = obj:final() --043c01b9s (the same)
 
 --along with the + operator being overloaded to work as obj:update and returning a seperate object
