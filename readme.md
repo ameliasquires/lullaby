@@ -1,4 +1,4 @@
-## lullaby
+# lullaby
 
 > a large multi-purpose library for lua (primarily 5.4) revolving around threading and cryptography, and including network, math, io, and table functions
 
@@ -31,13 +31,17 @@ end, port)
 
 </blockquote>
 
+## building
+
 build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
 windows works through msys2
 
+---
+
 [some docs](docs/)
 
-todo:
+## todo:
 
 * (working on seperatley) gui for graphs
 
