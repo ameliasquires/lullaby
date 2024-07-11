@@ -1,4 +1,4 @@
-require "llib"
+llib = require "llib"
 
 local hashes_working = 0
 local hashes_failed = 0

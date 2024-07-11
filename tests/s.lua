@@ -1,6 +1,6 @@
 local t = function (a) end
 
-require "llib"
+llib = require "llib"
 
 local a = llib.crypto.md5()
 --llib.io.pprint(_ENV.a)
