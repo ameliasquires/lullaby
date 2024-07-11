@@ -37,7 +37,6 @@ struct md5_hash md5_init_l(lua_State* L){
 
 void md5_round(struct md5_hash* hash){
   uint32_t* M = (uint32_t *)(hash->buffer); 
-
   uint32_t A = hash->a0;
   uint32_t B = hash->b0;
   uint32_t C = hash->c0;

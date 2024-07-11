@@ -180,10 +180,8 @@ int l_async(lua_State* oL){
 
   lua_getglobal(oL, "_G");
   luaI_deepcopy(oL, L, SKIP_GC);
-  //lua_set_global_table(L);
-
-  return 0;
-
+  lua_set_global_table(L);
+  
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
   //args->lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
@@ -344,11 +342,14 @@ int l_buffer(lua_State* L){
   return 1;
 }
 
+void _lua_getfenv(lua_State* L){
+  
+}
 int l_testcopy(lua_State* L){
   lua_settop(L, 0);
+
+  
   lua_State* temp = luaL_newstate();
-  lua_getglobal(L, "_G");
-  luaI_deepcopy(L, temp, SKIP_GC);
   //luaI_deepcopy(temp, L, NULL, SKIP_GC);
   lua_close(temp);
   return 1;

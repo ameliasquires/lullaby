@@ -54,15 +54,22 @@ function test(name,b,exp,oargs)
       functions_working = functions_working + 1
       llib.io.log(name.." + method working "..hash6.." == "..exp)
     end
-
+    
     if(oargs == nil) then
       hash3 = llib.crypto[name]()
     else 
       hash3 = llib.crypto[name](table.unpack(oargs))
     end
     b:gsub(".", function(c) hash3:update(c) end)
+    hash3b = hash3
     hash3 = hash3:final()
     
+    if hash3 ~= hash3b:final() then
+      fail = true
+      functions_failed = functions_failed + 1 
+      llib.io.error(name.." final not safe")
+    end
+
     if(oargs == nil) then
       hash4 = llib.crypto[name.."_init"]()
     else 

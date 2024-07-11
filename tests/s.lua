@@ -2,14 +2,12 @@ local t = function (a) end
 
 require "llib"
 
-a = llib.crypto.md5()
+local a = llib.crypto.md5()
 
-for i = 1,200 do
-  --llib.io.pprint(function (a) end)
-  llib.thread.async(function(a) end)--:await()
-end
+b = llib.thread.buffer(a)
 
-if a:final() ~= "d41d8cd98f00b204e9800998ecf8427e" then
-  print(a:final())
-end
+b:mod(function(e) 
+  return e:update("meow")
+end)
 
+print(b:get():final())
