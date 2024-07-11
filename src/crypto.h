@@ -90,6 +90,12 @@ int _##luaname##_common_hash(lua_State* L){\
   struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
   int ud = lua_gettop(L);\
   *a = initf;\
+  int ini = lua_gettop(L);\
+  lua_newtable(L);\
+  lua_setfield(L, LUA_REGISTRYINDEX, lua_topointer(L, ud));\
+  lua_getfield(L, LUA_REGISTRYINDEX, lua_topointer(L, ud));\
+  int i;\
+  for(i = ud; i != ini; i++) luaI_tsetv(L, ini + 1, lua_topointer(L, i), i);\
   lua_common_hash_meta_def(luaname);\
   lua_pushvalue(L, ud);\
   return 1;\
@@ -166,7 +172,7 @@ static const luaL_Reg crypto_function_list [] = {
       {"base64decode",l_base64decode},
 
       {"baseconvert",l_baseconvert},
-
+      
       {NULL,NULL}
 };
 

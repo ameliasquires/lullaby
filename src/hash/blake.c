@@ -206,8 +206,11 @@ void _blake256_final(struct blake256_hash* hash, char* out_stream){
 void blake256_final(struct blake256_hash* hash, char* out_stream){
   uint8_t old[bs];
   struct blake256_hash old_hash;
+  uint32_t hhash[8];
+
   memcpy(&old_hash, hash, sizeof * hash);
-  memcpy(old, hash->buffer, bs);
+  memcpy(old, hash->buffer, bs * sizeof * old);
+  memcpy(hhash, hash->hash, sizeof * hhash * 8);
 
   if(hash->bufflen == 55) hash->buffer[hash->bufflen] = 0x81;
   else hash->buffer[bs - 9] = 0x01;
@@ -219,14 +222,18 @@ void blake256_final(struct blake256_hash* hash, char* out_stream){
   }
 
   memcpy(hash, &old_hash, sizeof * hash);
-  memcpy(hash->buffer, old, bs);
+  memcpy(hash->buffer, old, bs * sizeof * old);
+  memcpy(hash->hash, hhash, sizeof * hhash * 8);
 }
 
 void blake224_final(struct blake256_hash* hash, char* out_stream){
   uint8_t old[bs];
   struct blake256_hash old_hash;
+  uint32_t hhash[8];
+
   memcpy(&old_hash, hash, sizeof * hash);
   memcpy(old, hash->buffer, bs);
+  memcpy(hhash, hash->hash, sizeof * hhash * 8);
 
   if(hash->bufflen == 55) hash->buffer[hash->bufflen] = 0x80;
   else hash->buffer[bs - 9] = 0x00;
@@ -239,6 +246,7 @@ void blake224_final(struct blake256_hash* hash, char* out_stream){
   
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs);
+  memcpy(hash->hash, hhash, sizeof * hhash * 8);
 }
 
 void blake256(char *out, char *in, uint64_t inlen){
@@ -418,8 +426,11 @@ void _blake512_final(struct blake512_hash* hash, char* out_stream){
 void blake512_final(struct blake512_hash* hash, char* out_stream){
   uint8_t old[bs_2];
   struct blake512_hash old_hash;
+  uint64_t hhash[8];
+
   memcpy(&old_hash, hash, sizeof * hash);
   memcpy(old, hash->buffer, bs_2);
+  memcpy(hhash, hash->hash, sizeof * hhash * 8);
 
   if(hash->bufflen == 111) hash->buffer[hash->bufflen] = 0x81;
   else hash->buffer[bs_2 - 17] = 0x01;
@@ -432,6 +443,7 @@ void blake512_final(struct blake512_hash* hash, char* out_stream){
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs_2);
+  memcpy(hash->hash, hhash, sizeof * hhash * 8);
 }
 
 void blake512(uint8_t* in, size_t len, char* out){
@@ -445,8 +457,11 @@ void blake512(uint8_t* in, size_t len, char* out){
 void blake384_final(struct blake384_hash* hash, char* out_stream){
   uint8_t old[bs_2];
   struct blake384_hash old_hash;
+  uint64_t hhash[8];
+
   memcpy(&old_hash, hash, sizeof * hash);
   memcpy(old, hash->buffer, bs_2);
+  memcpy(hhash, hash->hash, sizeof * hhash * 8);
 
   if(hash->bufflen == 111) hash->buffer[hash->bufflen] = 0x80;
   else hash->buffer[bs_2 - 17] = 0x00;
@@ -459,6 +474,7 @@ void blake384_final(struct blake384_hash* hash, char* out_stream){
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs_2);
+  memcpy(hash->hash, hhash, sizeof * hhash * 8);
 }
 
 void blake384(uint8_t* in, size_t len, char* out){

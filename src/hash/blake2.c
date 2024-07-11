@@ -221,10 +221,11 @@ void blake2b_update(uint8_t* input, size_t len, struct blake2b_hash* hash){
 
 void blake2b_final(struct blake2b_hash* hash, char* out_stream){
   uint8_t old[bs_2];
-  uint32_t hashh[8];
+  uint64_t hashh[8];
   struct blake2b_hash old_hash;
+
   memcpy(&old_hash, hash, sizeof * hash);
-  memcpy(old, hash->buffer, bs_2);
+  memcpy(old, hash->buffer, bs_2 * sizeof * old);
   memcpy(hashh, hash->hash, 8 * sizeof * hashh);
 
   hash->compressed += hash->bufflen;
@@ -234,7 +235,7 @@ void blake2b_final(struct blake2b_hash* hash, char* out_stream){
   for(int i = 0; i != hash->digest_len; i++)sprintf(out_stream + i * 2, "%02x", (((uint8_t*)hash->hash)[i]));
     
   memcpy(hash, &old_hash, sizeof * hash);
-  memcpy(hash->buffer, old, bs_2);
+  memcpy(hash->buffer, old, bs_2 * sizeof * old);
   memcpy(hash->hash, hashh, 8 * sizeof * hashh);
 }
 

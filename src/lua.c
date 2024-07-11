@@ -54,7 +54,6 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     int old_top = lua_gettop(src);
     int modi = 0;
 
-#define q lua_pushnumber(dest, 5); break;
     switch(lua_type(src, -1)){
         case LUA_TNUMBER:
             n = lua_tonumber(src, -1);
@@ -62,8 +61,6 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
             else lua_pushnumber(dest, n);
             break;
         case LUA_TSTRING:;
-            //seems to have some "ub" here, lua_pushlstring can overrite arbitrary data?
-            //has a chance to override other userdata, still testing this
             size_t slen;
             const char* ss = lua_tolstring(src, -1, &slen);
             lua_pushlstring(dest, ss, slen);
@@ -142,7 +139,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
           break;
         default:
           printf("unknown type %i\n",lua_type(src, -1));
-          lua_pushnil(dest);
+          lua_pushnumber(dest, 5);
           break;
     }
     int tidx = lua_gettop(dest);
@@ -154,7 +151,62 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
 
       lua_settop(dest, tidx);
     }
-    lua_settop(src, aa);
+    lua_settop(src, old_top);
+}
+
+void luaI_deepcopy2(lua_State* src, lua_State* dest){
+  switch(lua_type(src, -1)){
+    case LUA_TNUMBER:
+      lua_pushinteger(dest, lua_tointeger(src, -1));
+      break;
+
+    case LUA_TSTRING:;
+      size_t size = 0;
+      const char* str = lua_tolstring(src, -1, &size);
+      lua_pushlstring(dest, str, size);
+      break;
+    
+    case LUA_TTABLE:;
+      const void* p = lua_topointer(src, -1);
+      char* p_string = calloc(80, sizeof * p_string);
+      sprintf(p_string, "%p", p);
+      
+      //lua_getfield(dest, LUA_REGISTRYINDEX, p_string);
+      lua_pushstring(dest, p_string);
+      lua_gettable(dest, LUA_REGISTRYINDEX);
+      if(!lua_isnil(dest, -1)){
+        break;
+      }
+
+      lua_pop(dest, 1);
+      lua_pushstring(dest, p_string);
+      lua_newtable(dest);
+      //lua_setfield(dest, LUA_REGISTRYINDEX, p_string);
+      //lua_getfield(dest, LUA_REGISTRYINDEX, p_string);
+      lua_settable(dest, LUA_REGISTRYINDEX);
+
+      lua_pushstring(dest, p_string);
+      lua_gettable(dest, LUA_REGISTRYINDEX);
+
+      free(p_string);
+
+      int src_top = lua_gettop(src);
+      int dest_top = lua_gettop(dest);
+
+      lua_pushnil(src);
+      for(;lua_next(src, src_top) != 0;){
+        luaI_deepcopy2(src, dest); 
+        lua_pop(src, 1);
+        luaI_deepcopy2(src, dest);
+
+        lua_settable(dest, dest_top);
+      }
+      break;
+
+    default:
+      lua_pushinteger(dest, 4);
+      break;
+  }
 }
 
 /**

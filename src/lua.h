@@ -16,6 +16,8 @@ void* __malloc_(size_t);
 void __free_(void*);
 
 void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags);
+void luaI_deepcopy2(lua_State* src, lua_State* dest);
+
 void lua_set_global_table(lua_State*);
 //todo: char* _luaL_tolstring(lua_State*, int, size_t*);
 
