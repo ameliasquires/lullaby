@@ -23,7 +23,7 @@ static int lua_exit(lua_State* L){
   return 0;
 }
 
-int luaopen_llib(lua_State* L) { 
+int luaopen_lullaby(lua_State* L) { 
     lua_newuserdata(L, 1);
     int ud = lua_gettop(L);
     lua_newtable(L);
