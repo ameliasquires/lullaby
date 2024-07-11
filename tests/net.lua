@@ -1,4 +1,4 @@
-require "llib"
+llib = require "llib"
 llib.config.set({max_depth=5})
 --local print = llib.io.pprint
 sleep = function(a) 

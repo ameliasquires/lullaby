@@ -44,8 +44,6 @@ int luaopen_llib(lua_State* L) {
     lreg("config", config_function_list);
     lreg("net", net_function_list);
     lreg("thread", thread_function_list);
-
-    //make llib global
-    lua_setglobal(L, "llib");
+    
     return 1;
 }

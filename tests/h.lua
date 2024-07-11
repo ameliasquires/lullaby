@@ -1,4 +1,4 @@
-require "llib"
+llib = require "llib"
 
 llib.config.set({print_meta=1,max_depth=22})
 --llib.thread.lock(1)
