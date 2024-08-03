@@ -1,7 +1,7 @@
 CC := clang
 CFLAGS := -fPIC
 LFLAGS := -lm -shared
-LINKER := clang 
+LINKER := clang
 
 TARGET := lullaby.so
 
