@@ -1,31 +1,11 @@
-llib = require "llib"
+llib = require "lullaby"
+llib.config.set({print_meta = 1})
 
-llib.config.set({print_meta=1,max_depth=22})
---llib.thread.lock(1)
---llib.thread.lock(2)
---llib.thread.unlock(2)
-a = llib.thread.buffer(llib.crypto.md5())
+local a = llib.crypto.sha1()
 
+local b = llib.thread.buffer(a)
 
-print(a:get():final())
-for i=1,2009 do
-  llib.thread.async(function (res)    
-    --llib.io.pprint(a);
-    --l = a + a
-    --a:mod(function(e) return e:update("meow") end)
-  end)
-end
+llib.io.pprint(a)
+llib.io.pprint(b)
+llib.io.pprint((b + "meow"):final())
 
---os.execute("sleep 1")
-print(a:get():final())
---print("unlock")
---llib.thread.unlock(1)
-
-
---awa = thread_a:await()
-
---print(awa:await())
---print((awa + "hi"):final())
---thread_a:clean()
-
-print("clean exit")

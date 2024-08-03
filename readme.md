@@ -7,16 +7,18 @@ heres an example of a webserver to return a [sha0](https://en.wikipedia.org/wiki
 <blockquote>
 
 ```lua
-llib = require "lullaby"
+--(this is in tests/net2.lua)
+net = require "lullaby.net"
+crypto = require "lullaby.crypto"
 local port = 8080
 MAX_LENGTH = 2048
 
-llib.net.listen(function(server)
+net.listen(function(server)
 
   --listen to post requests at localhost:8080 (root directory)
   server:POST("/", function(res, req)
     --creates a sha0 hash object
-    local hash = llib.crypto.sha0()
+    local hash = crypto.sha0()
     --loads an extra 2048 characters from the request body (the body is not guaranteed to be >= 2048 characters, reasoning in docs)
     req:roll(MAX_LENGTH)
 

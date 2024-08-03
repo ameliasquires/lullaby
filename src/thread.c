@@ -280,25 +280,48 @@ int hi(lua_State* L){
   return 0;
 }
 
+//not thread safe yet
 int meta_proxy(lua_State* L){
-  printf("proxy");
+  int argc = lua_gettop(L);
+  struct thread_buffer *buffer = lua_touserdata(L, 1);
+
+  lua_getmetatable(buffer->L, 1);
+  lua_pushstring(buffer->L, lua_tostring(L, 2));
+  lua_gettable(buffer->L, 2);
+  
+  lua_pushvalue(buffer->L, 1);
+
+  int count = 0;
+  for(int i = 4; i <= argc; i++){
+    count++;
+    lua_pushvalue(L, i);
+    luaI_deepcopy(L, buffer->L, SKIP_GC);
+  }
+
+  //printf("%i\n",count);
+  lua_call(buffer->L, count + 1, 1);
+  luaI_deepcopy(buffer->L, L, 0);
+  //printf("%p\n", lua_topointer(buffer->L, -1));
   return 1;
 }
 
-void meta_proxy_gen(lua_State* L, int meta_idx, int new_meta_idx){  
+void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, int new_meta_idx){  
+
+  lua_pushcfunction(L, meta_proxy); 
+  lua_setglobal(L, "__proxy_call");
+  
+  lua_pushlightuserdata(L, buffer);
+  lua_setglobal(L, "__this_obj");
 
   lua_pushnil(L);
   for(; lua_next(L, meta_idx) != 0;){
     int k, v = lua_gettop(L);
     k = lua_gettop(L) - 1;
 
-    lua_pushcfunction(L, meta_proxy); 
-    lua_setglobal(L, "__proxy_call");
-
     char* fn = calloc(128, sizeof * fn); //todo: find optimal value for these
     const char* key = lua_tostring(L, k);
     sprintf(fn, "return function(_a,_b,_c)\
-return __proxy_call('%s',table.unpack({_a,_b,_c}));end", key);
+return __proxy_call(__this_obj,'%s',table.unpack({_a,_b,_c}));end", key);
     luaL_dostring(L, fn);
     //printf("%s\n",fn);
     free(fn);
@@ -322,12 +345,6 @@ int l_buffer(lua_State* L){
   int use = lua_getmetatable(L, 1);
   int old_meta_idx = lua_gettop(L);
 
-  lua_newtable(L);
-  int meta_idx = lua_gettop(L);
-  if(use!=0) meta_proxy_gen(L, old_meta_idx, meta_idx);
-  luaI_tsetcf(L, meta_idx, "__index", l_buffer_index);
-  luaI_tsetcf(L, meta_idx, "__gc", l_buffer_gc);
-
   struct thread_buffer *buffer = lua_newuserdata(L, sizeof * buffer);
   int buffer_idx = lua_gettop(L);
 
@@ -335,6 +352,12 @@ int l_buffer(lua_State* L){
   pthread_mutex_init(&buffer->lock, NULL);
   lua_pushvalue(L, 1);
   luaI_deepcopy(L, buffer->L, SKIP_GC);
+
+  lua_newtable(L);
+  int meta_idx = lua_gettop(L);
+  if(use!=0) meta_proxy_gen(L, buffer, old_meta_idx, meta_idx);
+  luaI_tsetcf(L, meta_idx, "__index", l_buffer_index);
+  luaI_tsetcf(L, meta_idx, "__gc", l_buffer_gc);
 
   lua_pushvalue(L, meta_idx);
   lua_setmetatable(L, buffer_idx);
