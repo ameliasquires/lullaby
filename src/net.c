@@ -737,6 +737,7 @@ volatile size_t threads = 0;
 void* handle_client(void *_arg){
   //printf("--\n");
   //pthread_mutex_lock(&mutex);
+
   int read_state = 0;
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
@@ -755,7 +756,7 @@ void* handle_client(void *_arg){
 
 //time_start(copy)
   luaI_deepcopy(args->L, L, 0);
- 
+
 //time_end("copy", copy)
   lua_settop(args->L, old_top);
   //l_pprint(L);
@@ -785,6 +786,7 @@ void* handle_client(void *_arg){
       str* sC = (str*)parray_get(table, "Cookie");
       int some = bytes_received - header_eof - 10;
       struct file_parse* file_cont = calloc(1, sizeof * file_cont);
+
       //printf("'%s'\n\n",buffer);
       lua_newtable(L);
       int files_idx = lua_gettop(L);
@@ -810,7 +812,6 @@ void* handle_client(void *_arg){
       //rolling_file_parse(L, buffer + header_eof + 4 + 900, sT, bytes_received - header_eof - 4 - 900, &file_cont);
       //rolling_file_parse(L, buffer + header_eof + 4 + 300, sT, 100, &file_cont);
 
-      
       //printf("found: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
       str_free(aa);
       if(v != NULL){
@@ -836,7 +837,6 @@ void* handle_client(void *_arg){
 
           parray_remove(table, "Cookie", NONE);
         }
-
         /*
         //handle files
         if(sT != NULL && bytes_received > 0){
@@ -891,6 +891,7 @@ void* handle_client(void *_arg){
         luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
         luaI_tsetv(L, res_idx, "header", header_idx);
+        
         //printf("wrote table: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
         //the function(s)
         //get all function that kinda match
@@ -904,12 +905,11 @@ void* handle_client(void *_arg){
             struct lchar* wowa = awa->cs[z];
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
                 (strcmp(sR->c, "HEAD") && strcmp(wowa->req, "GET"))){
-
+                  
                   luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
-
                   int func = lua_gettop(L);
 
-                  lua_pushvalue(L, func); // push function call
+                  //lua_pushvalue(L, func); // push function call
                   lua_pushvalue(L, res_idx); //push methods related to dealing with the request
                   lua_pushvalue(L, req_idx); //push info about the request
 
@@ -948,10 +948,9 @@ void* handle_client(void *_arg){
 
   shutdown(client_fd, 2);
   close(client_fd);
-
   free(args);
   free(buffer);
-  lua_close(L);
+  //lua_close(L);
   //printf("closed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   pthread_mutex_lock(&mutex);
   threads--;
