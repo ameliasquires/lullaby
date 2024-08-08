@@ -23,7 +23,6 @@ void lua_set_global_table(lua_State*);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
-    lua_pushvalue(L, Tidx);\
     lua_pushstring(L, K);\
     F(L, V);\
     lua_settable(L, Tidx);
