@@ -113,7 +113,6 @@ int l_res(lua_State* L){
 void* handle_thread(void* _args){
   struct thread_info* args = (struct thread_info*)_args;
   lua_State* L = args->L;
-  lua_gc(L, LUA_GCSTOP);
 
   lua_newtable(L);
   int res_idx = lua_gettop(L);
@@ -163,11 +162,13 @@ int l_clean(lua_State* L){
     struct thread_info* info = lua_touserdata(L, -1);
     if(info != NULL && info->L != NULL){
       
-      lua_gc(info->L, LUA_GCRESTART);
+      //lua_gc(info->L, LUA_GCRESTART);
       lua_gc(info->L, LUA_GCCOLLECT);
       lua_close(info->L);
       info->L = NULL;
+       
       pthread_mutex_destroy(&info->lock);
+      pthread_cancel(info->tid);
       free(info);
 
       luaI_tsetlud(L, 1, "_", NULL);
@@ -177,7 +178,9 @@ int l_clean(lua_State* L){
 
 int l_async(lua_State* oL){
   lua_State* L = luaL_newstate(); 
+  lua_gc(L, LUA_GCSTOP);
 
+  luaL_openlibs(L);
   lua_getglobal(oL, "_G");
   luaI_deepcopy(oL, L, SKIP_GC);
   lua_set_global_table(L);
@@ -188,7 +191,7 @@ int l_async(lua_State* oL){
   pthread_mutex_init(&args->lock, NULL);
   pthread_mutex_lock(&args->lock);
   args->return_count = 0;
-
+  
   args->function = str_init("");
   lua_pushvalue(oL, 1);
   lua_dump(oL, writer, (void*)args->function, 0);
@@ -214,30 +217,37 @@ int l_async(lua_State* oL){
 
 struct thread_buffer {
   lua_State* L;
-  pthread_mutex_t lock;
+  pthread_mutex_t* lock;
 };
 
 int _buffer_get(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
-  pthread_mutex_lock(&buffer->lock);
+  pthread_mutex_lock(&*buffer->lock);
   luaI_deepcopy(buffer->L, L, 0);
-  pthread_mutex_unlock(&buffer->lock);
+  pthread_mutex_unlock(&*buffer->lock);
   return 1;
 }
 
 int _buffer_set(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
-  pthread_mutex_lock(&buffer->lock);
+  pthread_mutex_lock(&*buffer->lock);
   lua_settop(buffer->L, 0);
-  luaI_deepcopy(L, buffer->L, 0);
-  pthread_mutex_unlock(&buffer->lock);
+  luaI_deepcopy(L, buffer->L, SKIP_GC);
+  pthread_mutex_unlock(&*buffer->lock);
   return 1;
 }
 
+#include <assert.h>
+_Atomic int used = 0;
+
 int _buffer_mod(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
-  pthread_mutex_lock(&buffer->lock);
-  luaI_deepcopy(buffer->L, L, 0);
+  pthread_mutex_lock(&*buffer->lock);
+  //printf("%p\n", &*buffer->lock);
+  assert(used == 0);
+  used = 1;
+  
+  luaI_deepcopy(buffer->L, L, SKIP_GC);
   int item = lua_gettop(L);
   lua_pushvalue(L, 2);
   lua_pushvalue(L, item);
@@ -247,7 +257,10 @@ int _buffer_mod(lua_State* L){
     lua_settop(buffer->L, 0);
     luaI_deepcopy(L, buffer->L, 0);
   }
-  pthread_mutex_unlock(&buffer->lock);
+
+  used = 0;
+
+  pthread_mutex_unlock(&*buffer->lock);
   return 1;
 }
 
@@ -318,12 +331,12 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
     int k, v = lua_gettop(L);
     k = lua_gettop(L) - 1;
 
-    char* fn = calloc(128, sizeof * fn); //todo: find optimal value for these
+    char* fn = calloc(128, sizeof * fn); 
     const char* key = lua_tostring(L, k);
     sprintf(fn, "return function(_a,_b,_c)\
 return __proxy_call(__this_obj,'%s',table.unpack({_a,_b,_c}));end", key);
     luaL_dostring(L, fn);
-    //printf("%s\n",fn);
+
     free(fn);
     int nf = lua_gettop(L);
 
@@ -336,7 +349,10 @@ return __proxy_call(__this_obj,'%s',table.unpack({_a,_b,_c}));end", key);
 int l_buffer_gc(lua_State* L){
   printf("gc\n");
   struct thread_buffer *buffer = lua_touserdata(L, 1);
-  pthread_mutex_lock(&buffer->lock);
+  pthread_mutex_lock(&*buffer->lock);
+  pthread_mutex_destroy(&*buffer->lock);
+  free(buffer->lock);
+
   lua_close(buffer->L);
   return 0;
 }
@@ -349,7 +365,8 @@ int l_buffer(lua_State* L){
   int buffer_idx = lua_gettop(L);
 
   buffer->L = luaL_newstate();
-  pthread_mutex_init(&buffer->lock, NULL);
+  buffer->lock = malloc(sizeof * buffer->lock);
+  if(pthread_mutex_init(&*buffer->lock, NULL) != 0) p_fatal("pthread_mutex_init failed");
   lua_pushvalue(L, 1);
   luaI_deepcopy(L, buffer->L, SKIP_GC);
 
@@ -369,11 +386,10 @@ void _lua_getfenv(lua_State* L){
   
 }
 int l_testcopy(lua_State* L){
-  lua_settop(L, 0);
 
   
   lua_State* temp = luaL_newstate();
-  //luaI_deepcopy(temp, L, NULL, SKIP_GC);
+  luaI_deepcopy(L, temp, SKIP_GC);
   lua_close(temp);
   return 1;
 }
