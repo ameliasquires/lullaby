@@ -53,8 +53,9 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     double n;
     int old_top = lua_gettop(src);
     int modi = 0;
-
-    switch(lua_type(src, -1)){
+    
+    int type;
+    switch(type = lua_type(src, -1)){
         case LUA_TNUMBER:
             n = lua_tonumber(src, -1);
             if(n == (int)n) lua_pushinteger(dest, (int)n);
@@ -123,7 +124,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
           str* awa = str_init("");
           lua_dump(src, writer, (void*)awa, 0);
 
-          luaL_loadbuffer(dest, awa->c, awa->len, awa->c);
+          luaL_loadbuffer(dest, awa->c, awa->len, "fun");
           //lua_remove(dest, -2);
           str_free(awa);
           break;
@@ -138,7 +139,8 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
           lua_pushlightuserdata(dest, lua_touserdata(src, -1)); 
           break;
         default:
-          printf("unknown type %i\n",lua_type(src, -1));
+          printf("unknown type %i vs (old)%i\n",lua_type(src, -1), type);
+          abort();
           lua_pushnumber(dest, 5);
           break;
     }

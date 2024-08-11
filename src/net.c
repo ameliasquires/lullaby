@@ -38,6 +38,7 @@ struct sarray_t {
 };
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t con_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /**
@@ -744,8 +745,11 @@ void* handle_client(void *_arg){
   char* buffer;
   char dummy[2] = {0, 0};
   int header_eof;
+  lua_State* L = args->L;
     //sleep(1);
   //create state for this thread
+
+  /*
   lua_State* L = luaL_newstate(); 
 
   luaL_openlibs(L);
@@ -755,14 +759,17 @@ void* handle_client(void *_arg){
   lua_getglobal(args->L, "_G");
 
 //time_start(copy)
-  luaI_deepcopy(args->L, L, 0);
+  luaI_deepcopy(args->L, L, SKIP_GC);
 
 //time_end("copy", copy)
   lua_settop(args->L, old_top);
+  pthread_mutex_unlock(&con_mutex);
+
   //l_pprint(L);
   //lua_setglobal(L, "_G");
   lua_set_global_table(L);
   pthread_mutex_unlock(&mutex);
+  */
   //printf("start: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   //read full request
 //time_start(recv)
@@ -892,8 +899,6 @@ void* handle_client(void *_arg){
         
         luaI_tsetv(L, res_idx, "header", header_idx);
         
-        //printf("wrote table: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
-        //the function(s)
         //get all function that kinda match
         parray_t* owo = (parray_t*)v;
         for(int i = 0; i != owo->len; i++){
@@ -903,6 +908,7 @@ void* handle_client(void *_arg){
           for(int z = 0; z != awa->len; z++){
             char* path;
             struct lchar* wowa = awa->cs[z];
+            //if request is HEAD, it is valid for GET and HEAD listeners 
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
                 (strcmp(sR->c, "HEAD") && strcmp(wowa->req, "GET"))){
                   
@@ -920,7 +926,7 @@ void* handle_client(void *_arg){
           }
         }
         parray_lclear(owo); //dont free the rest
-        //printf("out: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
+
         lua_pushstring(L, "client_fd");
         lua_gettable(L, res_idx);
         client_fd = luaL_checkinteger(L, -1);
@@ -942,7 +948,6 @@ void* handle_client(void *_arg){
 
       free(file_cont);
     }
-    //printf("end anyways\n");
     parray_clear(table, STR);
   }
 
@@ -950,7 +955,7 @@ void* handle_client(void *_arg){
   close(client_fd);
   free(args);
   free(buffer);
-  //lua_close(L);
+  lua_close(L);
   //printf("closed: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   pthread_mutex_lock(&mutex);
   threads--;
@@ -992,6 +997,9 @@ int start_serv(lua_State* L, int port){
   if (pthread_mutex_init(&mutex, NULL) != 0)
     p_fatal("mutex init failed\n");
 
+  if (pthread_mutex_init(&con_mutex, NULL) != 0)
+    p_fatal("con_mutex init failed\n");
+
   for(;;){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
@@ -1006,17 +1014,39 @@ int start_serv(lua_State* L, int port){
     args->fd = *client_fd;
     args->port = port;
     args->cli = client_addr;
-    args->L = L;
+    args->L = luaL_newstate();
+
+    luaL_openlibs(args->L);
+
+    pthread_mutex_lock(&mutex);
+    int old_top = lua_gettop(L);
+    lua_getglobal(L, "_G");
+
+    //time_start(copy)
+    luaI_deepcopy(L, args->L, SKIP_GC);
+
+    //time_end("copy", copy)
+    lua_settop(L, old_top);
+
+    //l_pprint(L);
+    //lua_setglobal(L, "_G");
+    lua_set_global_table(args->L);
+    pthread_mutex_unlock(&mutex);
 
     pthread_mutex_lock(&mutex);
     threads++;
     pthread_mutex_unlock(&mutex);
+
+    //pthread_mutex_lock(&con_mutex);
 
     //send request to handle_client()
     pthread_t thread_id;
     pthread_create(&thread_id, NULL, handle_client, (void*)args);
     pthread_detach(thread_id);
 
+    //double lock, wait for thread to unlock it
+    //pthread_mutex_lock(&con_mutex);
+     
     //handle_client((void*)args);
     free(client_fd);
   }
