@@ -62,6 +62,7 @@ int luaopen_lullaby(lua_State* L) {
     push(top, config);
     push(top, net);
     push(top, thread);
+    luaI_tsets(L, top, "version", GIT_COMMIT)
     //lreg("array", array_function_list);
     //lreg("crypto", crypto_function_list);
     //lreg("io", io_function_list);

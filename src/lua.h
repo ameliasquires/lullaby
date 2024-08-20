@@ -12,6 +12,10 @@ enum deep_copy_flags {
 };
 #endif 
 
+#ifndef GIT_COMMIT
+#define GIT_COMMIT "unknown"
+#endif
+
 void* __malloc_(size_t);
 void __free_(void*);
 
