@@ -16,7 +16,7 @@ struct thread_info {
     lua_State* L;
     int return_count, done;
     pthread_t tid;
-    pthread_mutex_t lock;
+    pthread_mutex_t* lock;
 };
 
 #include "io.h"
@@ -101,8 +101,8 @@ int l_res(lua_State* L){
 
         lua_settop(L, ot);
     }
-
-    pthread_mutex_unlock(&info->lock);
+    
+    pthread_mutex_unlock(&*info->lock);
 
     pthread_exit(NULL);
     p_error("thread did not exit");
@@ -130,7 +130,7 @@ void* handle_thread(void* _args){
   lua_pushvalue(L, res_idx);
   lua_call(L, 1, 0);
 
-  pthread_mutex_unlock(&args->lock);
+  pthread_mutex_unlock(&*args->lock);
 
   return NULL;
 }
@@ -141,7 +141,7 @@ int l_await(lua_State* L){
     struct thread_info* info = lua_touserdata(L, -1);
 
     if(info->L == NULL) p_fatal("thread has already been cleaned");
-    if(!info->done) pthread_mutex_lock(&info->lock);
+    if(!info->done) pthread_mutex_lock(&*info->lock);
     info->done = 1;
 
     for(int i = 0; i != info->return_count; i++){
@@ -167,7 +167,8 @@ int l_clean(lua_State* L){
       lua_close(info->L);
       info->L = NULL;
        
-      pthread_mutex_destroy(&info->lock);
+      pthread_mutex_destroy(&*info->lock);
+      free(info->lock);
       pthread_cancel(info->tid);
       free(info);
 
@@ -188,8 +189,9 @@ int l_async(lua_State* oL){
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
   //args->lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
-  pthread_mutex_init(&args->lock, NULL);
-  pthread_mutex_lock(&args->lock);
+  args->lock = malloc(sizeof * args->lock);
+  pthread_mutex_init(&*args->lock, NULL);
+  pthread_mutex_lock(&*args->lock);
   args->return_count = 0;
   
   args->function = str_init("");
@@ -223,7 +225,7 @@ struct thread_buffer {
 int _buffer_get(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
-  luaI_deepcopy(buffer->L, L, 0);
+  luaI_deepcopy(buffer->L, L, SKIP_GC);
   pthread_mutex_unlock(&*buffer->lock);
   return 1;
 }
@@ -255,7 +257,7 @@ int _buffer_mod(lua_State* L){
 
   if(lua_type(L, -1) != LUA_TNIL){
     lua_settop(buffer->L, 0);
-    luaI_deepcopy(L, buffer->L, 0);
+    luaI_deepcopy(L, buffer->L, SKIP_GC);
   }
 
   used = 0;
@@ -342,7 +344,7 @@ return __proxy_call(__this_obj,'%s',table.unpack({_a,_b,_c}));end", key);
 
     luaI_tsetv(L, new_meta_idx, lua_tostring(L, k), nf);
 
-    lua_pop(L, 3);
+    lua_pop(L, 2);
   }
 }
 
