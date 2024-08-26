@@ -2,10 +2,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include "../crypto.h"
-#include "../util.h"
 
 const uint8_t blake_sigma[][16] = {
   { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
@@ -438,7 +437,7 @@ void blake512_final(struct blake512_hash* hash, char* out_stream){
   _blake512_final(hash, out_stream);
 
   for(int i = 0; i != 8; i++){
-    sprintf(out_stream + 16 * i, "%016llx", (hash->hash)[i]);
+    sprintf(out_stream + 16 * i, "%016"PRIx64, (hash->hash)[i]);
   }
 
   memcpy(hash, &old_hash, sizeof * hash);
@@ -469,7 +468,7 @@ void blake384_final(struct blake384_hash* hash, char* out_stream){
   _blake512_final(hash, out_stream);
 
   for(int i = 0; i != 6; i++){
-    sprintf(out_stream + 16 * i, "%016llx", (hash->hash)[i]);
+    sprintf(out_stream + 16 * i, "%016"PRIx64, (hash->hash)[i]);
   }
 
   memcpy(hash, &old_hash, sizeof * hash);

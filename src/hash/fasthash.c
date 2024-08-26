@@ -1,6 +1,5 @@
-#include "../util.h"
 #include "../crypto.h"
-#include <stdio.h>
+#include <inttypes.h>
 #include <stdint.h>
 //almost entirely taken from https://github.com/ztanml/fast-hash/blob/master/fasthash.c
 
@@ -62,7 +61,7 @@ int l_fasthash64(lua_State* L){
   char digest[64];
 
   uint64_t u = fasthash64(a, len, seed);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -77,7 +76,7 @@ int l_fasthash32(lua_State* L){
   char digest[32];
 
   uint32_t u = fasthash32(a, len, seed);
-  sprintf(digest,"%04x",u);
+  sprintf(digest,"%04"PRIx32,u);
   lua_pushstring(L, digest);
   return 1;
 }

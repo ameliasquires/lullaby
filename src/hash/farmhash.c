@@ -1,7 +1,6 @@
-#include "../util.h"
 #include "../crypto.h" //include city hash too
 #include <stdint.h>
-
+#include <inttypes.h>
 uint32_t farmhash32len13to24(uint8_t* in, size_t len) {
     uint32_t seed = 0;
     uint32_t a = UNALIGNED_LOAD32(in - 4 + (len >> 1));
@@ -151,7 +150,7 @@ int l_farmhash32(lua_State* L){
   char digest[32];
 
   uint32_t u = farmhash32(a, len);
-  sprintf(digest,"%04x",u);
+  sprintf(digest,"%04"PRIx32,u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -163,7 +162,7 @@ int l_farmhash64(lua_State* L){
   char digest[64];
 
   uint64_t u = farmhash64(a, len);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
   return 1;
 }

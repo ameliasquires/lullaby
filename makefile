@@ -2,7 +2,7 @@ CC := clang
 
 GIT_COMMIT := "$(shell git describe --tags)-$(shell git describe --always --match 'NOT A TAG')"
 
-CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)'
+CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' -Wall
 LFLAGS := -lm -shared
 LINKER := clang
 

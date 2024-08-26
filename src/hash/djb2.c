@@ -1,6 +1,7 @@
 #include "../crypto.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 struct djb2_hash djb2_init(){
   return (struct djb2_hash){.hash = 5381};
@@ -31,7 +32,7 @@ int l_djb2_final(lua_State* L){
   struct djb2_hash* a = (struct djb2_hash*)lua_touserdata(L, 1);
   uint32_t u = djb2_final(a);
   char digest[64];
-  sprintf(digest,"%08x",u);
+  sprintf(digest,"%08"PRIx32,u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -44,7 +45,7 @@ int l_djb2(lua_State* L){
   char digest[64];
 
   uint32_t u = djb2(a, len);
-  sprintf(digest,"%08x",u);
+  sprintf(digest,"%08"PRIx32,u);
   lua_pushstring(L, digest);
   return 1;
 }

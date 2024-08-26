@@ -1,9 +1,9 @@
-#include "../util.h"
 #include "../crypto.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 const uint64_t k[80] = {0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc, 0x3956c25bf348b538, 
         0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118, 0xd807aa98a3030242, 0x12835b0145706fbe, 
@@ -175,7 +175,8 @@ void sha512_final(struct sha512_hash* hash, char* out_stream){
 
   _sha512_t_final(hash);
 
-  sprintf((char*)out_stream, "%016llx%016llx%016llx%016llx%016llx%016llx%016llx%016llx", hash->h0, hash->h1, hash->h2, hash->h3, hash->h4, hash->h5, hash->h6, hash->h7);
+  sprintf((char*)out_stream, "%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64
+      , hash->h0, hash->h1, hash->h2, hash->h3, hash->h4, hash->h5, hash->h6, hash->h7);
   /*sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h2);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h3);
@@ -196,7 +197,7 @@ void sha384_final(struct sha512_hash* hash, char* out_stream){
   _sha512_t_final(hash);
 
 
-  sprintf((char*)out_stream, "%016llx%016llx%016llx%016llx%016llx%016llx", hash->h0, hash->h1, hash->h2, hash->h3, hash->h4, hash->h5);
+  sprintf((char*)out_stream, "%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64"%016"PRIx64, hash->h0, hash->h1, hash->h2, hash->h3, hash->h4, hash->h5);
   /*sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h1);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h2);
   sprintf((char*)out_stream, "%s%016llx", out_stream, hash->h3);

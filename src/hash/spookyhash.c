@@ -1,4 +1,3 @@
-#include "../util.h"
 #include "../crypto.h"
 #include <stdint.h>
 #include <string.h>

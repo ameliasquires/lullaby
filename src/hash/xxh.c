@@ -1,6 +1,7 @@
 #include "../crypto.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #define max_buffer_size32 16
 #define max_buffer_size64 32
@@ -129,7 +130,7 @@ int l_xxh64(lua_State* L){
   char digest[64];
 
   uint64_t u = i_xxhash64(a, seed, len);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
 
   return 1;
