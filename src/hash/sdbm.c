@@ -1,6 +1,7 @@
 #include "../crypto.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 struct sdbm_hash sdbm_init(){
   return (struct sdbm_hash){.hash = 0};
@@ -30,7 +31,7 @@ int l_sdbm_final(lua_State* L){
   struct sdbm_hash* a = (struct sdbm_hash*)lua_touserdata(L, 1);
   uint64_t u = sdbm_final(a);
   char digest[64];
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -43,7 +44,7 @@ int l_sdbm(lua_State* L){
   char digest[64];
 
   uint64_t u = sdbm(a, len);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
   return 1;
 }

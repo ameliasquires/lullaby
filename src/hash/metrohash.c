@@ -1,5 +1,5 @@
 #include "../crypto.h"
-#include <stdio.h>
+#include <inttypes.h>
 #include <stdint.h>
 
 #define u64(a) (*(uint64_t*)a)
@@ -169,7 +169,7 @@ int l_metrohash64_v1(lua_State* L){
   char digest[64];
 
   uint64_t u = metrohash64(a, len, seed, v1);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -184,7 +184,7 @@ int l_metrohash64_v2(lua_State* L){
   char digest[64];
 
   uint64_t u = metrohash64(a, len, seed, v2);
-  sprintf(digest,"%016llx",u);
+  sprintf(digest,"%016"PRIx64,u);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -200,7 +200,7 @@ int l_metrohash128_v1(lua_State* L){
 
   uint64_t u1, u2;
   metrohash128(a, len, seed, &u1, &u2, v1);
-  sprintf(digest,"%016llx%016llx",u1,u2);
+  sprintf(digest,"%016"PRIx64"%016"PRIx64,u1,u2);
   lua_pushstring(L, digest);
   return 1;
 }
@@ -216,7 +216,7 @@ int l_metrohash128_v2(lua_State* L){
 
   uint64_t u1, u2;
   metrohash128(a, len, seed, &u1, &u2, v2);
-  sprintf(digest,"%016llx%016llx",u1,u2);
+  sprintf(digest,"%016"PRIx64"%016"PRIx64,u1,u2);
   lua_pushstring(L, digest);
   return 1;
 }
