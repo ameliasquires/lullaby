@@ -239,3 +239,51 @@ int content_disposition(str* src, parray_t** _dest){
 
   return 1;
 }
+
+int match_param(char* path, char* match){
+  int pi, mi = pi = 0;
+  int step = 0;
+  //0 increment both
+  //1 move match to find '/' or '\0'
+  //2 move path to find '}'
+  for(; path[pi] != '\0' && match[mi] != '\0';){
+    if(step == 0){
+      if(path[pi] == '{'){
+        step = 1;
+      } else {
+        pi++;
+        mi++;
+      } 
+    } else if (step == 1){
+      if(match[mi] == '/'){
+        printf("\n");
+        step = 2;
+      } else {
+        printf("%c",match[mi]);
+        mi++;
+      }
+    } else if (step == 2){
+      if(path[pi] == '}'){
+        step = 0;
+      } else {
+        pi++;
+      }
+    }
+  }
+  return 0;
+}
+
+parray_t* route_match(parray_t* paths, char* request){
+  parray_t* out = parray_initl(paths->len);
+  out->len = 0;
+
+  for(int i = 0; i != paths->len; i++){
+    match_param(paths->P[i].key->c, request);
+    if(strcmp(request, paths->P[i].key->c) == 0){
+      out->P[out->len] = paths->P[i];
+      out->len++;
+
+    }
+  }
+  return out;
+}
