@@ -70,7 +70,8 @@ void* handle_client(void *_arg){
 
       str_push(aa, sk->c);
 
-      void* v = parray_find(paths, aa->c);
+      //parray_t* v = parray_find(paths, aa->c);
+      parray_t* v = route_match(paths, aa->c);
       
       if(sT != NULL)
         rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, file_cont);
