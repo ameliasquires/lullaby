@@ -6,6 +6,7 @@
 #include "math.h"
 #include "net.h"
 #include "thread.h"
+#include "test.h"
 #include <signal.h>
 #include <stdlib.h>
 
@@ -36,6 +37,7 @@ open_common(math);
 open_common(config);
 open_common(net);
 open_common(thread);
+open_common(test);
 
 #define push(T, name)\
   lua_pushstring(L, #name);\
@@ -62,6 +64,7 @@ int luaopen_lullaby(lua_State* L) {
     push(top, config);
     push(top, net);
     push(top, thread);
+    push(top, test);
     luaI_tsets(L, top, "version", GIT_COMMIT)
     //lreg("array", array_function_list);
     //lreg("crypto", crypto_function_list);
