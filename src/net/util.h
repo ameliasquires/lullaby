@@ -47,3 +47,6 @@ void client_fd_errors(int client_fd);
 int content_disposition(str* src, parray_t** _dest);
 
 parray_t* route_match(parray_t* paths, char* path);
+
+int match_param(char* path, char* match, parray_t* arr);
+

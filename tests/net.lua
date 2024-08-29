@@ -19,10 +19,21 @@ net.listen(
         _G.server = server
 
         server:all("/{name}", function(res, req)
-          print("name is "..req.name)
+          --print("name is "..req.name)
+          print("name")
         end)
+
+        server:all("/{name}/nya/{user}", function(res, req)
+          --print("name is "..req.name)
+          print("name id user")
+        end)
+
         server:all("*", function(res, req)
           print("all")
+        end)
+
+        server:all("/{name}/user/*/{id}", function(res, req)
+          print("owo")
         end)
 
         server:all("/", function(res, req)

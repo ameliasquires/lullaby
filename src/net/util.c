@@ -240,37 +240,84 @@ int content_disposition(str* src, parray_t** _dest){
   return 1;
 }
 
-int match_param(char* path, char* match){
-  int pi, mi = pi = 0;
+int match_param(char* path, char* match, parray_t* arr){
+  int pi, index, imatch, start, mi;
+  mi = pi = imatch = start = 0;
+  index = -1;
+
   int step = 0;
   //0 increment both
-  //1 move match to find '/' or '\0'
-  //2 move path to find '}'
-  for(; path[pi] != '\0' && match[mi] != '\0';){
+  //1 move path to find '}'
+  //2 move match to find '/' or '\0'
+  char* name;
+
+  for(; /*(path[pi] != '\0' || step == 2) && */(match[mi] != '\0' || step == 1);){
     if(step == 0){
       if(path[pi] == '{'){
+
         step = 1;
+        start = pi;
+      } else if(path[pi] == '*'){
+        //printf("found\n");
+        index = pi;
+        imatch = mi;
+
       } else {
-        pi++;
+
+        if(path[pi] != match[mi]){
+          //printf("whaa\n");
+          if(index == -1) return 0;
+          //printf("here\n");
+          pi = index + 1;
+          imatch++;
+          mi = imatch;
+
+        }
         mi++;
       } 
+      pi++;
+
     } else if (step == 1){
-      if(match[mi] == '/'){
-        printf("\n");
-        step = 2;
-      } else {
-        printf("%c",match[mi]);
-        mi++;
-      }
-    } else if (step == 2){
       if(path[pi] == '}'){
-        step = 0;
+        step = 2;
+        name = calloc(pi - start, sizeof * name);
+        memcpy(name, path + start + 1, pi - start - 1);
+        start = mi;
+        //printf(": ");
       } else {
-        pi++;
+        //printf("%c", path[pi]);
+      }
+      pi++;
+
+    } else if (step == 2){
+      //change this to maybe match the next path char?
+      if(match[mi] == '/'){
+        step = 0;
+
+        char* out = calloc(mi - start, sizeof * out);
+        memcpy(out, match + start, mi - start);
+        parray_set(arr, name, out);
+        free(name);
+        //printf("\n");
+      } else {
+        //printf("%c", match[mi]);
+        mi++;
       }
     }
   }
-  return 0;
+
+  if(step == 2){
+    char* out = calloc(mi - start, sizeof * out);
+    memcpy(out, match + start, mi - start);
+    parray_set(arr, name, out);
+    free(name);
+  }
+
+  if(path[pi] != 0) for(; path[pi] == '*'; pi++);
+
+  //printf("path: '%s':'%s'\nmatch: '%s':'%s'\nend: %i,%i\n",path, &path[pi], match,&match[mi],path[pi],match[mi]);
+
+  return path[pi] == 0 && match[mi] == 0;
 }
 
 parray_t* route_match(parray_t* paths, char* request){
@@ -278,12 +325,14 @@ parray_t* route_match(parray_t* paths, char* request){
   out->len = 0;
 
   for(int i = 0; i != paths->len; i++){
-    match_param(paths->P[i].key->c, request);
-    if(strcmp(request, paths->P[i].key->c) == 0){
+    //if(match_param(paths->P[i].key->c, request))
+    //*if(strcmp(request, paths->P[i].key->c) == 0)*/{
+      //printf("pass!\n");
       out->P[out->len] = paths->P[i];
       out->len++;
 
-    }
+    //}
   }
+  printf("\n");
   return out;
 }
