@@ -33,6 +33,8 @@ end, port)
 
 </blockquote>
 
+note: any net code is prone to memory leaks, this will be addressed and fixed soon, on the other hand it has no know memory issues
+
 ## building
 
 build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
