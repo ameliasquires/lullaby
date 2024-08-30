@@ -39,7 +39,7 @@ note: any net code is prone to memory leaks, this will be addressed and fixed so
 
 build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
-windows works through msys2
+windows works through msys2, install `mingw-w64-x86_64-lua` then run `make CC=gcc`
 
 ---
 
