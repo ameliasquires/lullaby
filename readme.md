@@ -69,10 +69,6 @@ windows works through msys2
 
 * more doxygen like docs, everywhere
 
-* thread-safe wrapper object
-
-* threads
-
 * encode tests (and fix sprintf ub)
 
 ----
