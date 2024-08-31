@@ -21,6 +21,9 @@ endif
 
 all: $(TARGET)
 
+release: CFLAGS += -O3
+release: all
+
 debug: CFLAGS += -g
 debug: all
 
