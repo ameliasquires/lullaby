@@ -71,7 +71,22 @@ void* handle_client(void *_arg){
       str_push(aa, sk->c);
 
       //parray_t* v = parray_find(paths, aa->c);
-      parray_t* v = route_match(paths, aa->c);
+      larray_t* params = larray_init();
+      parray_t* v = route_match(paths, aa->c, &params);
+
+      /*for(int i = 0; i != params->len; i++){
+        int id = larray_geti(params, i);
+        parray_t* par = params->arr[id].value;
+        printf("%i\n", i);
+        for(int x = 0; x != par->len; x++){
+          printf("\t%s : %s\n",par->P[x].key->c, (char*)par->P[x].value);
+        }
+
+        parray_clear(par, STR);
+
+      }
+
+      larray_clear(params);*/
       
       if(sT != NULL)
         rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, file_cont);
@@ -154,12 +169,26 @@ void* handle_client(void *_arg){
         luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
         luaI_tsetv(L, res_idx, "header", header_idx);
-        
+
         //get all function that kinda match
         parray_t* owo = (parray_t*)v;
         for(int i = 0; i != owo->len; i++){
           //though these are arrays of arrays we have to iterate *again*
           struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
+
+          //push url params 
+          lua_newtable(L);
+          int new_param_idx = lua_gettop(L);
+
+          int id = larray_geti(params, i);
+          parray_t* par = params->arr[id].value;
+
+          for(int z = 0; z != par->len; z++){
+            luaI_tsets(L, new_param_idx, par->P[z].key->c, (char*)par->P[z].value);
+          }
+          parray_clear(par, FREE);
+
+          luaI_tsetv(L, req_idx, "paramaters", new_param_idx);
 
           for(int z = 0; z != awa->len; z++){
             char* path;
@@ -181,6 +210,7 @@ void* handle_client(void *_arg){
             }
           }
         }
+        larray_clear(params);
         parray_lclear(owo); //dont free the rest
 
         lua_pushstring(L, "client_fd");
