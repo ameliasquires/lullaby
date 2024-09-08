@@ -14,3 +14,7 @@ vgcore.*
 
 src/*.o
 src/*/*.o
+
+CMakeCache.txt
+Makefile
+*.cmake

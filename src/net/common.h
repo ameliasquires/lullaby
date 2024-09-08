@@ -22,6 +22,7 @@
 
 #define max_con 200
 //2^42
+#define MAX_HEADER_SIZE (1<<20)
 #define BUFFER_SIZE 20000
 #define HTTP_BUFFER_SIZE 4098
 #define max_content_length 200000

@@ -13,7 +13,7 @@ void* handle_client(void *_arg){
   int client_fd = args->fd;
   char* buffer;
   char dummy[2] = {0, 0};
-  int header_eof;
+  int header_eof = -1;
   lua_State* L = args->L;
     //sleep(1);
   //create state for this thread
@@ -43,7 +43,12 @@ void* handle_client(void *_arg){
   //read full request
 //time_start(recv)
   int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof, &read_state);
-
+  /*
+  for(int i = 0; i != header_eof; i++)
+    putchar(buffer[i]);
+  putchar('\n');
+  printf("hi %li:%i\n", bytes_received,header_eof);
+  */
   //ignore if header is just fucked
   if(bytes_received >= -1){
     parray_t* table;
@@ -67,7 +72,6 @@ void* handle_client(void *_arg){
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
-
       str_push(aa, sk->c);
 
       void* v = parray_find(paths, aa->c);
@@ -81,7 +85,7 @@ void* handle_client(void *_arg){
         int req_idx = lua_gettop(L);
         lua_newtable(L);
         int res_idx = lua_gettop(L);
-
+        
         //handle cookies
         //TODO: enable and test with valgrind
         if(0 && sC != NULL){
@@ -205,7 +209,6 @@ void* handle_client(void *_arg){
     }
     parray_clear(table, STR);
   }
-
   shutdown(client_fd, 2);
   close(client_fd);
   free(args);
