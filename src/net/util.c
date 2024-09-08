@@ -47,6 +47,10 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
     }
 
     len += n;
+    if(len >= MAX_HEADER_SIZE){
+      *_buffer = buffer;
+      return -2;//p_fatal("too large");
+    } 
     if(*header_eof == -1){
       buffer = realloc(buffer, len + BUFFER_SIZE + 1);
       memset(buffer + len, 0, n + 1);
@@ -80,7 +84,14 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
       str_clear(current);
       item++;
       if(buffer[oi] == '\n') break;
-    } else str_pushl(current, buffer + oi, 1);
+    } else {
+      str_pushl(current, buffer + oi, 1);
+    }
+  }
+
+  if(item != 3){
+    *_table = table;
+    return -1;
   }
 
   int key = 1;
@@ -103,10 +114,12 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
       continue;
     } else str_pushl(current, buffer + i, 1);
   }
-  parray_set(table, sw->c, (void*)str_init(current->c));
+  if(sw != NULL){
+    parray_set(table, sw->c, (void*)str_init(current->c));
+    str_free(sw);
+  }
 
   str_free(current);
-  if(sw != NULL) str_free(sw);
   *_table = table;
   return 0;
 }
@@ -135,7 +148,6 @@ void http_build(str** _dest, int code, char* code_det, char* header_vs, char* co
  * 
 */
 void http_code(int code, char* code_det){
-  //this was done with a script btw
   switch(code){
     case 100: sprintf(code_det,"Continue"); break;
     case 101: sprintf(code_det,"Switching Protocols"); break;

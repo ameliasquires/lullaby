@@ -115,7 +115,7 @@ void map_clear(map_t* M, enum free_type free){
     map_lclear(M);
 }
 
-int main(){
+int __main(){
     int i = 5;
     int b = 24;
     int c = 9;
