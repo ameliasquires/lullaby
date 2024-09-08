@@ -251,3 +251,108 @@ int content_disposition(str* src, parray_t** _dest){
 
   return 1;
 }
+
+int match_param(char* path, char* match, parray_t* arr){
+  int pi, index, imatch, start, mi;
+  mi = pi = imatch = start = 0;
+  index = -1;
+
+  enum steps {
+    NORMAL,
+    GET_KEY,
+    GET_VALUE
+  };
+
+  enum steps step = NORMAL;
+  char* name;
+
+  for(; /*(path[pi] != '\0' || step == 2) && */(match[mi] != '\0' || step == 1);){
+    switch(step){
+      case NORMAL:
+        if(path[pi] == '{'){
+
+          step = GET_KEY;
+          start = pi;
+        } else if(path[pi] == '*'){
+          index = pi;
+          imatch = mi;
+
+        } else {
+
+          if(path[pi] != match[mi]){
+            if(index == -1) return 0;
+
+            pi = index + 1;
+            imatch++;
+            mi = imatch;
+            continue;
+          }
+          mi++;
+        } 
+        pi++;
+        break;
+      case GET_KEY:
+        if(path[pi] == '}'){
+          step = GET_VALUE;
+          name = calloc(pi - start, sizeof * name);
+          memcpy(name, path + start + 1, pi - start - 1);
+          start = mi;
+        }
+        pi++;
+        break;
+      case GET_VALUE:
+        //change this to maybe match the next path char?
+        if(match[mi] == '/'){
+          step = NORMAL;
+
+          char* out = calloc(mi - start, sizeof * out);
+          memcpy(out, match + start, mi - start);
+          parray_set(arr, name, out);
+          free(name);
+        } else {
+          mi++;
+        }
+        break;
+    }
+  }
+
+  if(step == GET_VALUE){
+    char* out = calloc(mi - start, sizeof * out);
+    memcpy(out, match + start, mi - start);
+    parray_set(arr, name, out);
+    free(name);
+  }
+
+  if(path[pi] != 0) for(; path[pi] == '*'; pi++);
+
+  return path[pi] == 0 && match[mi] == 0;
+}
+
+parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
+  larray_t* params = *_params;
+  parray_t* out = parray_initl(paths->len * 2);
+  parray_t* temp;
+  out->len = 0;
+
+  for(int i = 0; i != paths->len; i++){
+    //if(match_param(paths->P[i].key->c, request))
+    //*if(strcmp(request, paths->P[i].key->c) == 0)*/{
+      //printf("pass!\n");
+    //printf("%i\n", i);
+    
+    temp = parray_init();
+
+    if(match_param(paths->P[i].key->c, request, temp)){
+      out->P[out->len] = paths->P[i];
+      larray_set(&params, out->len, (void*)temp);
+      out->len++;
+    } else {
+      parray_clear(temp, FREE);
+    }
+
+    //}
+  }
+
+  *_params = params;
+  return out;
+}

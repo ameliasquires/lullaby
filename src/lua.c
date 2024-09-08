@@ -87,6 +87,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
               //printf("use %p\n", lua_topointer(src, at2));
               //lua_pop(dest, 1);
               lua_remove(dest, -2);
+              free(aauwu);
               return;
             }
             free(aauwu);

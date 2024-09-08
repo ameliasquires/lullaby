@@ -30,7 +30,7 @@ server:unlock()
 ...
 ```
 
-### server:close
+### server:close **
 
 closes server
 
@@ -40,6 +40,8 @@ closes server
 
 the function has 2 arguments, the first (res) contains functions and info about resolving the request,
 the second (req) contains info on the request, the path allows for wildcards, multiple get requests per path is allowed
+
+it also allows for path paramaters which is a wildcard directory that pushes the results into req.paramaters (read below)
 
 the actual name of the function will change based on what request method you want to accept, all requests are treated the exact same on the backend, besides HEAD requests which will also use all GET requets, and the 'all' variant will get everything
 
@@ -56,6 +58,10 @@ server:GET("/", function(res, req)
     ...
 end)
 ...
+
+server:GET("/home/{user}/id", function(res, req)
+    --sets req.paramaters.user to whatever path was requested
+end)
 ```
 
 #### res:write
@@ -118,6 +124,26 @@ res.header["test"] = "wowa"
 res:sendfile("./html/index.html")
 ...
 ```
+
+### req.paramaters 
+
+a list of paramaters for the current function 
+
+a path of '/user/{name}/id'
+and a request of '/user/amelia/id'
+would set req.paramaters.name to amelia
+
+currently you can not have multiple paramaters per directory
+
+> this could be changed in later versions
+
+/home/{name} is valid 
+
+/flight/{id}-{airline} is not
+
+these can, of course be used with wildcards however you want
+
+/*/{user}/id would match /a/b/c/meow/id with req.paramaters.user being equal to meow
 
 ### req:roll
 
