@@ -17,6 +17,30 @@ net.listen(
 
         io.pprint("online")
         _G.server = server
+
+        server:all("/{name}", function(res, req)
+          --print("name is "..req.name)
+          print("name")
+          io.pprint(req.paramaters)
+        end)
+
+        server:all("/{name}/nya/{user}", function(res, req)
+          --print("name is "..req.name)
+          print("name user")
+          io.pprint(req.paramaters)
+        end)
+
+        server:all("*", function(res, req)
+          print("all")
+          io.pprint(req.paramaters)
+        end)
+
+        server:all("/{name}/user/*/{id}", function(res, req)
+          print("owo")
+          io.pprint(req.paramaters)
+
+        end)
+
         server:all("/", function(res, req)
             b = crypto.md5("hello")
 

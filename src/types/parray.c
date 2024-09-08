@@ -31,6 +31,13 @@ parray_t* parray_init(){
     return awa;
 }
 
+parray_t* parray_initl(int len){
+  parray_t* awa = malloc(sizeof * awa);
+  awa->P = malloc(sizeof * awa->P * len);
+  awa->len = len;
+  return awa;
+}
+
 /**
  * @brief sets value at key to value, adds a new index if new
  *

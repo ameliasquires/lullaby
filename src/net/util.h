@@ -1,5 +1,5 @@
 #include "common.h"
-
+#include "../types/larray.h"
 /**
  * @brief calls recv into buffer until everything is read
  *
@@ -45,3 +45,8 @@ void http_code(int code, char* code_det);
 void client_fd_errors(int client_fd);
 
 int content_disposition(str* src, parray_t** _dest);
+
+parray_t* route_match(parray_t* paths, char* path, larray_t** params);
+
+int match_param(char* path, char* match, parray_t* arr);
+
