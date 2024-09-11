@@ -104,6 +104,16 @@ int l_close(lua_State* L){
   return 0;
 }
 
+int l_stop(lua_State* L){
+  int res_idx = 1;
+
+  lua_pushstring(L, "_stop");
+  lua_pushboolean(L, 1);
+  lua_settable(L, res_idx);
+
+  return 0;
+}
+
 int l_roll(lua_State* L){
   int alen;
   if(lua_gettop(L) > 2) {
