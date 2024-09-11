@@ -201,7 +201,7 @@ void* handle_client(void *_arg){
             struct lchar* wowa = awa->cs[z];
             //if request is HEAD, it is valid for GET and HEAD listeners 
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
-                (strcmp(sR->c, "HEAD") && strcmp(wowa->req, "GET"))){
+                (strcmp(sR->c, "HEAD") == 0 && strcmp(wowa->req, "GET") == 0)){
                   
                   luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
                   int func = lua_gettop(L);
