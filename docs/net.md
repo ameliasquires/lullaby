@@ -48,13 +48,13 @@ the actual name of the function will change based on what request method you wan
 ```lua
 server:all("*", function(res, req) 
    if(req['Version'] ~= "HTTP/1.1") then 
-      res:close()
+      res:stop()
    end
 end)
 
 ...
 server:GET("/", function(res, req)
-    --version will always be 1.1, as per the middleware
+    --version will always be 1.1, because the request passes through the function sequentially
     ...
 end)
 ...
@@ -69,7 +69,7 @@ end)
 'takes a string 
 
 sends the string to the client, constructs a header on first call (whether or not res.header._sent is null)
-(the constructed header can not be changed later on in the request), and sends the string without closing the client
+(the constructed header can not be changed later on in the request*), and sends the string without closing the client
 
 ```lua
 ...
@@ -77,6 +77,8 @@ res:write("<h1>hello world</h1>")
 res:write("<h1>good bye world</h1>")
 ...
 ```
+
+*well it can but it wont do anything 
 
 #### res:send
 
@@ -93,6 +95,12 @@ res:send("<h1>hello world</h1>")
 #### res:close
 
 closes connection, sets res.client_fd to -1, any calls that use this value will fail
+
+this will still run any selected functions! 
+
+#### res:stop 
+
+prevents all further selected functions from running
 
 #### res.header
 
