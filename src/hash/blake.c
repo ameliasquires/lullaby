@@ -498,7 +498,8 @@ int l_blake256_clone(lua_State* L){
   return 1;
 }
 
-common_hash_init_update(blake256);
+lua_common_hash_init_l(blake256, blake256);
+lua_common_hash_update(blake256, blake256);
 
 int l_blake256_final(lua_State* L){
   struct blake256_hash* a = (struct blake256_hash*)lua_touserdata(L, 1);
@@ -539,7 +540,8 @@ int l_blake224_clone(lua_State* L){
   return 1;
 }
 
-common_hash_init_update(blake224);
+lua_common_hash_init_l(blake224, blake224);
+lua_common_hash_update(blake224, blake224);
 
 int l_blake224_final(lua_State* L){
   struct blake224_hash* a = (struct blake224_hash*)lua_touserdata(L, 1);
@@ -580,7 +582,8 @@ int l_blake512_clone(lua_State* L){
   return 1;
 }
 
-common_hash_init_update(blake512);
+lua_common_hash_init_l(blake512, blake512);
+lua_common_hash_update(blake512, blake512);
 
 int l_blake512_final(lua_State* L){
   struct blake512_hash* a = (struct blake512_hash*)lua_touserdata(L, 1);
@@ -622,7 +625,8 @@ int l_blake384_clone(lua_State* L){
   return 1;
 }
 
-common_hash_init_update(blake384);
+lua_common_hash_init_l(blake384, blake384);
+lua_common_hash_update(blake384, blake384);
 
 int l_blake384_final(lua_State* L){
   struct blake384_hash* a = (struct blake384_hash*)lua_touserdata(L, 1);
