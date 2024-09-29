@@ -265,6 +265,7 @@ net_end:
 }
 
 int start_serv(lua_State* L, int port){
+  parse_mimetypes();
   //need these on windows for sockets (stupid)
 #ifdef _WIN32
   WSADATA Data;

@@ -58,7 +58,7 @@ net.listen(
         end)
 
         server:GET("/aa", function(res, req)
-            res.header["Content-Type"] = "text/plain"
+            --res.header["Content-Type"] = "text/plain"
             res:sendfile("readme.md")
         end)
 

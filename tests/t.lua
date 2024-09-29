@@ -1,5 +1,15 @@
 a = require "lullaby"
 
-o = a.crypto.sha224()
---o:update("me")
---print(o:final())
+b = coroutine.create(function()
+  os.execute("sleep 2")
+  print("co")
+end)
+
+c = a.thread.async(function(res, req)
+  coroutine.resume(b)
+end)
+
+os.execute("sleep 0.5")
+print("owo")
+
+c:await()
