@@ -356,3 +356,65 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
   *_params = params;
   return out;
 }
+
+map_t* mime_type = NULL;
+void parse_mimetypes(){
+  mime_type = map_init();
+  FILE* fp = fopen(MIMETYPES, "r");
+  char* buffer = calloc(1024, sizeof * buffer);
+
+  for(;fgets(buffer, 1024, fp); memset(buffer, 0, 1024)){
+    int i;
+    for(i = 0; buffer[i] == ' '; i++);
+    if(buffer[i] == '#') continue;
+
+    //printf("s: '%s'\n",buffer + i);
+    char* type = calloc(512, sizeof * type);
+    int type_len = 0;
+    for(; buffer[i + type_len] != ' ' && buffer[i + type_len] != '\t'; type_len++){
+      //printf("%c", buffer[i + type_len]);
+      type[type_len] = buffer[i + type_len];
+      if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n') break;
+    }
+    type[type_len] = '\0';
+    
+    //check if the type has an associated file type
+    if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n'){
+      free(type);
+      continue;
+    }
+    type = realloc(type, (type_len + 1) * sizeof * type);
+
+
+    int file_type_len = 0;
+    char* file_type = calloc(512, sizeof * file_type);
+    i += type_len;
+
+    for(;buffer[i] == ' ' || buffer[i] == '\t'; i++);
+
+    int used = 0;
+    for(;;){
+      if(buffer[i + file_type_len] == ' ' || buffer[i + file_type_len] == '\n' || buffer[i + file_type_len] == '\0'){
+        used = 1;
+        file_type[file_type_len] = '\0';
+        file_type = realloc(file_type, (file_type_len + 1) * sizeof * file_type);
+        //printf("set %s to %s\n",file_type, type);
+        map_set(&mime_type, file_type, type);
+        file_type = calloc(512, sizeof * file_type);
+        if(buffer[i + file_type_len] != ' ') break;
+        i += file_type_len + 1;
+        file_type_len = 0;
+        //printf("finish\n");
+      } else {
+        file_type[file_type_len] = buffer[i + file_type_len];
+        file_type_len++;
+      }
+    }
+    free(file_type);
+
+    //printf("e: '%s'\n", type);
+    if(!used)free(type);
+  }
+  //printf("done\n");
+
+}

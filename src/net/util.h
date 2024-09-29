@@ -1,5 +1,7 @@
 #include "common.h"
 #include "../types/larray.h"
+
+#define MIMETYPES "/etc/mime.types"
 /**
  * @brief calls recv into buffer until everything is read
  *
@@ -50,3 +52,4 @@ parray_t* route_match(parray_t* paths, char* path, larray_t** params);
 
 int match_param(char* path, char* match, parray_t* arr);
 
+void parse_mimetypes();

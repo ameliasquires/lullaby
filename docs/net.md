@@ -12,10 +12,39 @@ right now everything within a server:GET function is partially global, it can re
 it can not read/copy local variables or modify globals
 **
 
+allows a third optional argument that offers some other options in a table format
+
+|name|default value|extra info|
+|--|--|--|
+|mime.types.file**|/etc/mime.types|formated similarly to [this](https://wiki.debian.org/MIME/etc/mime.types)|
+|max.connections**|64|maximum number of connections that can be opened at the same time, will respond with error(503)|
+|max.header.size**|1<<20 (1048576)|max header size before refusing connection with error(431)|
+|max.uri.size**|idk yet|maximum uri size before refusing request with error(414)|
+|max.request.timeout**|idk yet|maximum time server will wait for request to be parsed|
+
+
+the server will send these codes for these reasons
+|code|cause|
+|--|--|
+|503**|too many current requests, more than max.connections|
+|500**|anytime a server route crashes|
+|431**|header is larger than max header size, more than max.header.size|
+|414**|request uri is longer than max.uri.size|
+|408**|request took too longer than max.request.timeout|
+|404**|request has no defined route|
+
+(more to come?**)
+
 ```lua
 llib.net.listen(function(server)
     ...
 end, 80)
+```
+
+```lua
+llib.net.listen(function(server)
+    ...
+end, 80, {["mime.types.file"] = "/etc/mime.types"})
 ```
 
 ### server:lock server:unlock
@@ -126,6 +155,8 @@ res.header["test"] = "wowa"
 ### res:sendfile
 
 'takes one string, which is a path that will be served, must be a file
+
+res.header["Content-Type"] is set automatically depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
 
 ```lua
 ...

@@ -216,6 +216,14 @@ int l_sendfile(lua_State* L){
     p_fatal("missing permissions");
   }
 
+  char* ext = strrchr(path, '.');
+  if(ext){
+    char* content_type = map_get(mime_type, ext + 1);
+
+    if(content_type) 
+      {luaI_tsets(L, header, "Content-Type", content_type);}
+  }
+
   str* r;
   i_write_header(L, header, &r, "", 0);
   send(client_fd, r->c, r->len, 0);

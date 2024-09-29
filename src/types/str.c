@@ -12,7 +12,7 @@ str* str_initl(const char* init, size_t len){
   if(s->c == NULL) p_fatal("failed to allocate string\n");
   s->len = len ;
   
-  memcpy(s->c, init, len + 1);
+  memcpy(s->c, init, (len + 1) * sizeof * init);
   return s;
 }
 
