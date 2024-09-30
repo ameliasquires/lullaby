@@ -182,7 +182,8 @@ int l_roll(lua_State* L){
   return 1;
 }
 
-#define bsize 512
+#define bsize 32768
+//#define bsize 12
 int l_sendfile(lua_State* L){
   int res_idx = 1;
   
@@ -206,20 +207,27 @@ int l_sendfile(lua_State* L){
     p_fatal("missing permissions");
   }
 
-  str* r;
-  i_write_header(L, header, &r, "", 0);
-  send(client_fd, r->c, r->len, 0);
-  str_free(r);
-
   char* buffer = calloc(sizeof* buffer, bsize + 1);
   FILE* fp = fopen(path, "rb");
   fseek(fp, 0L, SEEK_END);
   size_t sz = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
+  
+  char size[256];
+  sprintf(size, "%li", sz);
+  luaI_tsets(L, header, "Content-Length", size);
+  //todo: allow file name
+  //luaI_tsets(L, header, "Content-Disposition", "attachment;");
 
-  for(int i = 0; i < sz; i += bsize){
+  str* r;
+  i_write_header(L, header, &r, "", 0);
+  send(client_fd, r->c, r->len, 0);
+  str_free(r);
+
+  for(size_t i = 0; i < sz; i += bsize){
     fread(buffer, sizeof * buffer, bsize, fp);
-    send(client_fd, buffer, bsize > sz - i ? sz - i : bsize, 0);
+    if(send(client_fd, buffer, bsize > sz - i ? sz - i : bsize, 0) == -1)
+      break;
   }
 
   free(buffer);
