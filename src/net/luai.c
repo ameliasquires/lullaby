@@ -1,5 +1,6 @@
 #include "luai.h"
 #include "common.h"
+#include "util.h"
 
 void i_write_header(lua_State* L, int header_top, str** _resp, char* content, size_t len){
   str* resp;
@@ -24,9 +25,8 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content, si
   lua_gettable(L, header_top);
   int code = luaL_checkinteger(L, -1);
     
-  char code_det[50] = {0};
-  http_code(code, code_det);
-  http_build(&resp, code,  code_det, header_vs->c, content, len);
+  const char* code_det = http_code(code);
+  http_build(&resp, code, code_det, header_vs->c, content, len);
 
   str_free(header_vs);
   *_resp = resp;

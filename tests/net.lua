@@ -18,10 +18,11 @@ net.listen(
         io.pprint("online")
         _G.server = server
 
-        server:all("/{name}", function(res, req)
+        server:POST("/{name}", function(res, req)
           --print("name is "..req.name)
           print("name")
           io.pprint(req.paramaters)
+          res:stop()
         end)
 
         server:all("/{name}/nya/{user}", function(res, req)
@@ -57,7 +58,7 @@ net.listen(
         end)
 
         server:GET("/aa", function(res, req)
-            res.header["Content-Type"] = "text/plain"
+            --res.header["Content-Type"] = "text/plain"
             res:sendfile("readme.md")
         end)
 

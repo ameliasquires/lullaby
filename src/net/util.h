@@ -1,5 +1,7 @@
 #include "common.h"
 #include "../types/larray.h"
+
+#define MIMETYPES "/etc/mime.types"
 /**
  * @brief calls recv into buffer until everything is read
  *
@@ -32,7 +34,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table);
  * @param {char*} response content
  * @param {size_t} content length
 */
-void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len);
+void http_build(str** _dest, int code, const char* code_det, char* header_vs, char* content, size_t len);
 
 /**
  * @brief gets a string representation of a http code
@@ -40,7 +42,7 @@ void http_build(str** _dest, int code, char* code_det, char* header_vs, char* co
  * @param {int} http response code
  * @param {char*} allocated destination string
 */
-void http_code(int code, char* code_det);
+const char* http_code(int code);
 
 void client_fd_errors(int client_fd);
 
@@ -50,3 +52,4 @@ parray_t* route_match(parray_t* paths, char* path, larray_t** params);
 
 int match_param(char* path, char* match, parray_t* arr);
 
+void parse_mimetypes();
