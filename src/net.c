@@ -43,12 +43,12 @@ void* handle_client(void *_arg){
   //read full request
 //time_start(recv)
   int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof, &read_state);
-  /*
-  for(int i = 0; i != header_eof; i++)
+  
+  /*for(int i = 0; i != header_eof; i++)
     putchar(buffer[i]);
-  putchar('\n');
-  printf("hi %li:%i\n", bytes_received,header_eof);
-  */
+  putchar('\n');*/
+  //printf("hi %li:%i\n", bytes_received,header_eof);
+  
   //ignore if header is just fucked
   if(bytes_received >= -1){
     parray_t* table;
@@ -104,12 +104,12 @@ void* handle_client(void *_arg){
         
         //handle cookies
         //TODO: enable and test with valgrind
-        if(0 && sC != NULL){
+        if(sC != NULL){
           lua_newtable(L);
           int lcookie = lua_gettop(L);
 
           parray_t* cookie = parray_init();
-          //printf("%i\n",gen_parse(sC->c, sC->len, &cookie));
+          gen_parse(sC->c, sC->len, &cookie);
           for(int i = 0; i != cookie->len; i++){
             //printf("%s %s\n", cookie->P[i].key->c, ((str*)cookie->P[i].value)->c);
             luaI_tsetsl(L, lcookie, cookie->P[i].key->c, ((str*)cookie->P[i].value)->c, ((str*)cookie->P[i].value)->len);
