@@ -196,6 +196,20 @@ int l_roll(lua_State* L){
 //#define bsize 12
 int l_sendfile(lua_State* L){
   int res_idx = 1;
+  int attachment = 0;
+
+  char* path = (char*)luaL_checkstring(L, 2);
+  char* filename = path;
+
+  if(lua_gettop(L) > 2 && lua_type(L, 3) == LUA_TTABLE){
+    lua_pushstring(L, "attachment");
+    lua_gettable(L, 3);
+    if(!lua_isnil(L, -1)) attachment = lua_toboolean(L, -1);
+
+    lua_pushstring(L, "filename");
+    lua_gettable(L, 3);
+    if(!lua_isnil(L, -1)) filename = (char*)lua_tostring(L, -1);
+  }
   
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
@@ -207,8 +221,6 @@ int l_sendfile(lua_State* L){
   lua_pushstring(L, "header");
   lua_gettable(L, -2);
   int header = lua_gettop(L);
-
-  char* path = (char*)luaL_checkstring(L, 2);
 
   if(access(path, F_OK)) {
     p_fatal("file not found"); //TODO: use diff errors here
@@ -234,8 +246,14 @@ int l_sendfile(lua_State* L){
   char size[256];
   sprintf(size, "%li", sz);
   luaI_tsets(L, header, "Content-Length", size);
-  //todo: allow file name
-  //luaI_tsets(L, header, "Content-Disposition", "attachment;");
+
+  if(attachment) {
+    char disp[256];
+    sprintf(disp, "attachment; filename=\"%s\"", filename);
+    luaI_tsets(L, header, "Content-Disposition", disp);
+  } else {
+    luaI_tsets(L, header, "Content-Disposition", "inline;");
+  }
 
   str* r;
   i_write_header(L, header, &r, "", 0);
