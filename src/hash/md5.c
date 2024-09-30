@@ -134,7 +134,14 @@ void md5_final(struct md5_hash* hash, char out_stream[64]){
 
 }
 
-common_hash_clone(md5);
+//common_hash_clone(md5);
+lua_common_hash_clone_oargs(md5, md5, l_md5_init(L), {
+    uint8_t* old = b->buffer;
+    *b = *a;
+    b->buffer = old;
+    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
+});
+
 lua_common_hash_init_ni(md5, md5, md5_init_l(L));
 lua_common_hash_update(md5, md5);
 //common_hash_init_update(md5);

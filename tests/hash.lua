@@ -1,5 +1,7 @@
 llib = require "lullaby"
 
+--llib.io.log = function() end
+
 local hashes_working = 0
 local hashes_failed = 0
 local functions_working = 0
@@ -14,6 +16,8 @@ function test(name,b,exp,oargs)
   local hash5
   local hash6
   local hash7
+  local hash8
+  local hash9
   local add = ""
   if oargs == nil then
     hash = llib.crypto[name](b)
@@ -28,13 +32,29 @@ function test(name,b,exp,oargs)
       hash5 = llib.crypto[name]()
       hash6 = hash5 + b;
       hash6 = hash6:final()
-      hash5 = hash5:update(b):final()
+      hash5 = hash5:update(b):final() 
+      hash7 = llib.crypto[name]()
     else
       hash2 = llib.crypto[name](table.unpack(oargs)):update(b):final()
       hash5 = llib.crypto[name](table.unpack(oargs))
       hash6 = hash5 + b;
       hash6 = hash6:final()
       hash5 = hash5:update(b):final()
+      hash7 = llib.crypto[name](table.unpack(oargs))
+    end
+
+      hash8 = hash7 + "test"
+      hash9 = hash8:final()
+      hash7 = hash7:update("meo"):final()
+      hash8 = hash8:final()
+
+    if hash8 ~= hash9 then
+      fail = true
+      functions_failed = functions_failed + 1 
+      llib.io.error(name.." __copy not working")
+    else 
+      functions_working = functions_working + 1 
+      llib.io.log(name.." __copy working")
     end
 
     if(hash5 ~= exp) then

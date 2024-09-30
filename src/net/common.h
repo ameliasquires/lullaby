@@ -19,6 +19,7 @@
 #include "../table.h"
 #include "../types/str.h"
 #include "../types/parray.h"
+#include "../types/map.h"
 
 #define max_con 200
 //2^42
@@ -61,5 +62,7 @@ struct sarray_t {
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t con_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+extern map_t* mime_type;
 
 #endif

@@ -128,7 +128,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
  * @brief contructs an http request
  *
 */
-void http_build(str** _dest, int code, char* code_det, char* header_vs, char* content, size_t len){
+void http_build(str** _dest, int code, const char* code_det, char* header_vs, char* content, size_t len){
   char* dest = malloc(HTTP_BUFFER_SIZE);
   memset(dest, 0, HTTP_BUFFER_SIZE);
 
@@ -147,70 +147,70 @@ void http_build(str** _dest, int code, char* code_det, char* header_vs, char* co
  * @brief gets a string representation of a http code
  * 
 */
-void http_code(int code, char* code_det){
+const char* http_code(int code){
   switch(code){
-    case 100: sprintf(code_det,"Continue"); break;
-    case 101: sprintf(code_det,"Switching Protocols"); break;
-    case 102: sprintf(code_det,"Processing"); break;
-    case 103: sprintf(code_det,"Early Hints"); break;
-    case 200: sprintf(code_det,"OK"); break;
-    case 201: sprintf(code_det,"Created"); break;
-    case 202: sprintf(code_det,"Accepted"); break;
-    case 203: sprintf(code_det,"Non-Authoritative Information"); break;
-    case 204: sprintf(code_det,"No Content"); break;
-    case 205: sprintf(code_det,"Reset Content"); break;
-    case 206: sprintf(code_det,"Partial Content"); break;
-    case 207: sprintf(code_det,"Multi-Status"); break;
-    case 208: sprintf(code_det,"Already Reported"); break;
-    case 226: sprintf(code_det,"IM Used"); break;
-    case 300: sprintf(code_det,"Multiple Choices"); break;
-    case 301: sprintf(code_det,"Moved Permanently"); break;
-    case 302: sprintf(code_det,"Found"); break;
-    case 303: sprintf(code_det,"See Other"); break;
-    case 304: sprintf(code_det,"Not Modified"); break;
-    case 307: sprintf(code_det,"Temporary Redirect"); break;
-    case 308: sprintf(code_det,"Permanent Redirect"); break;
-    case 400: sprintf(code_det,"Bad Request"); break;
-    case 401: sprintf(code_det,"Unauthorized"); break;
-    case 402: sprintf(code_det,"Payment Required"); break;
-    case 403: sprintf(code_det,"Forbidden"); break;
-    case 404: sprintf(code_det,"Not Found"); break;
-    case 405: sprintf(code_det,"Method Not Allowed"); break;
-    case 406: sprintf(code_det,"Not Acceptable"); break;
-    case 407: sprintf(code_det,"Proxy Authentication Required"); break;
-    case 408: sprintf(code_det,"Request Timeout"); break;
-    case 409: sprintf(code_det,"Conflict"); break;
-    case 410: sprintf(code_det,"Gone"); break;
-    case 411: sprintf(code_det,"Length Required"); break;
-    case 412: sprintf(code_det,"Precondition Failed"); break;
-    case 413: sprintf(code_det,"Content Too Large"); break;
-    case 414: sprintf(code_det,"URI Too Long"); break;
-    case 415: sprintf(code_det,"Unsupported Media Type"); break;
-    case 416: sprintf(code_det,"Range Not Satisfiable"); break;
-    case 417: sprintf(code_det,"Expectation Failed"); break;
-    case 418: sprintf(code_det,"I'm a teapot"); break;
-    case 421: sprintf(code_det,"Misdirected Request"); break;
-    case 422: sprintf(code_det,"Unprocessable Content"); break;
-    case 423: sprintf(code_det,"Locked"); break;
-    case 424: sprintf(code_det,"Failed Dependency"); break;
-    case 425: sprintf(code_det,"Too Early"); break;
-    case 426: sprintf(code_det,"Upgrade Required"); break;
-    case 428: sprintf(code_det,"Precondition Required"); break;
-    case 429: sprintf(code_det,"Too Many Requests"); break;
-    case 431: sprintf(code_det,"Request Header Fields Too Large"); break;
-    case 451: sprintf(code_det,"Unavailable For Legal Reasons"); break;
-    case 500: sprintf(code_det,"Internal Server Error"); break;
-    case 501: sprintf(code_det,"Not Implemented"); break;
-    case 502: sprintf(code_det,"Bad Gateway"); break;
-    case 503: sprintf(code_det,"Service Unavailable"); break;
-    case 504: sprintf(code_det,"Gateway Timeout"); break;
-    case 505: sprintf(code_det,"HTTP Version Not Supported"); break;
-    case 506: sprintf(code_det,"Variant Also Negotiates"); break;
-    case 507: sprintf(code_det,"Insufficient Storage"); break;
-    case 508: sprintf(code_det,"Loop Detected"); break;
-    case 510: sprintf(code_det,"Not Extended"); break;
-    case 511: sprintf(code_det,"Network Authentication Required"); break;
-    default: sprintf(code_det,"unknown");
+    case 100: return "Continue"; break;
+    case 101: return "Switching Protocols"; break;
+    case 102: return "Processing"; break;
+    case 103: return "Early Hints"; break;
+    case 200: return "OK"; break;
+    case 201: return "Created"; break;
+    case 202: return "Accepted"; break;
+    case 203: return "Non-Authoritative Information"; break;
+    case 204: return "No Content"; break;
+    case 205: return "Reset Content"; break;
+    case 206: return "Partial Content"; break;
+    case 207: return "Multi-Status"; break;
+    case 208: return "Already Reported"; break;
+    case 226: return "IM Used"; break;
+    case 300: return "Multiple Choices"; break;
+    case 301: return "Moved Permanently"; break;
+    case 302: return "Found"; break;
+    case 303: return "See Other"; break;
+    case 304: return "Not Modified"; break;
+    case 307: return "Temporary Redirect"; break;
+    case 308: return "Permanent Redirect"; break;
+    case 400: return "Bad Request"; break;
+    case 401: return "Unauthorized"; break;
+    case 402: return "Payment Required"; break;
+    case 403: return "Forbidden"; break;
+    case 404: return "Not Found"; break;
+    case 405: return "Method Not Allowed"; break;
+    case 406: return "Not Acceptable"; break;
+    case 407: return "Proxy Authentication Required"; break;
+    case 408: return "Request Timeout"; break;
+    case 409: return "Conflict"; break;
+    case 410: return "Gone"; break;
+    case 411: return "Length Required"; break;
+    case 412: return "Precondition Failed"; break;
+    case 413: return "Content Too Large"; break;
+    case 414: return "URI Too Long"; break;
+    case 415: return "Unsupported Media Type"; break;
+    case 416: return "Range Not Satisfiable"; break;
+    case 417: return "Expectation Failed"; break;
+    case 418: return "I'm a teapot"; break;
+    case 421: return "Misdirected Request"; break;
+    case 422: return "Unprocessable Content"; break;
+    case 423: return "Locked"; break;
+    case 424: return "Failed Dependency"; break;
+    case 425: return "Too Early"; break;
+    case 426: return "Upgrade Required"; break;
+    case 428: return "Precondition Required"; break;
+    case 429: return "Too Many Requests"; break;
+    case 431: return "Request Header Fields Too Large"; break;
+    case 451: return "Unavailable For Legal Reasons"; break;
+    case 500: return "Internal Server Error"; break;
+    case 501: return "Not Implemented"; break;
+    case 502: return "Bad Gateway"; break;
+    case 503: return "Service Unavailable"; break;
+    case 504: return "Gateway Timeout"; break;
+    case 505: return "HTTP Version Not Supported"; break;
+    case 506: return "Variant Also Negotiates"; break;
+    case 507: return "Insufficient Storage"; break;
+    case 508: return "Loop Detected"; break;
+    case 510: return "Not Extended"; break;
+    case 511: return "Network Authentication Required"; break;
+    default: return "unknown";
   }
 }
 
@@ -355,4 +355,66 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
 
   *_params = params;
   return out;
+}
+
+map_t* mime_type = NULL;
+void parse_mimetypes(){
+  mime_type = map_init();
+  FILE* fp = fopen(MIMETYPES, "r");
+  char* buffer = calloc(1024, sizeof * buffer);
+
+  for(;fgets(buffer, 1024, fp); memset(buffer, 0, 1024)){
+    int i;
+    for(i = 0; buffer[i] == ' '; i++);
+    if(buffer[i] == '#') continue;
+
+    //printf("s: '%s'\n",buffer + i);
+    char* type = calloc(512, sizeof * type);
+    int type_len = 0;
+    for(; buffer[i + type_len] != ' ' && buffer[i + type_len] != '\t'; type_len++){
+      //printf("%c", buffer[i + type_len]);
+      type[type_len] = buffer[i + type_len];
+      if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n') break;
+    }
+    type[type_len] = '\0';
+    
+    //check if the type has an associated file type
+    if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n'){
+      free(type);
+      continue;
+    }
+    type = realloc(type, (type_len + 1) * sizeof * type);
+
+
+    int file_type_len = 0;
+    char* file_type = calloc(512, sizeof * file_type);
+    i += type_len;
+
+    for(;buffer[i] == ' ' || buffer[i] == '\t'; i++);
+
+    int used = 0;
+    for(;;){
+      if(buffer[i + file_type_len] == ' ' || buffer[i + file_type_len] == '\n' || buffer[i + file_type_len] == '\0'){
+        used = 1;
+        file_type[file_type_len] = '\0';
+        file_type = realloc(file_type, (file_type_len + 1) * sizeof * file_type);
+        //printf("set %s to %s\n",file_type, type);
+        map_set(&mime_type, file_type, type);
+        file_type = calloc(512, sizeof * file_type);
+        if(buffer[i + file_type_len] != ' ') break;
+        i += file_type_len + 1;
+        file_type_len = 0;
+        //printf("finish\n");
+      } else {
+        file_type[file_type_len] = buffer[i + file_type_len];
+        file_type_len++;
+      }
+    }
+    free(file_type);
+
+    //printf("e: '%s'\n", type);
+    if(!used)free(type);
+  }
+  //printf("done\n");
+
 }

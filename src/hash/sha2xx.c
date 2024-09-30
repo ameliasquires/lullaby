@@ -179,16 +179,24 @@ void sha256(uint8_t* in, size_t len, char* out){
     struct sha256_hash a = sha256_init();
     sha256_update(in, len, &a);
     sha256_final(&a, out);
+    free(a.buffer);
 }
 
 void sha224(uint8_t* in, size_t len, char* out){
     struct sha256_hash a = sha224_init();
     sha224_update(in, len, &a);
     sha224_final(&a, out);
+    free(a.buffer);
 }
 
-common_hash_clone(sha256);
-lua_common_hash_init(sha256, sha256);
+//common_hash_clone(sha256);
+lua_common_hash_clone_oargs(sha256, sha256, l_sha256_init(L), {
+    uint8_t* old = b->buffer;
+    *b = *a;
+    b->buffer = old;
+    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
+});
+lua_common_hash_init_l(sha256, sha256);
 lua_common_hash_update(sha256, sha256);
 
 int l_sha256_final(lua_State* L){
@@ -215,8 +223,14 @@ int l_sha256(lua_State* L){
 };
 
 #define sha224_hash sha256_hash
-common_hash_clone(sha224);
-lua_common_hash_init(sha224, sha224);
+//common_hash_clone(sha224);
+lua_common_hash_clone_oargs(sha224, sha224, l_sha224_init(L), {
+    uint8_t* old = b->buffer;
+    *b = *a;
+    b->buffer = old;
+    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
+});
+lua_common_hash_init_l(sha224, sha224);
 lua_common_hash_update(sha224, sha224);
 
 int l_sha224_final(lua_State* L){

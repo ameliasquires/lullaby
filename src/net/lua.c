@@ -104,6 +104,16 @@ int l_close(lua_State* L){
   return 0;
 }
 
+int l_stop(lua_State* L){
+  int res_idx = 1;
+
+  lua_pushstring(L, "_stop");
+  lua_pushboolean(L, 1);
+  lua_settable(L, res_idx);
+
+  return 0;
+}
+
 int l_roll(lua_State* L){
   int alen;
   if(lua_gettop(L) > 2) {
@@ -207,6 +217,22 @@ int l_sendfile(lua_State* L){
     p_fatal("missing permissions");
   }
 
+<<<<<<< HEAD
+=======
+  char* ext = strrchr(path, '.');
+  if(ext){
+    char* content_type = map_get(mime_type, ext + 1);
+
+    if(content_type) 
+      {luaI_tsets(L, header, "Content-Type", content_type);}
+  }
+
+  str* r;
+  i_write_header(L, header, &r, "", 0);
+  send(client_fd, r->c, r->len, 0);
+  str_free(r);
+
+>>>>>>> e29d3ea86551380ace8e2c86c9f1f63e901941e1
   char* buffer = calloc(sizeof* buffer, bsize + 1);
   FILE* fp = fopen(path, "rb");
   fseek(fp, 0L, SEEK_END);

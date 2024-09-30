@@ -44,15 +44,16 @@ int tp(lua_State*);
 #define common_hash_init_update(hashname) lua_common_hash_init_update(hashname, hashname)
 #define lua_common_hash_init_update(hashname, luaname) lua_common_hash_init(hashname, luaname) lua_common_hash_update(hashname, luaname)
 #define lua_common_hash_init(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init())
+#define lua_common_hash_init_l(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init_l(L))
 
 #define common_hash_clone(hashname) lua_common_hash_clone(hashname, hashname)
-#define lua_common_hash_clone(hashname, luaname) lua_common_hash_clone_oargs(hashname, luaname, l_##luaname##_init(L))
-#define lua_common_hash_clone_oargs(hashname, luaname, oinit)\
+#define lua_common_hash_clone(hashname, luaname) lua_common_hash_clone_oargs(hashname, luaname, l_##luaname##_init(L), *b = *a)
+#define lua_common_hash_clone_oargs(hashname, luaname, oinit, copy)\
 int l_##luaname##_clone(lua_State* L){\
   struct hashname##_hash* a = (struct hashname##_hash*)lua_touserdata(L, -1);\
   oinit;\
   struct hashname##_hash* b = (struct hashname##_hash*)lua_touserdata(L, -1);\
-  *b = *a;\
+  copy;\
   return 1;\
 }
 

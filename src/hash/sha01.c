@@ -174,11 +174,24 @@ void sha1(uint8_t* a, size_t len, char* out_stream){
     free(aa.buffer);
 }
 
-common_hash_clone(sha1);
+//common_hash_clone(sha1);
+lua_common_hash_clone_oargs(sha1, sha1, l_sha1_init(L), {
+    uint8_t* old = b->buffer;
+    *b = *a;
+    b->buffer = old;
+    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
+});
+
 lua_common_hash_init_ni(sha1, sha1, sha01_init_l(1, L));
 lua_common_hash_update(sha1, sha1);
 
-common_hash_clone(sha0);
+//common_hash_clone(sha0);
+lua_common_hash_clone_oargs(sha0, sha0, l_sha0_init(L), {
+    uint8_t* old = b->buffer;
+    *b = *a;
+    b->buffer = old;
+    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
+});
 lua_common_hash_init_ni(sha0, sha0, sha01_init_l(0, L));
 lua_common_hash_update(sha0, sha0);
 

@@ -269,6 +269,7 @@ int _buffer_mod(lua_State* L){
 
 int l_buffer_index(lua_State* L){
   uint64_t len, hash;
+  struct thread_buffer *buffer = lua_touserdata(L, 1);
   const char* str = luaL_tolstring(L, 2, &len);
 
   hash = fnv_1((uint8_t*)str, len, v_1);
@@ -284,7 +285,15 @@ int l_buffer_index(lua_State* L){
       lua_pushcfunction(L, _buffer_mod);
       break;
     default:
-      lua_pushnil(L);
+      lua_pushstring(buffer->L, str);
+      lua_gettable(buffer->L, 1);
+      if(lua_isnil(buffer->L, -1)){
+        lua_pushnil(L);
+        return 1;
+      }
+
+      luaI_deepcopy(buffer->L, L, SKIP_GC);
+      lua_pop(buffer->L, 1);
       break;
   }
   return 1;
@@ -349,7 +358,6 @@ return __proxy_call(__this_obj,'%s',table.unpack({_a,_b,_c}));end", key);
 }
 
 int l_buffer_gc(lua_State* L){
-  printf("gc\n");
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
   pthread_mutex_destroy(&*buffer->lock);
@@ -387,9 +395,8 @@ int l_buffer(lua_State* L){
 void _lua_getfenv(lua_State* L){
   
 }
-int l_testcopy(lua_State* L){
 
-  
+int l_testcopy(lua_State* L){ 
   lua_State* temp = luaL_newstate();
   luaI_deepcopy(L, temp, SKIP_GC);
   lua_close(temp);

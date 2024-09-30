@@ -161,6 +161,8 @@ void* handle_client(void *_arg){
         luaI_tsetcf(L, res_idx, "sendfile", l_sendfile);
         luaI_tsetcf(L, res_idx, "write", l_write);
         luaI_tsetcf(L, res_idx, "close", l_close);
+        luaI_tsetcf(L, res_idx, "stop", l_stop);
+
 
         //values
         luaI_tseti(L, res_idx, "client_fd", client_fd);
@@ -199,7 +201,7 @@ void* handle_client(void *_arg){
             struct lchar* wowa = awa->cs[z];
             //if request is HEAD, it is valid for GET and HEAD listeners 
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
-                (strcmp(sR->c, "HEAD") && strcmp(wowa->req, "GET"))){
+                (strcmp(sR->c, "HEAD") == 0 && strcmp(wowa->req, "GET") == 0)){
                   
                   luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
                   int func = lua_gettop(L);
@@ -210,10 +212,18 @@ void* handle_client(void *_arg){
 
                   //call the function
                   lua_call(L, 2, 0);
+
+                  //check if res:stop() was called
+                  lua_pushstring(L, "_stop");
+                  lua_gettable(L, res_idx);
+                  if(!lua_isnil(L, -1))
+                    goto net_end;
                  
             }
           }
         }
+
+net_end:
         larray_clear(params);
         parray_lclear(owo); //dont free the rest
 
@@ -255,6 +265,7 @@ void* handle_client(void *_arg){
 }
 
 int start_serv(lua_State* L, int port){
+  parse_mimetypes();
   //need these on windows for sockets (stupid)
 #ifdef _WIN32
   WSADATA Data;
@@ -289,6 +300,7 @@ int start_serv(lua_State* L, int port){
   if (pthread_mutex_init(&con_mutex, NULL) != 0)
     p_fatal("con_mutex init failed\n");
 
+  int count = 0;
   for(;;){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
@@ -296,6 +308,13 @@ int start_serv(lua_State* L, int port){
 
     if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
       p_fatal("failed to accept\n");
+
+    if(count >= max_con){
+      //deny request
+      free(client_fd);
+      continue;
+    }
+    count++;
 
     //open a state to call shit, should be somewhat thread safe
     thread_arg_struct* args = malloc(sizeof * args);
