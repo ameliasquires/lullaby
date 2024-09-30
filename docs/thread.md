@@ -6,6 +6,18 @@
 
 a thread-safe object buffer to easily transfer things between threads 
 
+you *can* index the buffer normally, but all data will be read only, and it does NOT work with the colon syntax
+
+i might be able to fix this in the future with a proxy function solution, the difficulty arrises when i have no way to tell if it is being sent as a dot function 
+
+```lua
+buffer = llib.thread.buffer(llib.crypto.md5())
+buffer.final(buffer:get()) --works fine, same as buffer:get().final(buffer:get()) 
+buffer:final() --does not work, this *would* expands to buffer.final(buffer), but unless the functions expects my specific buffer object (which is dumb), it will break
+```
+
+also, be careful sending userdata, lightuser data cant really be copied, user data will be memcpy'd (or will use __clone)
+
 full example:
 
 ```lua
