@@ -217,8 +217,6 @@ int l_sendfile(lua_State* L){
     p_fatal("missing permissions");
   }
 
-<<<<<<< HEAD
-=======
   char* ext = strrchr(path, '.');
   if(ext){
     char* content_type = map_get(mime_type, ext + 1);
@@ -227,12 +225,6 @@ int l_sendfile(lua_State* L){
       {luaI_tsets(L, header, "Content-Type", content_type);}
   }
 
-  str* r;
-  i_write_header(L, header, &r, "", 0);
-  send(client_fd, r->c, r->len, 0);
-  str_free(r);
-
->>>>>>> e29d3ea86551380ace8e2c86c9f1f63e901941e1
   char* buffer = calloc(sizeof* buffer, bsize + 1);
   FILE* fp = fopen(path, "rb");
   fseek(fp, 0L, SEEK_END);
