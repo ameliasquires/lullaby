@@ -158,6 +158,14 @@ res.header["test"] = "wowa"
 
 res.header["Content-Type"] is set automatically depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
 
+option table
+
+|key|value|effect|
+|--|--|--|
+|attatchment|boolean, default false|whether or not to add Content-Disposition (if file will be downloaded)|
+|filename|string, defualts as the first argument|what the client should see as a filename (only when attatchment is true)|
+
+
 ```lua
 ...
 res:sendfile("./html/index.html")
