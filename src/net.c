@@ -3,6 +3,8 @@
 #include "net/lua.h"
 #include "net/luai.h"
 
+#define max_uri_size 2048
+
 volatile size_t threads = 0;
 void* handle_client(void *_arg){
   //printf("--\n");
@@ -48,13 +50,19 @@ void* handle_client(void *_arg){
     putchar(buffer[i]);
   putchar('\n');*/
   //printf("hi %li:%i\n", bytes_received,header_eof);
+  if(bytes_received == -2) net_error(client_fd, 431);
+
   
-  //ignore if header is just fucked
+  //ignore if header is just fucked  
   if(bytes_received >= -1){
     parray_t* table;
 
     //checks for a valid header
-    if(parse_header(buffer, header_eof, &table) != -1){
+    int val = parse_header(buffer, header_eof, &table);
+
+    if(val == -2) net_error(client_fd, 414);
+
+    if(val >= 0){
 
       str* sk = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
@@ -211,7 +219,12 @@ void* handle_client(void *_arg){
                   lua_pushvalue(L, req_idx); //push info about the request
 
                   //call the function
-                  lua_call(L, 2, 0);
+                  if(lua_pcall(L, 2, 0, 0) != 0){
+                    //send an error message if send has not been called
+                    if(client_fd >= 0) net_error(client_fd, 500);
+                    
+                    goto net_end;
+                  }
 
                   //check if res:stop() was called
                   lua_pushstring(L, "_stop");
@@ -311,7 +324,10 @@ int start_serv(lua_State* L, int port){
 
     if(count >= max_con){
       //deny request
+      net_error(*client_fd, 503);
+      close(*client_fd);
       free(client_fd);
+
       continue;
     }
     count++;

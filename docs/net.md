@@ -26,12 +26,11 @@ allows a third optional argument that offers some other options in a table forma
 the server will send these codes for these reasons
 |code|cause|
 |--|--|
-|503**|too many current requests, more than max.connections|
-|500**|anytime a server route crashes|
-|431**|header is larger than max header size, more than max.header.size|
-|414**|request uri is longer than max.uri.size|
-|408**|request took too longer than max.request.timeout|
-|404**|request has no defined route|
+|503|too many current requests, more than max.connections|
+|500|anytime a server route crashes|
+|431|header is larger than max header size, more than max.header.size|
+|414|request uri is longer than max.uri.size|
+|408**|request took too long to read all of (recv timeout) than max.request.timeout|
 
 (more to come?**)
 

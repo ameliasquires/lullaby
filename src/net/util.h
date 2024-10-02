@@ -53,3 +53,5 @@ parray_t* route_match(parray_t* paths, char* path, larray_t** params);
 int match_param(char* path, char* match, parray_t* arr);
 
 void parse_mimetypes();
+
+int net_error(int fd, int code);
