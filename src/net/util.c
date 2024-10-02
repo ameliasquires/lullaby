@@ -63,6 +63,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
   return len;
 }
 
+#define max_uri_len 2048
 /**
  * @brief converts the request buffer into a parray_t
  *
@@ -85,6 +86,11 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
       item++;
       if(buffer[oi] == '\n') break;
     } else {
+      if(oi >= max_uri_len){
+        *_table = table;
+        str_free(current);
+        return -2;
+      }
       str_pushl(current, buffer + oi, 1);
     }
   }
@@ -417,4 +423,11 @@ void parse_mimetypes(){
   }
   //printf("done\n");
 
+}
+
+int net_error(int fd, int code){
+  char out[512] = {0};
+  sprintf(out, "HTTP/1.1 %i %s\n\n", code, http_code(code));
+  send(fd, out, strlen(out), 0);
+  return 0;
 }

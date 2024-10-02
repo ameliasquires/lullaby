@@ -67,6 +67,10 @@ net.listen(
             res:send("<h2>you would never</h2>")
         end)
 
+        server:GET("/error", function(res, req)
+            res.a.a.a.a()
+        end)
+
 
         
     end,
