@@ -42,7 +42,7 @@ int l_write(lua_State* L){
     resp = str_init(content);
   }
 
-  send(client_fd, resp->c, resp->len, 0);
+  send(client_fd, resp->c, resp->len, MSG_NOSIGNAL);
 
   str_free(resp);
   return 0;
@@ -75,7 +75,7 @@ int l_send(lua_State* L){
   } else 
     i_write_header(L, header, &resp, content, len);
 
-  int a = send(client_fd, resp->c, resp->len, 0);
+  int a = send(client_fd, resp->c, resp->len, MSG_NOSIGNAL);
   
   //
   lua_pushstring(L, "client_fd");
@@ -257,12 +257,12 @@ int l_sendfile(lua_State* L){
 
   str* r;
   i_write_header(L, header, &r, "", 0);
-  send(client_fd, r->c, r->len, 0);
+  send(client_fd, r->c, r->len, MSG_NOSIGNAL);
   str_free(r);
 
   for(size_t i = 0; i < sz; i += bsize){
     fread(buffer, sizeof * buffer, bsize, fp);
-    if(send(client_fd, buffer, bsize > sz - i ? sz - i : bsize, 0) == -1)
+    if(send(client_fd, buffer, bsize > sz - i ? sz - i : bsize, MSG_NOSIGNAL) == -1)
       break;
   }
 

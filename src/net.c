@@ -5,7 +5,7 @@
 
 #define max_uri_size 2048
 
-volatile size_t threads = 0;
+_Atomic size_t threads = 0;
 void* handle_client(void *_arg){
   //printf("--\n");
   //pthread_mutex_lock(&mutex);
@@ -313,7 +313,6 @@ int start_serv(lua_State* L, int port){
   if (pthread_mutex_init(&con_mutex, NULL) != 0)
     p_fatal("con_mutex init failed\n");
 
-  int count = 0;
   for(;;){
     struct sockaddr_in client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
@@ -322,7 +321,7 @@ int start_serv(lua_State* L, int port){
     if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
       p_fatal("failed to accept\n");
 
-    if(count >= max_con){
+    if(threads >= max_con){
       //deny request
       net_error(*client_fd, 503);
       close(*client_fd);
@@ -330,7 +329,6 @@ int start_serv(lua_State* L, int port){
 
       continue;
     }
-    count++;
 
     //open a state to call shit, should be somewhat thread safe
     thread_arg_struct* args = malloc(sizeof * args);
