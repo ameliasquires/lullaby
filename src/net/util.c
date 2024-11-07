@@ -428,6 +428,6 @@ void parse_mimetypes(){
 int net_error(int fd, int code){
   char out[512] = {0};
   sprintf(out, "HTTP/1.1 %i %s\n\n", code, http_code(code));
-  send(fd, out, strlen(out), 0);
+  send(fd, out, strlen(out), MSG_NOSIGNAL);
   return 0;
 }
