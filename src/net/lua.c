@@ -115,7 +115,7 @@ int l_stop(lua_State* L){
 }
 
 int l_roll(lua_State* L){
-  int alen;
+  int64_t alen;
   if(lua_gettop(L) > 2) {
     alen = luaL_checkinteger(L, 2);
   } else {
@@ -125,7 +125,7 @@ int l_roll(lua_State* L){
   lua_pushvalue(L, 1);
   lua_pushstring(L, "_bytes");
   lua_gettable(L, 1);
-  int bytes = luaL_checkinteger(L, -1);
+  int64_t bytes = luaL_checkinteger(L, -1);
 
   lua_pushstring(L, "Content-Length");
   lua_gettable(L, 1);
@@ -133,7 +133,7 @@ int l_roll(lua_State* L){
     lua_pushinteger(L, -1);
     return 1;
   }
-  int content_length = strtol(luaL_checkstring(L, -1), NULL, 10);
+  uint64_t content_length = strtol(luaL_checkstring(L, -1), NULL, 10);
   lua_pushstring(L, "_data");
   lua_gettable(L, 1);
   struct file_parse* data = (void*)lua_topointer(L, -1); 
@@ -161,7 +161,6 @@ int l_roll(lua_State* L){
 
   //time_start(recv)
   if(alen == -1) alen = content_length - bytes;
-  //printf("to read: %i\n", alen);
   char* buffer = malloc(alen * sizeof * buffer);
   int r = recv(client_fd, buffer, alen, 0);
   if(r <= 0){

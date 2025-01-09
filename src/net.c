@@ -10,13 +10,14 @@ void* handle_client(void *_arg){
   //printf("--\n");
   //pthread_mutex_lock(&mutex);
 
-  int read_state = 0;
+  //int read_state = 0;
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
   char* buffer;
   char dummy[2] = {0, 0};
   int header_eof = -1;
   lua_State* L = args->L;
+  luaL_openlibs(L);
     //sleep(1);
   //create state for this thread
 
@@ -44,17 +45,34 @@ void* handle_client(void *_arg){
   //printf("start: %f\n",(double)(clock() - begin) / CLOCKS_PER_SEC);
   //read full request
 //time_start(recv)
-  int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof, &read_state);
+  char* header = NULL;  
+
+  int64_t bite = recv_header(client_fd, &buffer, &header);
+  header_eof = header - buffer;
+  printf("%x = %p - %p\n", header_eof, header, buffer);
   
-  /*for(int i = 0; i != header_eof; i++)
+  if(bite == -2) net_error(client_fd, 431);
+  printf("'");
+  for(int i = bite - 20; i != bite; i++){
     putchar(buffer[i]);
-  putchar('\n');*/
+  }
+  printf("'\n");
+  /*
+
+  return NULL;
+  int64_t bytes_received = recv_full_buffer(client_fd, &buffer, &header_eof, &read_state);
+ 
+
+  for(int i = 0; i != header_eof; i++)
+    putchar(buffer[i]);
+  putchar('\n');
+
   //printf("hi %li:%i\n", bytes_received,header_eof);
   if(bytes_received == -2) net_error(client_fd, 431);
-
+  */
   
   //ignore if header is just fucked  
-  if(bytes_received >= -1){
+  if(bite >= -1){
     parray_t* table;
 
     //checks for a valid header
@@ -63,12 +81,11 @@ void* handle_client(void *_arg){
     if(val == -2) net_error(client_fd, 414);
 
     if(val >= 0){
-
       str* sk = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
       str* sC = (str*)parray_get(table, "Cookie");
-      int some = bytes_received - header_eof - 10;
+      int some = bite - header_eof - 10;
       struct file_parse* file_cont = calloc(1, sizeof * file_cont);
 
       lua_newtable(L);
@@ -101,7 +118,7 @@ void* handle_client(void *_arg){
       larray_clear(params);*/
       
       if(sT != NULL)
-        rolling_file_parse(L, &files_idx, &body_idx, buffer + header_eof + 4, sT, bytes_received - header_eof - 4, file_cont);
+        rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
 
       str_free(aa);
       if(v != NULL){
@@ -154,12 +171,11 @@ void* handle_client(void *_arg){
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
 
-        if(bytes_received == -1){
+        if(bite == -1){
           client_fd = -2;
         }
 
-        luaI_tsetb(L, req_idx, "partial", read_state == 1);
-        luaI_tseti(L, req_idx, "_bytes", bytes_received - header_eof - 4);
+        luaI_tseti(L, req_idx, "_bytes", bite - header_eof - 4);
         luaI_tseti(L, req_idx, "client_fd", client_fd);
         luaI_tsetcf(L, req_idx, "roll", l_roll);
         //luaI_tsetcf(L, req_idx, "continue", l_continue);
@@ -338,7 +354,7 @@ int start_serv(lua_State* L, int port){
     args->cli = client_addr;
     args->L = luaL_newstate();
 
-    luaL_openlibs(args->L);
+    //luaL_openlibs(args->L);
 
     pthread_mutex_lock(&mutex);
     int old_top = lua_gettop(L);
