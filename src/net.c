@@ -3,9 +3,134 @@
 #include "net/lua.h"
 #include "net/luai.h"
 
+#include <fcntl.h>
+
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+#define pab(M) {printf(M);abort();}
+
+SSL* ssl_connect(SSL_CTX* ctx, int sockfd, const char* hostname){
+  SSL* ssl = SSL_new(ctx);
+  if(hostname != NULL)
+    SSL_set_tlsext_host_name(ssl, hostname);
+
+  SSL_set_fd(ssl, sockfd);
+
+  if(SSL_connect(ssl) < 0){
+    SSL_free(ssl);
+
+    return NULL;
+  }
+
+  return ssl;
+}
+
+int get_host(char* hostname, char* port){
+  int sockfd;
+  struct addrinfo  hints;
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = 0;
+  hints.ai_protocol = 0;
+
+  struct addrinfo *result, *awa;
+  if(getaddrinfo(hostname, port, &hints, &result) != 0)
+    return -1;
+
+  for(awa = result; awa != NULL; awa = awa->ai_next){
+    sockfd = socket(awa->ai_family, awa->ai_socktype, awa->ai_protocol);
+
+    if(sockfd == -1) continue;
+
+    if(connect(sockfd, awa->ai_addr, awa->ai_addrlen) != -1)
+      break;
+
+    close(sockfd);
+    sockfd = -1;
+  }
+
+  freeaddrinfo(result);
+
+  return sockfd;
+}
+
+int l_srequest(lua_State* L){
+  const char* host = luaL_checkstring(L, 1);
+  int sock = get_host((char*)host, lua_tostring(L, 2));
+  if(sock == -1) abort();
+
+  SSL_library_init();
+  SSL_load_error_strings();
+  SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+  SSL* ssl = ssl_connect(ctx, sock, host);
+  
+  char* path = "/";
+  if(lua_gettop(L) >= 3)
+    path = (char*)luaL_checkstring(L, 3);
+
+  //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
+
+  char request[2000];
+  sprintf(request, "GET %s HTTP/1.1\nHost: %s\nConnection: Close\n\n", path, host); 
+  printf("%s\n", request);
+  SSL_write(ssl, request, strlen(request));
+
+  str* a = str_init("");
+  char buffer[51222];
+  int len = 0;
+
+  for(; (len = SSL_read(ssl, buffer, 511)) > 0;){
+    str_pushl(a, buffer, len);    
+    memset(buffer, 0, 512);
+  }
+
+  lua_pushstring(L, a->c);
+
+  return 1;
+}
+
+int l_request(lua_State* L){
+  const char* host = luaL_checkstring(L, 1);
+  int sock = get_host((char*)host, lua_tostring(L, 2));
+  
+  char* path = "/";
+  if(lua_gettop(L) >= 3)
+    path = (char*)luaL_checkstring(L, 3);
+
+  //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
+
+  char request[2000];
+  sprintf(request, "GET %s HTTP/1.1\nHost: %s\nConnection: Close\n\n", path, host); 
+  write(sock, request, strlen(request));
+
+  str* a = str_init("");
+  char buffer[512];
+  int len = 0;
+
+  for(; (len = read(sock, buffer, 511)) != 0;){
+    str_pushl(a, buffer, len);
+    memset(buffer, 0, 512);
+  }
+
+  lua_pushstring(L, a->c);
+
+  return 1;
+}
+
 #define max_uri_size 2048
 
 _Atomic size_t threads = 0;
+
 void* handle_client(void *_arg){
   //printf("--\n");
   //pthread_mutex_lock(&mutex);
