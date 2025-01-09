@@ -83,7 +83,6 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
   //time_end("start", start)
   //printf("hi\n");
   if(content.status == NORMAL){
-    //printf("normal\n");
     //strnstr(buffer, )
     //if(override) str_clear(current);
     //str_pushl(current, buffer, blen);
@@ -102,8 +101,8 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
         //printf("\n");
         if(*buffer == '\r'){
           content.status = FILE_HEADER;
-          buffer+=2;
-          blen-=i+2;
+          buffer += 2;
+          blen -= i + 2;
           
           content.table_idx = lua_rawlen(L, *files_idx) + 1;
           lua_pushinteger(L, content.table_idx);
@@ -131,8 +130,10 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
         } else if(buffer[i] == '\n'){
           if(content.current->len == 0){
             content.status = FILE_BODY;
-            buffer += i;
-            blen -= i;
+
+            buffer += i + 1;
+            blen -= i + 1;
+
             content.old = NULL;
             str_free(content.current);
             content.current = str_init("");
@@ -151,13 +152,11 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
     //time_end("file_header", file_header)
     //time_start(file_body)
     if(content.status == FILE_BODY){
-      //printf("body\n");
-      //if(content.old==NULL) content.old = str_init("");
-      char* barrier_end = strnstr(buffer, content.boundary->c, blen);
+      char* barrier_end = memmem(buffer, blen, content.boundary->c, content.boundary->len);
       if(barrier_end == NULL){
         str* temp = str_initl(content.current->c, content.current->len);
-        str_pushl(temp, buffer, blen);
-        barrier_end = strnstr(temp->c, content.boundary->c, temp->len);
+        str_pushl(temp, buffer, blen); 
+        barrier_end = memmem(temp->c, temp->len, content.boundary->c, content.boundary->len);
         if(barrier_end != NULL) abort(); // todo
 
         str* temp2 = content.current;
@@ -170,7 +169,7 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
         for(; *end != '\n'; end++);
         int clen = start - buffer;
         str_pushl(content.current, buffer, clen);
-        luaI_tsetsl(L, rfiles_idx, "content", content.current->c, content.current->len);
+        luaI_tsetsl(L, rfiles_idx, "content", content.current->c, content.current->len - 1);
         str_clear(content.current);
         blen-= end - buffer;
         buffer = end;
