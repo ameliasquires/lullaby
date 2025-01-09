@@ -13,6 +13,7 @@
  * @return {int64_t} bytes read, -1 if the body was damaged, -2 if the header was
 */
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state);
+int64_t recv_header(int client_fd, char** _buffer, char** header_eof);
 
 /**
  * @brief converts the request buffer into a parray_t

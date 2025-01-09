@@ -1,16 +1,51 @@
 #include "common.h"
 #include "util.h"
 
+int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
+  char* buffer = calloc(sizeof* buffer, BUFFER_SIZE);
+  *_buffer = buffer;
+  int64_t len = 0;
+  int64_t n = 0;
+  *header_eof = 0;
+
+  for(;;){
+    n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
+
+    if(n < 0){
+      printf("%s %i\n", strerror(errno), errno);
+      return -1;
+    }
+    
+    // search the last 4 characters too if they exist
+    // this could probably be changed to 3
+    int64_t start_len = len - 4 > 0 ? len - 4 : 0;
+    int64_t search_end = len - 4 > 0 ? n + 4 : n;
+    if((*header_eof = memmem(buffer + start_len, search_end, "\r\n\r\n", 4)) != NULL){
+      return len + n; 
+    }
+
+    if((len += n) >= MAX_HEADER_SIZE){
+      return -2;
+    }
+
+    buffer = realloc(buffer, sizeof* buffer * (len + BUFFER_SIZE + 1));
+
+    *_buffer = buffer;
+  }
+}
+
 /**
  * @brief calls recv into buffer until everything is read
  *
 */
+// deprecated!! replaced by recv_header (above)
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state){
   char* header, *buffer = malloc(BUFFER_SIZE * sizeof * buffer);
   memset(buffer, 0, BUFFER_SIZE);
   int64_t len = 0;
   *header_eof = -1;
   int n, content_len = -1;
+  uint64_t con_len_full = 0;
   //printf("&_\n");
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
@@ -35,14 +70,16 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
       if(cont_len_raw == NULL) abort();
       //i is length of 'Content-Length: '
       for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
-      content_len = strtol(cont_len_str->c, NULL, 10);
+      con_len_full = strtol(cont_len_str->c, NULL, 10);
+      //if(content_len < 0) p_fatal("idk");
       str_free(cont_len_str);
-      if(content_len > max_content_length) {
+      if(con_len_full > max_content_length) {
         *_buffer = buffer;
-        *state = (len + n != content_len + *header_eof + 4);
+        *state = (len + n != con_len_full + *header_eof + 4);
         return len + n;
       }
-      buffer = realloc(buffer, content_len + *header_eof + 4 + BUFFER_SIZE);
+      content_len = 1;
+      buffer = realloc(buffer, con_len_full + *header_eof + 4 + BUFFER_SIZE);
       if(buffer == NULL) p_fatal("unable to allocate");
     }
 
@@ -57,7 +94,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
     }
     
 
-    if(content_len != -1 && len - *header_eof - 4 >= content_len) break;
+    if(content_len != -1 && len - *header_eof - 4 >= con_len_full) break;
   }
   *_buffer = buffer;
   return len;
