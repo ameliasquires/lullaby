@@ -1,0 +1,364 @@
+HTTP/1.1 200 OK
+Date: Thu, 09 Jan 2025 21:48:45 GMT
+Content-Type: text/html
+Transfer-Encoding: chunked
+Connection: close
+alt-svc: h3=":443"; ma=86400
+content-disposition: inline;
+cf-cache-status: DYNAMIC
+Report-To: {"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report\/v4?s=HoLapdkVmVNNOWOPHLfVaLulPcOZhVCo5Rc7etuMv4Qg%2FYpg9agn%2B2v5kO1WDKmhj5XLL97PbdHfcOnJmuCRK87qnlSJdx6DfRlQlbIBJwxXWjPNeTrZhCgl"}],"group":"cf-nel","max_age":604800}
+NEL: {"success_fraction":0,"report_to":"cf-nel","max_age":604800}
+Server: cloudflare
+CF-RAY: 8ff7a222e9214df9-MCI
+server-timing: cfL4;desc="?proto=TCP&rtt=3935&min_rtt=3648&rtt_var=1573&sent=5&recv=6&lost=0&retrans=0&sent_bytes=2810&recv_bytes=469&delivery_rate=793859&cwnd=249&unsent_bytes=0&cid=86505eb6c8333f64&ts=102&x=0"
+
+365b
+<html lang="en">
+    <head>
+      <title>amyy!</title>
+       <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script> 
+        let yellow = document.getElementById("yellow-here")
+        function yellowing(){
+            if(yellow == null) yellow = document.getElementById("yellow-here")
+            let h = window.innerHeight;
+            let count = Math.ceil(h/1000) + 2;
+            let out = ""
+            for(let i = 0; i < count; i++){
+                out += "<div>0x6a09e667; 0xbb67ae85; 0x3c6ef372; 0xa54ff53a; 0x510e527f; 0x9b05688c; 0x1f83d9ab; 0x5be0cd19;&nbsp;</div>"
+            }
+
+            yellow.innerHTML = out
+
+        }
+        window.addEventListener('resize', yellowing, true);
+
+        function css(element, property){
+            return window.getComputedStyle(element, null).getPropertyValue(property);
+        }
+
+        function appendHtml(el, str) {
+            var div = document.createElement('div');
+            div.innerHTML = str;
+            while (div.children.length > 0) {
+                el.appendChild(div.children[0]);
+            }
+        }
+
+
+        function translate(elem, x, y, delay) {
+            return new Promise((res, rej) => {
+                let left = parseInt(css( elem, 'left' ), 10),
+                    top = parseInt(css( elem, 'top' ), 10),
+                    dx = left - x,
+                    dy = top - y,
+                    i = 1,
+                    count = 20;
+
+                function loop() {
+                    if (i >= count) return res();
+                    i += .02;
+                    elem.style.left = (left - (dx * i / count)).toFixed(0) + 'px';
+                    elem.style.top = (top - (dy * i / count)).toFixed(0) + 'px';
+                    setTimeout(loop, delay/5);
+                }
+
+                loop();
+            })
+        }
+
+        async function awa(parent, i){
+            for(;;){
+                appendHtml(parent, "<div style='width:"+(Math.random() * 50 + 120)+"px;top:"+window.innerHeight*1.1+"px; left:"+window.innerWidth* Math.random()+"px;' class='circle' id='circle-"+i+"'></div>")
+                let el = document.getElementById("circle-"+i)
+                await translate(el, 500 * Math.random(), -200, 50 + 50 * Math.random())
+                el.remove()
+            }
+        }
+        function circles(){
+            let circle_root = document.getElementById("circle-cont")
+            let count = 17;
+            let i = 1;
+            function f(){
+                awa(circle_root, i)
+                i++
+                if(i >= count) return;
+                setTimeout(f, 500);
+            }
+            f()
+
+        }
+
+        const smoothing = 1
+        function fade_out(elem, up){
+            return new Promise((res, rej) => {
+
+                if(up) elem.classList.add("fade_out_up")
+                else elem.classList.add("fade_out_down")
+
+                setTimeout(()=>{
+                    elem.style.opacity = "0%"
+
+                    //chrome is stupid, and would mess the up if it was structured like fade_in
+                    setTimeout(()=>{
+                      elem.classList.add("hide")
+
+                      if(up) elem.classList.remove("fade_out_up")
+                      else elem.classList.remove("fade_out_down")
+
+                      elem.style.opacity = "100%"
+                      res()
+                    },40)
+
+                }, 320)
+            })
+        }
+        function fade_in(elem, up){
+            return new Promise((res, rej) => {
+
+                if(up) elem.classList.add("fade_in_up")
+                else elem.classList.add("fade_in_down")
+                elem.classList.remove("hide")
+
+                setTimeout(()=>{
+                    if(up) elem.classList.remove("fade_in_up")
+                    else elem.classList.remove("fade_in_down")
+                    res()
+                }, 560)
+
+            })
+        }
+        let cont_arr = []
+        let item = 1;
+
+        function populate_dots(count){
+          let left = document.getElementsByClassName("left-hand")[0];
+          
+          for(let i = 1; i != count; i++){
+            appendHtml(left, '<div class="dot" id="dot-'+i+'"></div>');
+            let new_dot = document.getElementById("dot-"+i)
+            new_dot.onclick = async () => {
+              if(item == i) return;
+              let direction = item < i;
+              await fade_out(cont_arr[item], direction);
+              item = i;
+              light_dot(item);
+              await fade_in(cont_arr[item], direction);
+            }
+          }
+        }
+
+        function light_dot(n){
+          let elems = document.getElementsByClassName("dot")
+
+          for(let d of elems){
+            d.classList.remove("dot-lit")
+          }
+
+          elems[n - 1].classList.add("dot-lit")
+        }
+
+        async function move_main(up){
+            if(up){
+                if(item >= 2){
+                    await fade_out(cont_arr[item], false);
+                    item--;
+                    light_dot(item);
+                    await fade_in(cont_arr[item], false);
+                }
+            } else {
+                if(item < cont_arr.length - 1){
+                    await fade_out(cont_arr[item], true);
+                    item++;
+                    light_dot(item);
+                    await fade_in(cont_arr[item], true);
+                }
+            }
+        }
+        async function wheel_fun(ev){
+            document.body.onwheel = undefined
+            if(ev.deltaY < 0){
+                await move_main(true)
+            } else if(ev.deltaY > 0) {
+                await move_main(false)
+            }
+            document.body.onwheel = wheel_fun
+        }
+
+        let tX = 0;
+        let tY = 0;
+
+        function touch_start_fun(e){
+            e = e.touches.item(0)
+            tX = e.screenX;
+            tY = e.screenY;
+        }
+
+        async function touch_end_fun(e){
+            document.body.removeEventListener('touchstart', touch_start_fun)
+            document.body.removeEventListener('touchend', touch_end_fun)
+            e = e.changedTouches.item(0)
+            const thresh = 65
+            if(tY < e.screenY && e.screenY - tY > thresh){
+                    //down
+                await move_main(true)
+            } else if (tY > e.screenY && tY - e.screenY > thresh){
+                    //up
+                await move_main(false)
+            }
+            document.body.addEventListener('touchstart', touch_start_fun)
+            document.body.addEventListener('touchend', touch_end_fun)
+        }
+
+        function get(u){
+          var xmlHttp = new XMLHttpRequest()
+          xmlHttp.open("GET", u, false)
+          xmlHttp.send(null)
+          return xmlHttp.responseText
+        } 
+
+        function load(){
+            yellowing()
+            circles()
+
+            let links = document.getElementsByClassName("ico")
+
+            for(let link of links){
+
+                link.onerror = () => {
+                    //fallback image
+                    link.src = "link.png"
+                    link.onerror = undefined;
+                }
+                link.src = link.src
+            }
+
+            let tcont = document.getElementById("cont-1");
+
+            for(let i = 1;tcont != null; i++){
+                cont_arr.push(tcont);
+                tcont  = document.getElementById("cont-"+i);
+            }
+
+            populate_dots(cont_arr.length)
+            light_dot(1)
+
+            document.getElementById("version").innerHTML = get("version")
+
+            document.body.onwheel = wheel_fun
+
+            document.body.addEventListener('touchstart', touch_start_fun)
+            document.body.addEventListener('touchend', touch_end_fun)
+        }
+
+
+
+    </script>
+    </head>
+    <body onload="load()">
+        <div class="c">
+            <div class="blur" id="circle-cont">
+
+            </div>
+                <div class="filter filter-dodge"></div>
+                <div class="filter filter-burn"></div>
+        </div>
+        <div class="huh"></div>
+        <div class="oflex">
+            <div class="cont" id="cont-1">
+                <div class="inner">
+                    <a style="padding-right:25px; position: relative;" href="https://mangadex.org/title/bd6d0982-0091-4945-ad70-c028ed3c0917/mushoku-tensei-isekai-ittara-honki-dasu"><img alt="pfp" height="180" src="pfp.png"></a>
+
+                    <div class="items">
+                        <h1>amelia (ame | amy) <b style="font-size:17px;">she/it</b></h1>
+
+                        <div class="info">
+                            <div class="l">bio</div>
+                            <div class="l"><b>;</b> being silly</div>
+                            <div class="l">links</div>
+                            <div class="l" style="max-width:450px;"><b>;</b>
+                                <a class="link" href="https://git.disroot.org/amelia"><img alt="icon" class="ico" src="https://git.disroot.org/favicon.ico">git</a>(<a class="link" href="https://git.amyy.cc"><img alt="icon" class="ico" src=".">alt</a>)
+                                <a class="link" href="https://github.com/ameliasquires/"><img alt="icon" class="ico" src="https://github.com/favicon.ico">github</a>
+                                <a class="link" href="https://keyoxide.org/592843A0BE5EE9FA6960C63897CEC24F4AB637EB"><img alt="icon" class="ico" src="https://keyoxide.org/favicon.svg">keyoxide</a>
+                                <a class="link" href="https://pronouns.cc/@amelia"><img alt="icon" class="ico" src="https://en.pronouns.page/_nuxt/icons/icon_64x64.dbf401.png">pronouns</a>
+                            </div>
+                        </div>
+                        <b style="font-size:15px;">(scroll for more)</b>
+
+                    </div>
+
+
+                </div>
+            </div>
+            <div class="cont hide" id="cont-2">
+                <div class="hflex">
+                    <div class="cbox">
+                        <h3>languages and skills:3</h3>
+                        <ul>
+                            <li>c/c++</li>
+                            <li>zig</li>
+                            <li>js + webdev</li>
+                            <li>sysadmin/linux</li>
+                            <li>low level stuff</li>
+                        </ul>
+                    </div>
+                    <div class="vflex">
+                        <div class="cbox">i enjoy some gaming too, competitive and casual,<br>
+                            terraria, cs2, and pokemon notably along with some shiny hunting:)</div>
+                        <div class="cbox">i watch anime too:3 anything from romance to action<br>i will usually enjoy:3</div>
+                    </div>
+                </div>
+            </div>
+            <div class="cont hide" id="cont-3">
+                clean project page coming soon:3
+            </div>
+            <div class="cont hide" id="cont-4">
+                made with <span id="red">&lt;3</span> <br>
+                tested on firefox <br>
+                running on <a href="https://github.com/ameliasquires/lullaby">lullaby</a><b id="version">version</b>
+                <a href="https://github.com/nyoom-engineering/base16-oxocarbon/tree/main">
+                    <div style="display:flex; background:red; height: 40px; flex-wrap: wrap; margin-top:3px;">
+                        <div style="background:#161616; flex-grow: 1;"></div>
+                        <div style="background:#262626; flex-grow: 1;"></div>
+                        <div style="background:#393939; flex-grow: 1;"></div>
+                        <div style="background:#525252; flex-grow: 1;"></div>
+                        <div style="background:#dde1e6; flex-grow: 1;"></div>
+                        <div style="background:#f2f4f8; flex-grow: 1;"></div>
+                        <div style="background:#ffffff; flex-grow: 1;"></div>
+                        <div style="background:#08bdba; flex-grow: 1;"></div>
+                    </div>
+                    <div style="display:flex; background:red; height: 40px; flex-wrap: wrap;">
+                        <div style="background:#42be65; flex-grow: 1;"></div>
+                        <div style="background:#3ddbd9; flex-grow: 1;"></div>
+                        <div style="background:#82cfff; flex-grow: 1;"></div>
+                        <div style="background:#33b1ff; flex-grow: 1;"></div>
+                        <div style="background:#78a9ff; flex-grow: 1;"></div>
+                        <div style="background:#be95ff; flex-grow: 1;"></div>
+                        <div style="background:#ee5396; flex-grow: 1;"></div>
+                        <div style="background:#ff7eb6; flex-grow: 1;"></div>
+                    </div>
+                </a>
+            </div>
+            <div class="peeb"></div>
+            <div class="sc-out">
+                <div class="sc-in" id="yellow-here">
+                    <!--sha256/224 iv, why? didnt know what else to do:p-->
+                    <div>0x6a09e667; 0xbb67ae85; 0x3c6ef372; 0xa54ff53a; 0x510e527f; 0x9b05688c; 0x1f83d9ab; 0x5be0cd19;&nbsp;</div><div>
+                        0x6a09e667; 0xbb67ae85; 0x3c6ef372; 0xa54ff53a; 0x510e527f; 0x9b05688c; 0x1f83d9ab; 0x5be0cd19;</div></div>
+
+            </div>
+            <div class="peeb"></div>
+        </div>
+        <div class="left-hand"></div>
+
+        <a href="https://www.pokencyclopedia.info/sprites/menu-icons/ico-a_old/ico-a_old_637.gif"><img alt="volcarona" src="./volcarona.gif" style="position: absolute; bottom:5px; left:5px; width: 40px;"></a>
+    </body>
+</html>
+
+0
+
