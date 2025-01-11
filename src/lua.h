@@ -50,6 +50,17 @@ void lua_set_global_table(lua_State*);
 #define luaI_tsetlud(L, Tidx, K, V)\
     _tset_b(L, Tidx, K, V, lua_pushlightuserdata)
 
+#define luaI_treplk(L, Tidx, K, nK){\
+  lua_pushstring(L, K);\
+  lua_gettable(L, Tidx);\
+  int _v = lua_gettop(L);\
+  luaI_tsetv(L, Tidx, nK, _v);\
+  lua_pushstring(L, K);\
+  lua_pushnil(L);\
+  lua_settable(L, Tidx);\
+  lua_pop(L, 1);}
+
+
 int writer(lua_State*, const void*, size_t, void*);
 
 #if LUA_VERSION_NUM == 504

@@ -1,4 +1,3 @@
 local awa = require "lullaby"
 
-print(awa.net.srequest("amyy.cc", 443, "/"))
-
+awa.net.srequest("amyy.cc", 443, "/")
