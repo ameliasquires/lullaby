@@ -104,8 +104,17 @@ int chunked_encoding_round(char* input, int length, struct chunked_encoding_stat
 }
 
 int l_srequest(lua_State* L){
-  const char* host = luaL_checkstring(L, 1);
-  int sock = get_host((char*)host, lua_tostring(L, 2));
+  int params = lua_gettop(L);
+
+  int check = 1;
+  const char* host = luaL_checkstring(L, check);
+  const char* port = "443";
+  if(lua_isnumber(L, check + 1)){
+    check++;
+    port = lua_tostring(L, check);
+  }
+
+  int sock = get_host((char*)host, (char*)port);
   if(sock == -1) abort();
 
   SSL_library_init();
@@ -114,14 +123,48 @@ int l_srequest(lua_State* L){
   SSL* ssl = ssl_connect(ctx, sock, host);
   
   char* path = "/";
-  if(lua_gettop(L) >= 3)
-    path = (char*)luaL_checkstring(L, 3);
+  if(params >= check + 1){
+    check++;
+    path = (char*)luaL_checkstring(L, check);
+  }
+
+  char* cont = "";
+  size_t cont_len = 0;
+  if(params >= check + 1){
+    check++;
+    switch(lua_type(L, check)){
+      case LUA_TNUMBER:
+      case LUA_TSTRING:
+        cont = (char*)luaL_tolstring(L, check, &cont_len);
+        break;
+      default:
+        p_fatal("cant send type");
+        break;
+    }
+  }
+
+  str* header = str_init("");
+  if(params >= check + 1){
+    check++;
+    lua_pushnil(L);
+
+    for(;lua_next(L, check) != 0;){
+      str_push(header, "\r\n");
+      str_push(header, lua_tostring(L, -2));
+      str_push(header, ": ");
+      str_push(header, lua_tostring(L, -1));
+      lua_pop(L, 1);
+    }
+  }
 
   //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
 
-  char request[2000];
-  sprintf(request, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: Close\r\n\r\n", path, host); 
+  char* request = calloc(cont_len + header->len + 256, sizeof * request);
+  sprintf(request, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", path, host, header->c, cont); 
+  str_free(header);
+
   SSL_write(ssl, request, strlen(request));
+  free(request);
 
   str* a = str_init("");
   char buffer[512];
@@ -142,7 +185,7 @@ int l_srequest(lua_State* L){
     lua_newtable(L);
     int idx = lua_gettop(L);
 
-    parray_t* owo = parray_init();
+    parray_t* owo = NULL;
     parse_header(a->c, header_eof - a->c, &owo);
 
     for(int i = 0; i != owo->len; i++){
@@ -160,7 +203,7 @@ int l_srequest(lua_State* L){
         struct chunked_encoding_state state = {
           .reading_length = 1,
           .buffer = str_init(""),
-          .content = str_init("")
+          .content = content
         };
         chunked_encoding_round(header_eof + 4, extra_len - 4, &state);
         memset(buffer, 0, 512);
@@ -169,17 +212,35 @@ int l_srequest(lua_State* L){
           chunked_encoding_round(buffer, len, &state);
           memset(buffer, 0, 512);
         }
-        printf("%s", state.content->c);
+
+        str_free(state.buffer);
+        content = state.content;
+      }
+    } else {
+      memset(buffer, 0, 512);
+
+      for(; (len = SSL_read(ssl, buffer, 511)) > 0;){
+        str_pushl(content, buffer, len);
+        memset(buffer, 0, 512);
       }
     }
 
-    return 1;
+    parray_clear(owo, STR);
+
+    luaI_tsetsl(L, idx, "content", content->c, content->len);
+    str_free(content);
   } else {
     lua_pushstring(L, a->c);
-    str_free(a);
-
-    return 1;
   }
+  str_free(a);
+
+  SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
+  SSL_shutdown(ssl);
+  SSL_free(ssl);
+  SSL_CTX_free(ctx);
+
+  close(sock);
+  return 1;
 }
 
 int l_request(lua_State* L){
