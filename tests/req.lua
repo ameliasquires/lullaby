@@ -1,6 +1,6 @@
 local awa = require "lullaby"
 
-awa.net.srequest("amyy.cc", "/", "meow")
+print(awa.net.srequest("amyy.cc", "/", "meow").content)
 
 --awa.net.srequest("example.com", "/", "meow")
 
