@@ -156,11 +156,18 @@ int l_srequest(lua_State* L){
       lua_pop(L, 1);
     }
   }
+  
+  char* action = "GET";
+  if(params >= check + 1){
+    check++;
+    action = (char*)lua_tostring(L, check);
+  }
+
 
   //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
 
   char* request = calloc(cont_len + header->len + 256, sizeof * request);
-  sprintf(request, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", path, host, header->c, cont); 
+  sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
   str_free(header);
 
   SSL_write(ssl, request, strlen(request));
