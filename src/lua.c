@@ -144,8 +144,8 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
           break;
         default:
           printf("unknown type %i vs (old)%i\n",lua_type(src, -1), type);
-          abort();
-          lua_pushnumber(dest, 5);
+          //abort();
+          lua_pushnil(dest);
           break;
     }
     int tidx = lua_gettop(dest);
