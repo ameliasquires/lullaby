@@ -18,6 +18,7 @@ int l_listen(lua_State*);
 
 int l_request(lua_State*);
 int l_srequest(lua_State*);
+int l_wss(lua_State*);
 
 
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state);
@@ -41,8 +42,9 @@ static char* http_codes[600] = {0};
 
 static const luaL_Reg net_function_list [] = {
   {"listen",l_listen},
-  {"request",l_request},
+  //{"request",l_request},
   {"srequest",l_srequest},
+  {"wss",l_wss},
   
   {NULL,NULL}
 };

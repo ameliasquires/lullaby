@@ -114,6 +114,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   str* current = str_init("");
   int oi = 0;
   int item = 0;
+
   for(; oi != header_eof; oi++){
     if(buffer[oi] == ' ' || buffer[oi] == '\n'){
       if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
@@ -133,6 +134,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   }
 
   if(item != 3){
+    str_free(current);
     *_table = table;
     return -1;
   }
@@ -148,6 +150,10 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
         key = 0;
       } else {
         if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
+        //duplicate keys would cause memory leaks, ignore them for now
+        //todo: figure out system to handle this
+        str* id = (str*)parray_get(table, sw->c);
+        if(id != NULL) str_free(id);
         parray_set(table, sw->c, (void*)str_init(current->c));
         str_clear(current);
         str_free(sw);
