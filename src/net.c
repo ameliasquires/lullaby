@@ -20,6 +20,16 @@
 
 #define pab(M) {printf(M);abort();}
 
+_Atomic int has_ssl_init = 0;
+
+void ssl_init(){
+  if(has_ssl_init == 0){
+    has_ssl_init = 1;
+    SSL_library_init();
+    SSL_load_error_strings();
+  }
+}
+
 SSL* ssl_connect(SSL_CTX* ctx, int sockfd, const char* hostname){
   SSL* ssl = SSL_new(ctx);
   if(hostname != NULL)
@@ -276,21 +286,23 @@ int i_ws_write(lua_State* L){
 }
 
 int i_ws_close(lua_State* L){
-  printf("free\n");
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct wss_data* data = lua_touserdata(L, -1);
+  if(data != NULL){
+    str_free(data->buffer);
 
-  str_free(data->buffer);
+    SSL_set_shutdown(data->ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
+    SSL_shutdown(data->ssl);
+    SSL_free(data->ssl);
+    SSL_CTX_free(data->ctx);
 
-  SSL_set_shutdown(data->ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
-  SSL_shutdown(data->ssl);
-  SSL_free(data->ssl);
-  SSL_CTX_free(data->ctx);
+    close(data->sock);
 
-  close(data->sock);
+    free(data);
+  }
 
-  free(data);
+  luaI_tsetlud(L, 1, "_", NULL);
   return 0;
 }
 
@@ -309,8 +321,7 @@ int l_wss(lua_State* L){
   int set = 1;
   signal(SIGPIPE, SIG_IGN);
 
-  SSL_library_init();
-  SSL_load_error_strings();
+  ssl_init();
   SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
   SSL* ssl = ssl_connect(ctx, sock, awa.domain->c);
 
@@ -385,13 +396,15 @@ int l_srequest(lua_State* L){
   }
 
   int sock = get_host((char*)host, (char*)port);
-  if(sock == -1) abort();
+  if(sock == -1){
+    p_fatal("could not resolve address");
+    abort();
+  }
 
-  SSL_library_init();
-  SSL_load_error_strings();
+  ssl_init();
   SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
   SSL* ssl = ssl_connect(ctx, sock, host);
-  
+ 
   char* path = "/";
   if(params >= check + 1){
     check++;
@@ -466,7 +479,9 @@ int l_srequest(lua_State* L){
     int idx = lua_gettop(L);
 
     parray_t* owo = NULL;
+    //handle errors
     int err = parse_header(a->c, header_eof - a->c, &owo);
+    assert(err == 0);
 
     for(int i = 0; i != owo->len; i++){
       luaI_tsets(L, idx, (owo->P[i].key)->c, ((str*)owo->P[i].value)->c);
@@ -497,6 +512,7 @@ int l_srequest(lua_State* L){
         content = state.content;
       }
     } else {
+      str_pushl(content, header_eof + 4, extra_len - 4);
       memset(buffer, 0, BUFFER_LEN);
 
       for(; (len = SSL_read(ssl, buffer, BUFFER_LEN)) > 0;){
@@ -598,14 +614,14 @@ void* handle_client(void *_arg){
 
   int64_t bite = recv_header(client_fd, &buffer, &header);
   header_eof = header - buffer;
-  printf("%x = %p - %p\n", header_eof, header, buffer);
+  /*printf("%x = %p - %p\n", header_eof, header, buffer);
   
   if(bite == -2) net_error(client_fd, 431);
   printf("'");
   for(int i = bite - 20; i != bite; i++){
     putchar(buffer[i]);
   }
-  printf("'\n");
+  printf("'\n");*/
   /*
 
   return NULL;
