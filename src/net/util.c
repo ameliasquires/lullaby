@@ -100,7 +100,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
   return len;
 }
 
-#define max_uri_len 2048
+#define max_uri_len 4096
 /**
  * @brief converts the request buffer into a parray_t
  *
@@ -118,7 +118,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   for(; oi != header_eof; oi++){
     if(buffer[oi] == ' ' || buffer[oi] == '\n'){
       if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
-      parray_set(table, item == 0 ? "Request" :
+      if(item < 3) parray_set(table, item == 0 ? "Request" :
                 item == 1 ? "Path" : "Version", (void*)str_init(current->c));
       str_clear(current);
       item++;
@@ -133,7 +133,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
     }
   }
 
-  if(item != 3){
+  if(item < 3){
     str_free(current);
     *_table = table;
     return -1;
