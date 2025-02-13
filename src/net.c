@@ -289,6 +289,7 @@ int i_ws_close(lua_State* L){
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct wss_data* data = lua_touserdata(L, -1);
+
   if(data != NULL){
     str_free(data->buffer);
 
@@ -302,7 +303,7 @@ int i_ws_close(lua_State* L){
     free(data);
   }
 
-  luaI_tsetlud(L, 1, "_", NULL);
+  data = NULL;
   return 0;
 }
 

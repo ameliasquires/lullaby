@@ -58,7 +58,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     switch(type = lua_type(src, -1)){
         case LUA_TNUMBER:
             n = lua_tonumber(src, -1);
-            if(n == (int)n) lua_pushinteger(dest, (int)n);
+            if(n == (uint64_t)n) lua_pushinteger(dest, lua_tonumber(src, -1));
             else lua_pushnumber(dest, n);
             break;
         case LUA_TSTRING:;
