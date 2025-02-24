@@ -60,6 +60,12 @@ void lua_set_global_table(lua_State*);
   lua_settable(L, Tidx);\
   lua_pop(L, 1);}
 
+#define luaI_error(L, en, str){\
+  lua_pushnil(L);\
+  lua_pushstring(L, str);\
+  lua_pushinteger(L, en);\
+  return 3;}
+
 
 int writer(lua_State*, const void*, size_t, void*);
 

@@ -38,9 +38,11 @@ release: all
 # https://github.com/google/sanitizers/issues/89#issuecomment-406316683
 #
 # this also requires lua to be built with asan
-
-debug: CFLAGS += -ggdb3 -static-libasan -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls
+debug: CFLAGS += -ggdb3 -fno-omit-frame-pointer -fno-optimize-sibling-calls
 debug: all
+
+san: CFLAGS += -ggdb3 -static-libasan -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls
+san: all
 
 reg: 
 	rm src/reg.o 

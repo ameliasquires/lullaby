@@ -1,6 +1,13 @@
 llby = require("lullaby")
 
-local ws = llby.net.wss("echo.websocket.org:443")
+local ws, error = llby.net.wss("echo.websocket.org:4432")
+
+if ws == nil then
+  print(error)
+  os.exit(12)
+end
+
+print(ws)
 
 for i=1,10 do
   local c = ws:read().content
