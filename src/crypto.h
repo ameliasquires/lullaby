@@ -93,8 +93,7 @@ int _##luaname##_common_hash(lua_State* L){\
   *a = initf;\
   int ini = lua_gettop(L);\
   lua_newtable(L);\
-  lua_setfield(L, LUA_REGISTRYINDEX, lua_topointer(L, ud));\
-  lua_getfield(L, LUA_REGISTRYINDEX, lua_topointer(L, ud));\
+  luaI_tsetlud(L, LUA_REGISTRYINDEX, "__", lua_topointer(L, ud));\
   int i;\
   for(i = ud; i != ini; i++) luaI_tsetv(L, ini + 1, lua_topointer(L, i), i);\
   lua_common_hash_meta_def(luaname);\
