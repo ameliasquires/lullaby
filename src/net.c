@@ -243,8 +243,7 @@ int i_ws_read(lua_State* L){
     str_free(message);
     luaI_error(L, len, "SSL_read error");
   }
-
-  
+ 
   lua_newtable(L);
   int idx = lua_gettop(L);
   luaI_tsetsl(L, idx, "content", message->c, message->len);
@@ -275,10 +274,11 @@ int i_ws_write(lua_State* L){
   str_pushl(send_data, content, clen);
 
   int s = SSL_write(data->ssl, send_data->c, send_data->len);
+  str_free(send_data);
+
   if(s <= 0) luaI_error(L, s, "SSL_write error");
   lua_pushinteger(L, 1);
 
-  str_free(send_data);
   return 1;
 }
 
@@ -295,7 +295,7 @@ int i_ws_close(lua_State* L){
     SSL_free(data->ssl);
     SSL_CTX_free(data->ctx);
 
-    close(data->sock);
+    if(data->sock != -1) close(data->sock);
 
     free(data);
   }
@@ -305,6 +305,8 @@ int i_ws_close(lua_State* L){
   lua_settable(L, 1);
   return 0;
 }
+
+
 
 int l_wss(lua_State* L){  
   uint64_t len = 0;
@@ -327,7 +329,7 @@ int l_wss(lua_State* L){
 
   char* request = calloc(512, sizeof * request);
   sprintf(request, "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n"\
-      "Sec-Websocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-Websocket-Version: 13\r\n\r\n", path, awa.domain->c);
+      "Sec-Websocket-Key: aWxvdmVsb3ZlbG92ZXlvdQ==\r\nSec-Websocket-Version: 13\r\n\r\n", path, awa.domain->c);
 
   int s = SSL_write(ssl, request, strlen(request));
   free_url(awa);
