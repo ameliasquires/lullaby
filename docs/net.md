@@ -69,7 +69,7 @@ closes server
 the function has 2 arguments, the first (res) contains functions and info about resolving the request,
 the second (req) contains info on the request, the path allows for wildcards, multiple get requests per path is allowed
 
-it also allows for path paramaters which is a wildcard directory that pushes the results into req.paramaters (read below)
+it also allows for path parameters which is a wildcard directory that pushes the results into req.parameters (read below)
 
 the actual name of the function will change based on what request method you want to accept, all requests are treated the exact same on the backend, besides HEAD requests which will also use all GET requets, and the 'all' variant will get everything
 
@@ -88,7 +88,7 @@ end)
 ...
 
 server:GET("/home/{user}/id", function(res, req)
-    --sets req.paramaters.user to whatever path was requested
+    --sets req.parameters.user to whatever path was requested
 end)
 ```
 
@@ -171,15 +171,15 @@ res:sendfile("./html/index.html")
 ...
 ```
 
-### req.paramaters 
+### req.parameters 
 
-a list of paramaters for the current function 
+a list of parematers for the current function 
 
 a path of '/user/{name}/id'
 and a request of '/user/amelia/id'
-would set req.paramaters.name to amelia
+would set req.parameters.name to amelia
 
-currently you can not have multiple paramaters per directory
+currently you can not have multiple parameters per directory
 
 > this could be changed in later versions
 
@@ -189,7 +189,7 @@ currently you can not have multiple paramaters per directory
 
 these can, of course be used with wildcards however you want
 
-/*/{user}/id would match /a/b/c/meow/id with req.paramaters.user being equal to meow
+/*/{user}/id would match /a/b/c/meow/id with req.parameters.user being equal to meow
 
 ### req:roll
 
