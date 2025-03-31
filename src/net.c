@@ -798,7 +798,7 @@ void* handle_client(void *_arg){
           }
           parray_clear(par, FREE);
 
-          luaI_tsetv(L, req_idx, "paramaters", new_param_idx);
+          luaI_tsetv(L, req_idx, "parameters", new_param_idx);
 
           for(int z = 0; z != awa->len; z++){
             char* path;
