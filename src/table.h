@@ -1,6 +1,7 @@
 #include "lua.h"
 #include "util.h"
 #include "sort.h"
+#include "config.h"
 #include <stdint.h>
 
 void i_shuffle(double*, size_t);
@@ -45,4 +46,8 @@ static const luaL_Reg array_function_list [] = {
       {"bogosort",l_bogosort},
 
       {NULL,NULL}
+};
+
+static struct config array_config[] = {
+  {.type = c_none}
 };

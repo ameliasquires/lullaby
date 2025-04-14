@@ -125,8 +125,10 @@ void* handle_thread(void* _args){
   lua_setmetatable(L, res_idx);
 
   luaL_loadbuffer(L, args->function->c, args->function->len, "thread");
+  int x = lua_gettop(L);
   str_free(args->function);
 
+  lua_assign_upvalues(L, x);
   lua_pushvalue(L, res_idx);
   lua_call(L, 1, 0);
 
@@ -182,9 +184,10 @@ int l_async(lua_State* oL){
   lua_gc(L, LUA_GCSTOP);
 
   luaL_openlibs(L);
-  lua_getglobal(oL, "_G");
-  luaI_deepcopy(oL, L, SKIP_GC);
-  lua_set_global_table(L);
+  //lua_getglobal(oL, "_G");
+  //luaI_deepcopy(oL, L, SKIP_GC);
+  //lua_set_global_table(L);
+  luaI_copyvars(oL, L);
   
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;

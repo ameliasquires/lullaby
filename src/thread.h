@@ -1,4 +1,5 @@
 #include "lua.h"
+#include "config.h"
 
 int l_async(lua_State*);
 int l_tlock(lua_State*);
@@ -15,4 +16,8 @@ static const luaL_Reg thread_function_list [] = {
   {"buffer",l_buffer},
   {"testcopy",l_testcopy},
   {NULL,NULL}
+};
+
+static struct config thread_config[] = {
+  {.type = c_none}
 };

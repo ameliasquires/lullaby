@@ -556,7 +556,7 @@ int l_srequest(lua_State* L){
 
 int l_request(lua_State* L){
   const char* host = luaL_checkstring(L, 1);
-  int sock = get_host((char*)host, lua_tostring(L, 2));
+  int sock = get_host((char*)host, (char*)lua_tostring(L, 2));
   
   char* path = "/";
   if(lua_gettop(L) >= 3)
@@ -809,6 +809,7 @@ void* handle_client(void *_arg){
                   
                   luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
                   int func = lua_gettop(L);
+                  lua_assign_upvalues(L, func);
 
                   //lua_pushvalue(L, func); // push function call
                   lua_pushvalue(L, res_idx); //push methods related to dealing with the request
@@ -816,6 +817,7 @@ void* handle_client(void *_arg){
 
                   //call the function
                   if(lua_pcall(L, 2, 0, 0) != 0){
+                    printf("(net thread) %s\n", lua_tostring(L, -1));
                     //send an error message if send has not been called
                     if(client_fd >= 0) net_error(client_fd, 500);
                     
@@ -941,7 +943,7 @@ int start_serv(lua_State* L, int port){
     lua_getglobal(L, "_G");
 
     //time_start(copy)
-    luaI_deepcopy(L, args->L, SKIP_GC);
+    luaI_copyvars(L, args->L);
 
     //time_end("copy", copy)
     lua_settop(L, old_top);

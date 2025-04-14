@@ -1,54 +1,56 @@
 ---@meta
 
----@class sort
-local sort = {}
+---to be rewritten
+---@deprecated
+---@class lullaby.array
+local table = {}
 
 ---greatest, least
 ---@param array number[]
-function sort.quicksort(array) end
+function table.quicksort(array) end
 
 ---greatest, least
 ---@param array number[]
-function sort.mergesort(array) end
+function table.mergesort(array) end
 
 ---greatest, least
 ---@param array number[]
-function sort.shellsort(array) end
+function table.shellsort(array) end
 
 ---greatest, least
 ---@param array number[]
-function sort.bubblesort(array) end
+function table.bubblesort(array) end
 
 ---greatest, least
 ---@param array number[]
-function sort.heapsort(array) end
+function table.heapsort(array) end
 
 ---least, greatest
 ---@param array integer[]
-function sort.countintsort(array) end
+function table.countintsort(array) end
 
 ---dont use this lol
 ---@deprecated
 ---greatest, least
 ---@param array number[]
-function sort.miraclesort(array) end
+function table.miraclesort(array) end
 
 ---dont use this lol
 ---@deprecated
 ---greatest, least
 ---@param array number[]
-function sort.stalinsort(array) end
+function table.stalinsort(array) end
 
 ---dont use this lol
 ---@deprecated
 ---greatest, least
 ---@param array number[]
-function sort.slowsort(array) end
+function table.slowsort(array) end
 
 ---dont use this lol
 ---@deprecated
 ---greatest, least
 ---@param array number[]
-function sort.bogosort(array) end
+function table.bogosort(array) end
 
-return sort
+return table
