@@ -1,6 +1,13 @@
 ---@meta
 
 ---@class io
+---@field filemallocchunk integer default chunk size for readfile
+---@field print_type integer print the type next to the value
+---@field max_depth integer max print depth before collapsing
+---@field start_nl_at integer when to start new line while printing
+---@field collapse_all integer whether or not to collapse everything
+---@field collapse_to_memory integer when collapsing, print memory address
+---@field print_meta integer print metatable
 local io = {}
 
 ---print a string with a "pretty" log header

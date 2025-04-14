@@ -97,8 +97,12 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
             for(;lua_next(src, at2) != 0;){
                 int first, second = first = lua_gettop(src);
                 first -= 1;
-                if((flags & SKIP_GC) && lua_type(src, first) == LUA_TSTRING 
-                  && strcmp("__gc", lua_tostring(src, first)) == 0){
+                //this is a mess, skip if key is __gc (when SKIP_GC)
+                //and skip _G (when SKIP__G)
+                if(((flags & SKIP__G) && lua_type(src, first) == LUA_TSTRING
+                  && strcmp("_G", lua_tostring(src, first)) == 0)
+                  || ((flags & SKIP_GC) && lua_type(src, first) == LUA_TSTRING 
+                  && strcmp("__gc", lua_tostring(src, first)) == 0)){
                   //printf("found %s\n", lua_tostring(src, first));
                   lua_pop(src, 1);
                   continue;
@@ -215,6 +219,71 @@ void luaI_deepcopy2(lua_State* src, lua_State* dest){
   }
 }
 
+int env_table(lua_State* L, int provide_table){
+  if(provide_table == 0){
+    lua_newtable(L);
+  }
+  int tidx = lua_gettop(L);
+ 
+  lua_Debug debug;
+  for(int i = 0;; i++){
+    if(lua_getstack(L, i, &debug) == 0) break;
+    for(int idx = 1;; idx++){
+      const char* name = lua_getlocal(L, &debug, idx);
+      int val = lua_gettop(L);
+      if(name == NULL) break;
+
+      lua_pushstring(L, name);
+      lua_gettable(L, tidx);
+      //all temporary (non-local variables) should start with '('
+      if(!lua_isnil(L, -1) || name[0] == '('){
+        lua_pop(L, 2);
+        continue;
+      }
+
+      luaI_tsetv(L, tidx, name, val);
+      lua_pop(L, 2);
+    }
+  }
+
+  //luaI_tseti(L, tidx, "hii", 234);
+
+  return 1;
+}
+
+//top table is prioritized
+void luaI_jointable(lua_State* L){
+  int idx = lua_gettop(L) - 1;
+
+  lua_pushnil(L);
+  for(;lua_next(L, -2) != 0;){
+    lua_pushvalue(L, -2);
+    lua_pushvalue(L, -2);
+    lua_settable(L, idx);
+    lua_pop(L, 1);
+  }
+
+  lua_pushvalue(L, idx);
+}
+
+//copys all variables from state A to B, including locals (stored in _locals)
+//populates _ENV the same as _G
+void luaI_copyvars(lua_State* from, lua_State* to){
+  lua_getglobal(from, "_G");
+  luaI_deepcopy(from, to, SKIP_GC | SKIP__G);
+  lua_set_global_table(to);
+
+  env_table(from, 0);
+  luaI_deepcopy(from, to, SKIP_GC);
+  int idx = lua_gettop(to);
+  lua_pushglobaltable(to);
+  int tidx = lua_gettop(to);
+
+  luaI_tsetv(to, idx, "_ENV", tidx);
+
+  luaI_tsetv(to, tidx, "_locals", idx);
+}
+
 /**
  * @brief extracts a table to be global
  *
@@ -223,7 +292,50 @@ void luaI_deepcopy2(lua_State* src, lua_State* dest){
 void lua_set_global_table(lua_State* L){
   lua_pushnil(L);
   for(;lua_next(L, -2) != 0;){
+    if(lua_type(L, -2) != LUA_TSTRING){
+      lua_pop(L, 1);
+      continue;
+    }
+
+    //lua_pushstring(L, lua_tostring(L, -2));
     lua_setglobal(L, lua_tostring(L, -2));
   }
 }
 
+//returns a table where index is the name at that index
+void lua_upvalue_key_table(lua_State* L, int fidx){
+  lua_newtable(L);
+  int tidx = lua_gettop(L);
+  char* name;
+
+  for(int i = 1; (name = (char*)lua_getupvalue(L, fidx, i)) != NULL; i++){
+    int idx = lua_gettop(L);
+    lua_pushinteger(L, lua_rawlen(L, tidx) + 1);
+    lua_pushstring(L, name);
+    lua_settable(L, tidx);
+  }
+
+  lua_pushvalue(L, tidx);
+}
+
+//sets each upvalue where the name exists in _locals table.
+//if function was dumped it wont work if debug values are stripped
+int lua_assign_upvalues(lua_State* L, int fidx){
+  lua_getglobal(L, "_locals");
+  int lidx = lua_gettop(L);
+
+  lua_upvalue_key_table(L, fidx);
+
+  lua_pushnil(L);
+  for(;lua_next(L, -2) != 0;){
+    lua_gettable(L, lidx);
+    if(lua_isnil(L, -1)){
+      lua_pop(L, 1);
+    }
+    lua_setupvalue(L, fidx, lua_tointeger(L, -2));
+  }
+
+  lua_pushvalue(L, fidx);
+
+  return 0;
+}

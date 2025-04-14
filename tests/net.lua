@@ -1,10 +1,9 @@
 --yes, this is kinda a mess of requires, just proof it works:3
 net = require "lullaby.net"
-io = require "lullaby.io"
-crypto = require "lullaby.crypto"
-config = require "lullaby.config"
+local io = require "lullaby.io"
+local crypto = require "lullaby.crypto"
 
-config.set({max_depth=5})
+io.max_depth = 5
 
 sleep = function(a) 
     local sec = tonumber(os.clock() + a); 
@@ -19,6 +18,7 @@ net.listen(
         _G.server = server
 
         server:POST("/{name}", function(res, req)
+          eroifjeor()
           --print("name is "..req.name)
           print("name")
           io.pprint(req.parameters)

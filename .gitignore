@@ -18,3 +18,5 @@ src/*/*.o
 CMakeCache.txt
 Makefile
 *.cmake
+
+!.luarc.json
