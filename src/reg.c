@@ -1,12 +1,12 @@
 #include "lua.h"
 #include "table.h"
 #include "crypto.h"
-#include "config.h"
 #include "io.h"
 #include "math.h"
 #include "net.h"
 #include "thread.h"
 #include "test.h"
+#include "config.h"
 #include <signal.h>
 #include <stdlib.h>
 
@@ -27,6 +27,9 @@ static int lua_exit(lua_State* L){
 #define open_common(name)\
   int luaopen_lullaby_##name (lua_State* L){\
     luaL_register(L, NULL, name##_function_list);\
+    int tidx = lua_gettop(L);\
+    i_config_metatable(L, name##_config);\
+    lua_settop(L, tidx);\
     return 1;\
   }
 
@@ -34,7 +37,6 @@ open_common(array);
 open_common(crypto);
 open_common(io);
 open_common(math);
-open_common(config);
 open_common(net);
 open_common(thread);
 open_common(test);
@@ -43,6 +45,7 @@ open_common(test);
   lua_pushstring(L, #name);\
   luaopen_lullaby_##name(L);\
   lua_settable(L, T);
+  
 
 int luaopen_lullaby(lua_State* L) { 
     /*lua_newuserdata(L, 1);
@@ -61,11 +64,11 @@ int luaopen_lullaby(lua_State* L) {
     push(top, crypto);
     push(top, io);
     push(top, math);
-    push(top, config);
     push(top, net);
     push(top, thread);
     push(top, test);
     luaI_tsets(L, top, "version", GIT_COMMIT)
+
     //lreg("array", array_function_list);
     //lreg("crypto", crypto_function_list);
     //lreg("io", io_function_list);

@@ -10,6 +10,7 @@
 #endif
 
 #include "lua.h"
+#include "config.h"
 #include "types/str.h"
 #include "types/parray.h"
 #include <stdint.h>
@@ -47,4 +48,8 @@ static const luaL_Reg net_function_list [] = {
   {"wss",l_wss},
   
   {NULL,NULL}
+};
+
+static struct config net_config[] = {
+  {.type = c_none}
 };

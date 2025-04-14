@@ -4,7 +4,7 @@
 
 int ld_match(lua_State* L){
   parray_t* a = parray_init();
-  int o = match_param(lua_tostring(L, 1), lua_tostring(L, 2), a);
+  int o = match_param((char*)lua_tostring(L, 1), (char*)lua_tostring(L, 2), a);
   
   if(o == 0){
     lua_pushinteger(L, o);
@@ -36,16 +36,22 @@ int l_stack_dump(lua_State* L){
 
   //printf("%i\n", level);
   lua_Debug info;
-  for(int i = 0; ; i++){
+  for(int i = 0;; i++){
     if(lua_getstack(L, i, &info) == 0) break;
     for(int idx = 1;; idx++){
       const char* name = lua_getlocal(L, &info, idx);
       if(name == NULL) break;
-      printf("l:%i | %s = %s %s\n", i, name, lua_tostring(L, -1), lua_typename(L, lua_type(L, -1)));
+      const char* type = lua_typename(L, lua_type(L, -1));
+      printf("l:%i | %s = %s (%s)\n", i, name, lua_tostring(L, -1), type);
       lua_pop(L, 1);
     }
   }
   //lua_getstack(L, level, &info);
   //const char* name = lua_getlocal(L, &info, 2);
   return 0;
+}
+
+int l_upvalue_key_table(lua_State* L){
+  lua_upvalue_key_table(L, 1);
+  return 1;
 }

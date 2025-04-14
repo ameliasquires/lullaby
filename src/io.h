@@ -1,4 +1,5 @@
 #include "lua.h"
+#include "config.h"
 
 #define color_black "\e[30m"
 #define color_red "\e[31m"
@@ -27,6 +28,25 @@ int l_pprint(lua_State*);
 int l_arg_handle(lua_State*);
 
 int l_json_parse(lua_State*);
+
+extern int _file_malloc_chunk;
+extern int _print_type;
+extern int _max_depth;
+extern int _start_nl_at;
+extern int _collapse_all;
+extern int _collapse_to_memory;
+extern int _print_meta;
+
+static struct config io_config[] = {
+  {.name = "filechunksize", .type = c_int, .value = {.c_int = &_file_malloc_chunk}},
+  {.name = "print_type", .type = c_int, .value = {.c_int = &_print_type}},
+  {.name = "max_depth", .type = c_int, .value = {.c_int = &_max_depth}},
+  {.name = "start_nl_at", .type = c_int, .value = {.c_int = &_start_nl_at}},
+  {.name = "collapse_all", .type = c_int, .value = {.c_int = &_collapse_all}},
+  {.name = "collapse_to_memory", .type = c_int, .value = {.c_int = &_collapse_to_memory}},
+  {.name = "print_meta", .type = c_int, .value = {.c_int = &_print_meta}},
+  {.type = c_none}
+};
 
 static const luaL_Reg io_function_list [] = {
   {"readfile",l_readfile},

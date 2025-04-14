@@ -1,6 +1,6 @@
 --(this is in tests/net2.lua)
 net = require "lullaby.net"
-crypto = require "lullaby.crypto"
+local crypto = require "lullaby.crypto"
 local port = 8080
 MAX_LENGTH = 2048
 
@@ -15,6 +15,7 @@ net.listen(function(server)
 
     --incremental hashes allow updating via addition, in this case adding the body and getting a string from it
     hash = (hash + req.Body):final()
+    print(hash, crypto)
     --send the hash to the client, closes connection, but thread is live until it ends
     res:send(hash)
   end)
