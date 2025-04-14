@@ -4,9 +4,17 @@
 #include "io.h"
 #include "stdlib.h"
 #include "stdio.h"
-#include "config.h"
 #include "stdint.h"
 #include "table.h"
+
+int _print_type = 0;
+int _max_depth = 2;
+int _start_nl_at = 3;
+int _collapse_all = 0;
+int _collapse_to_memory = 1;
+int _print_meta = 0;
+
+int _file_malloc_chunk = 512;
 
 int l_readfile(lua_State* L){
   size_t len;

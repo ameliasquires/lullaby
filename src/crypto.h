@@ -32,6 +32,8 @@
 #include "encode/base64.h"
 #include "encode/baseN.h"
 
+#include "config.h"
+
 uint8_t rotl8(uint8_t, uint8_t);
 uint16_t rotl16(uint16_t, uint16_t);
 unsigned rotl32(unsigned, unsigned);
@@ -93,7 +95,7 @@ int _##luaname##_common_hash(lua_State* L){\
   *a = initf;\
   int ini = lua_gettop(L);\
   lua_newtable(L);\
-  luaI_tsetlud(L, LUA_REGISTRYINDEX, "__", lua_topointer(L, ud));\
+  luaI_tsetlud(L, LUA_REGISTRYINDEX, "__", (void*)lua_topointer(L, ud));\
   int i;\
   for(i = ud; i != ini; i++) luaI_tsetv(L, ini + 1, lua_topointer(L, i), i);\
   lua_common_hash_meta_def(luaname);\
@@ -176,3 +178,6 @@ static const luaL_Reg crypto_function_list [] = {
       {NULL,NULL}
 };
 
+static struct config crypto_config[] = {
+  {.type = c_none}
+};

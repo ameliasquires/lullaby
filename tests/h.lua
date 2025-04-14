@@ -1,5 +1,5 @@
 llib = require "lullaby"
-llib.config.set({print_meta = 1})
+llib.io.print_meta = 1
 
 local a = llib.crypto.sha1()
 

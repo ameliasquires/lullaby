@@ -8,7 +8,8 @@
 enum deep_copy_flags {
   SKIP_META = (1 << 0),
   SKIP_GC = (1 << 1),
-  IS_META = (1 << 2)
+  IS_META = (1 << 2),
+  SKIP__G = (1 << 3),
 };
 #endif 
 
@@ -24,6 +25,11 @@ void luaI_deepcopy2(lua_State* src, lua_State* dest);
 
 void lua_set_global_table(lua_State*);
 //todo: char* _luaL_tolstring(lua_State*, int, size_t*);
+
+void luaI_copyvars(lua_State* src, lua_State* dest);
+
+void lua_upvalue_key_table(lua_State* L, int fidx);
+int lua_assign_upvalues(lua_State* L, int fidx);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
