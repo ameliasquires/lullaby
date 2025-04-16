@@ -26,7 +26,7 @@ static int lua_exit(lua_State* L){
 
 #define open_common(name)\
   int luaopen_lullaby_##name (lua_State* L){\
-    luaL_register(L, NULL, name##_function_list);\
+    luaL_register(L, #name, name##_function_list);\
     int tidx = lua_gettop(L);\
     i_config_metatable(L, name##_config);\
     lua_settop(L, tidx);\

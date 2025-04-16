@@ -3,8 +3,8 @@
 #include "io.h"
 #include <stdlib.h>
 #include <string.h>
-#include "lua5.4/lua.h"
 #include "types/str.h"
+#include <stdint.h>
 #include "types/parray.h"
 
 static int ii = 0;
