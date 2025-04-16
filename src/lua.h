@@ -79,7 +79,7 @@ int writer(lua_State*, const void*, size_t, void*);
     #define lua_objlen(L,i) lua_rawlen(L,(i))
 
     #define luaL_register(L, M, F) luaL_newlib(L, F);
-#elif LUA_VERSION_NUM = 501
+#elif LUA_VERSION_NUM == 501
     #define luaL_tolstring lua_tolstring
     
     #define lua_dump(A, B, C, D) lua_dump(A, B, C)
@@ -87,6 +87,8 @@ int writer(lua_State*, const void*, size_t, void*);
     #define lua_rawlen lua_objlen
 
     #define lua_gc(A, B) lua_gc(A, B, 0)
+
+    #define lua_pushglobaltable(L) {lua_getglobal(L, "_G");}
 #endif
 
 

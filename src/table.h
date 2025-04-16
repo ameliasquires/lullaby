@@ -19,6 +19,8 @@ int l_sindexof(lua_State*);//[double+int] (greatest -> least), item -> i
 int l_split(lua_State*);
 int l_to_char_array(lua_State*);
 
+int l_unpack(lua_State*);
+
 static const luaL_Reg array_function_list [] = {
       {"len",l_len},
       {"reverse",l_reverse},
@@ -44,6 +46,8 @@ static const luaL_Reg array_function_list [] = {
       {"stalinsort",l_stalinsort},
       {"slowsort",l_slowsort},
       {"bogosort",l_bogosort},
+
+      {"unpack", l_unpack},
 
       {NULL,NULL}
 };

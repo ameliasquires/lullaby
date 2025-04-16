@@ -3,6 +3,18 @@
 #include <string.h>
 #include <stdint.h>
 
+int l_unpack(lua_State* L){
+  int top = lua_gettop(L);
+  lua_pushnil(L);
+  
+  for(;lua_next(L, top);){
+    lua_pushvalue(L, -2);
+    lua_remove(L, -3);
+  }
+
+  return lua_gettop(L) - top;
+}
+
 uint64_t i_len(lua_State* L, int pos){
   uint64_t i = 0;
   lua_pushnil(L);
