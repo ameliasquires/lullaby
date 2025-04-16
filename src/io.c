@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include "lua5.4/lua.h"
 #include "types/str.h"
 #include "io.h"
 #include "stdlib.h"

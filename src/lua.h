@@ -76,52 +76,17 @@ int lua_assign_upvalues(lua_State* L, int fidx);
 int writer(lua_State*, const void*, size_t, void*);
 
 #if LUA_VERSION_NUM == 504
-    #define lreg(N, FN)\
-        lua_pushstring(L, N);\
-        luaL_register(L, NULL, FN);\
-        lua_settable(L, -3);
-
-    
-    #define requiref( L, modname, f, glob ) \
-        { luaL_requiref( L, modname, f, glob ); lua_pop( L, 1 ); }
-
     #define lua_objlen(L,i) lua_rawlen(L,(i))
+
     #define luaL_register(L, M, F) luaL_newlib(L, F);
-#else
-    //todo: #define luaL_tolstring(L, idx, n) _luaL_tolstring(L, idx, n)
-
-    #define lreg(N, FN)\
-        lua_newtable(L);\
-        luaL_register(L, NULL, FN);\
-        lua_setfield(L, 2, N);
+#elif LUA_VERSION_NUM = 501
+    #define luaL_tolstring lua_tolstring
     
-    //taken straight from luaproc
-    #define requiref(L, modname, f, glob){\
-      lua_pushcfunction(L, f);\
-      lua_pushstring(L, modname); \
-      lua_call(L, 1, 1);\
-      lua_getfield(L, LUA_GLOBALSINDEX, LUA_LOADLIBNAME);\
-      if(lua_type(L, -1) == LUA_TTABLE){\
-        lua_getfield(L, -1, "loaded");\
-        if(lua_type(L, -1) == LUA_TTABLE){\
-          lua_getfield(L, -1, modname);\
-          if(lua_type(L, -1) == LUA_TNIL) {\
-            lua_pushvalue(L, 1);\
-            lua_setfield(L, -3, modname);\
-          }\
-        lua_pop(L, 1);\
-        }\
-      lua_pop(L, 1);\
-      }\
-      lua_pop(L, 1);\
-      if(glob){\
-        lua_setglobal(L, modname);\
-      }else{\
-        lua_pop(L, 1);\
-      }\
-    }
-
+    #define lua_dump(A, B, C, D) lua_dump(A, B, C)
     
+    #define lua_rawlen lua_objlen
+
+    #define lua_gc(A, B) lua_gc(A, B, 0)
 #endif
 
 

@@ -1,9 +1,6 @@
 #ifndef __common_net_h
 #define __common_net_h
 
-#include "lua5.4/lauxlib.h"
-#include "lua5.4/lua.h"
-
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>

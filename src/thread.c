@@ -1,6 +1,4 @@
 #include "thread.h"
-#include "lua5.4/lauxlib.h"
-#include "lua5.4/lua.h"
 #include "stdint.h"
 #include <stdlib.h>
 #include <unistd.h>
