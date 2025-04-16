@@ -8,6 +8,7 @@
 
 #include "types/larray.h"
 #include "hash/fnv.h"
+#include "table.h"
 
 struct thread_info {
     str* function;
@@ -338,6 +339,9 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
   lua_pushlightuserdata(L, buffer);
   lua_setglobal(L, "__this_obj");
 
+  lua_pushcfunction(L, l_unpack);
+  lua_setglobal(L, "__unpack");
+
   lua_pushnil(L);
   for(; lua_next(L, meta_idx) != 0;){
     int k, v = lua_gettop(L);
@@ -346,7 +350,7 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
     char* fn = calloc(128, sizeof * fn); 
     const char* key = lua_tostring(L, k);
     sprintf(fn, "return function(_a,_b,_c)\
-return __proxy_call(__this_obj,'%s',table.unpack({_a,_b,_c}));end", key);
+return __proxy_call(__this_obj,'%s',__unpack({_a,_b,_c}));end", key);
     luaL_dostring(L, fn);
 
     free(fn);
