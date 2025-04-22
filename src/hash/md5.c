@@ -27,10 +27,15 @@ struct md5_hash md5_init(){
   return a;
 }
 
+int l_md5_free(lua_State* L){
+  struct md5_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  return 0;
+}
 
 struct md5_hash md5_init_l(lua_State* L){
   struct md5_hash a = {.a0 = 0x67452301, .b0 = 0xefcdab89, .c0 = 0x98badcfe, .d0 = 0x10325476, .total = 0, .bufflen = 0};
-  a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
+  a.buffer = calloc(sizeof * a.buffer, bs);
   memset(a.buffer, 0, bs);
   return a;
 }
@@ -142,7 +147,7 @@ lua_common_hash_clone_oargs(md5, md5, l_md5_init(L), {
     memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
 });
 
-lua_common_hash_init_ni(md5, md5, md5_init_l(L));
+lua_common_hash_init_ni(md5, md5, md5_init_l(L), l_md5_free);
 lua_common_hash_update(md5, md5);
 //common_hash_init_update(md5);
 

@@ -6,6 +6,10 @@ struct xor8_hash xor8_init(){
   return (struct xor8_hash){.a = 0};
 }
 
+int xor8_free_l(lua_State* L){
+  return 0;
+}
+
 void xor8_update(uint8_t* aa, size_t len, struct xor8_hash* hash){
   for(int i = 0; i != len; i++)
     hash->a += aa[i] & 0xff;

@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+int crc32_free_l(lua_State* L){return 0;}
+int crc16_free_l(lua_State* L){return 0;}
+int crc8_free_l(lua_State* L){return 0;}
+
 struct crc32_hash crc32_init(){
     return (struct crc32_hash){.crc = 0xFFFFFFFF};
 }

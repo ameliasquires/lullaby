@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+int djb2_free_l(lua_State* L){
+  return 0;
+}
+
 struct djb2_hash djb2_init(){
   return (struct djb2_hash){.hash = 5381};
 }

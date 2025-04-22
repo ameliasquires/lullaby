@@ -6,6 +6,10 @@ struct bsdchecksum_hash bsdchecksum_init(){
   return (struct bsdchecksum_hash){.check = 0x0};
 }
 
+int bsdchecksum_free_l(lua_State* L){
+  return 0;
+}
+
 void bsdchecksum_update(uint8_t* aa, size_t len, struct bsdchecksum_hash* hash){
   for(int i = 0; i != len; i++){
       uint8_t a = aa[i];

@@ -23,10 +23,16 @@ struct sha01_hash sha01_init(uint8_t ver){
     return a;
 }
 
+int sha01_free_l(lua_State* L){
+  struct sha01_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  return 0;
+}
+
 struct sha01_hash sha01_init_l(uint8_t ver, lua_State* L){
     struct sha01_hash a = {.h0 = 0x67452301, .h1 = 0xEFCDAB89, .h2 = 0x98BADCFE, .h3 = 0x10325476, .h4 = 0xC3D2E1F0,
         .total = 0, .bufflen = 0, .version = ver};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
+    a.buffer = calloc(sizeof * a.buffer, bs);
     memset(a.buffer, 0, bs);
     return a;
 }
@@ -182,7 +188,7 @@ lua_common_hash_clone_oargs(sha1, sha1, l_sha1_init(L), {
     memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
 });
 
-lua_common_hash_init_ni(sha1, sha1, sha01_init_l(1, L));
+lua_common_hash_init_ni(sha1, sha1, sha01_init_l(1, L), sha01_free_l);
 lua_common_hash_update(sha1, sha1);
 
 //common_hash_clone(sha0);
@@ -192,7 +198,7 @@ lua_common_hash_clone_oargs(sha0, sha0, l_sha0_init(L), {
     b->buffer = old;
     memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
 });
-lua_common_hash_init_ni(sha0, sha0, sha01_init_l(0, L));
+lua_common_hash_init_ni(sha0, sha0, sha01_init_l(0, L), sha01_free_l);
 lua_common_hash_update(sha0, sha0);
 
 int l_sha1_final(lua_State* L){

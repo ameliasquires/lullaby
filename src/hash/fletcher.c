@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+int fletcher8_free_l(lua_State* L){return 0;}
+int fletcher16_free_l(lua_State* L){return 0;}
+int fletcher32_free_l(lua_State* L){return 0;}
+
 struct fletcher8_hash fletcher8_init(){
   return (struct fletcher8_hash){.s1 = 0, .s2 = 0};
 }

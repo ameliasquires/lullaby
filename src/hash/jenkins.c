@@ -6,6 +6,10 @@ struct jenkins_oaat_hash jenkins_oaat_init(){
   return (struct jenkins_oaat_hash){.hash = 0};
 }
 
+int jenkins_oaat_free_l(lua_State* L){
+  return 0;
+}
+
 void jenkins_oaat_update(uint8_t* in, size_t len, struct jenkins_oaat_hash* hash){
   for(int i = 0; i != len;){
     hash->hash += in[i++];

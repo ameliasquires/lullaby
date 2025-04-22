@@ -1,6 +1,6 @@
-#include <lua5.4/lua.h>
-#include <lua5.4/lualib.h>
-#include <lua5.4/lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
 #include <stdlib.h>
 
 #ifndef __lua_h
@@ -76,9 +76,17 @@ int lua_assign_upvalues(lua_State* L, int fidx);
 int writer(lua_State*, const void*, size_t, void*);
 
 #if LUA_VERSION_NUM == 504
-    #define lua_objlen(L,i) lua_rawlen(L,(i))
+    #define lua_objlen lua_rawlen
 
     #define luaL_register(L, M, F) luaL_newlib(L, F);
+
+#elif LUA_VERSION_NUM == 503
+  #define lua_objlen lua_rawlen
+
+  #define luaL_register(L, M, F) luaL_newlib(L, F);
+
+  #define lua_gc(A, B) lua_gc(A, B, 0)
+
 #elif LUA_VERSION_NUM == 501
     #define luaL_tolstring lua_tolstring
     
@@ -88,7 +96,7 @@ int writer(lua_State*, const void*, size_t, void*);
 
     #define lua_gc(A, B) lua_gc(A, B, 0)
 
-    #define lua_pushglobaltable(L) {lua_getglobal(L, "_G");}
+    #define lua_pushglobaltable(L) {lua_getglobal(L, "_G");if(lua_isnil(L, -1)){lua_newtable(L);lua_setglobal(L, "_G");lua_getglobal(L, "_G");}}
 #endif
 
 

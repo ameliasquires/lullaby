@@ -7,6 +7,10 @@ struct sdbm_hash sdbm_init(){
   return (struct sdbm_hash){.hash = 0};
 }
 
+int sdbm_free_l(lua_State* L){
+  return 0;
+}
+
 void sdbm_update(uint8_t* in, size_t len, struct sdbm_hash* hash){
   for(int i = 0; i != len; i++){
     hash->hash = (uint64_t)*in + (hash->hash << 6) + (hash->hash << 16) - hash->hash;

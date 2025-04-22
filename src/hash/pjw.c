@@ -7,6 +7,10 @@ struct pjw_hash pjw_init(){
     return (struct pjw_hash){.hash = 0, .high = 0};
 }
 
+int pjw_free_l(lua_State* L){
+  return 0;
+}
+
 void pjw_update(uint8_t* in, size_t len, struct pjw_hash* hash){
     for(int i = 0; i != len; i++){
         hash->hash = (hash->hash << 4) + *in++;

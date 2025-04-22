@@ -104,8 +104,8 @@ struct blake256_hash blake256_init(){
 
 struct blake256_hash blake256_init_l(lua_State* L){
     struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
-    a.hash = lua_newuserdata(L, sizeof * a.hash * 8);
+    a.buffer = calloc(sizeof * a.buffer, bs);
+    a.hash = calloc(sizeof * a.hash, 8);
     memset(a.buffer, 0, bs);
     a.hash[0] = 0x6a09e667;
     a.hash[1] = 0xbb67ae85;
@@ -135,8 +135,8 @@ struct blake256_hash blake224_init(){
 
 struct blake256_hash blake224_init_l(lua_State* L){
     struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
-    a.hash = lua_newuserdata(L, sizeof * a.hash * 8);
+    a.buffer = calloc(sizeof * a.buffer, bs);
+    a.hash = calloc(sizeof * a.hash, 8);
     memset(a.buffer, 0, bs);
     a.hash[0] = 0xc1059ed8;
     a.hash[1] = 0x367cd507;
@@ -148,6 +148,15 @@ struct blake256_hash blake224_init_l(lua_State* L){
     a.hash[7] = 0xbefa4fa4;
     return a;
 }
+
+int blake256_free_l(lua_State* L){
+  struct blake256_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  free(h->hash);
+  return 0;
+}
+
+#define blake224_free_l blake256_free_l
 
 void blake256_round(struct blake256_hash* hash){
   compress256(hash->hash, (char*)hash->buffer, hash->compressed * 8);
@@ -326,8 +335,8 @@ struct blake512_hash blake512_init(){
 
 struct blake512_hash blake512_init_l(lua_State* L){
     struct blake512_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs_2);
-    a.hash = lua_newuserdata(L, sizeof * a.hash * 8);
+    a.buffer = calloc(sizeof * a.buffer, bs_2);
+    a.hash = calloc(sizeof * a.hash, 8);
     memset(a.buffer, 0, bs_2);
     a.hash[0] = 0x6a09e667f3bcc908ULL;
     a.hash[1] = 0xbb67ae8584caa73bULL;
@@ -357,8 +366,8 @@ struct blake384_hash blake384_init(){
 
 struct blake384_hash blake384_init_l(lua_State* L){
     struct blake384_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs_2);
-    a.hash = lua_newuserdata(L, sizeof * a.hash * 8);
+    a.buffer = calloc(sizeof * a.buffer, bs_2);
+    a.hash = calloc(sizeof * a.hash, 8);
     memset(a.buffer, 0, bs_2);
     a.hash[0] = 0xcbbb9d5dc1059ed8ULL;
     a.hash[1] = 0x629a292a367cd507ULL;
@@ -370,6 +379,15 @@ struct blake384_hash blake384_init_l(lua_State* L){
     a.hash[7] = 0x47b5481dbefa4fa4ULL;
     return a;
 }
+
+int blake512_free_l(lua_State* L){
+  struct blake512_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  free(h->hash);
+  return 0;
+}
+
+#define blake384_free_l blake512_free_l
 
 void blake512_round(struct blake512_hash* hash){
   compress512(hash->hash, hash->buffer, hash->compressed * 8);

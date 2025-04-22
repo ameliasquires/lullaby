@@ -7,6 +7,10 @@ struct sysvchecksum_hash sysvchecksum_init(){
   return (struct sysvchecksum_hash){.check = 0};
 }
 
+int sysvchecksum_free_l(lua_State* L){
+  return 0;
+}
+
 void sysvchecksum_update(uint8_t* aa, size_t len, struct sysvchecksum_hash* hash){
   for(int i = 0; i != len; i++)
     hash->check += aa[i];
