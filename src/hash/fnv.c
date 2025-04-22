@@ -6,6 +6,10 @@ struct fnv_1_hash fnv_1_init(enum fnv_version A){
   return (struct fnv_1_hash){.A = A, .hash = (A != v_0) * 0xcbf29ce484222325};
 }
 
+int fnv_1_free_l(lua_State* L){
+  return 0;
+}
+
 void fnv_1_update(uint8_t* in, size_t len, struct fnv_1_hash* hash){
   uint64_t prime = 0x100000001b3;
 
@@ -42,9 +46,9 @@ lua_common_hash_update(fnv_1, fnv_1);
 lua_common_hash_update(fnv_1, fnv_0);
 lua_common_hash_update(fnv_1, fnv_a);
 
-lua_common_hash_init_ni(fnv_1, fnv_1, fnv_1_init(v_1));
-lua_common_hash_init_ni(fnv_1, fnv_0, fnv_1_init(v_0));
-lua_common_hash_init_ni(fnv_1, fnv_a, fnv_1_init(v_a));
+lua_common_hash_init_ni(fnv_1, fnv_1, fnv_1_init(v_1), fnv_1_free_l);
+lua_common_hash_init_ni(fnv_1, fnv_0, fnv_1_init(v_0), fnv_1_free_l);
+lua_common_hash_init_ni(fnv_1, fnv_a, fnv_1_init(v_a), fnv_1_free_l);
 
 #define aaa(v)\
 int l_fnv_##v##_final(lua_State* L){\

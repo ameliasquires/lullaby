@@ -108,10 +108,16 @@ struct sha512_hash sha512_t_init(struct iv sha_iv){
     return a;
 }
 
+int sha512_t_free_l(lua_State* L){
+  struct sha512_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  return 0;
+}
+
 struct sha512_hash sha512_t_init_l(struct iv sha_iv, lua_State* L){
     struct sha512_hash a = {.h0 = sha_iv.h0, .h1 = sha_iv.h1, .h2 = sha_iv.h2, .h3 = sha_iv.h3, .h4 = sha_iv.h4, .h5 = sha_iv.h5, .h6 = sha_iv.h6, .h7 = sha_iv.h7,
         .total = 0, .bufflen = 0};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
+    a.buffer = calloc((sizeof * a.buffer), bs);
     memset(a.buffer, 0, bs);
     return a;
 }
@@ -124,6 +130,7 @@ struct sha512_hash sha384_init(){
     return sha512_t_init(sha384_iv);
 }
 
+char old[512];
 void sha512_update(uint8_t* input, size_t len, struct sha512_hash* hash){
   hash->total += len;
   size_t total_add = len + hash->bufflen;
@@ -131,6 +138,7 @@ void sha512_update(uint8_t* input, size_t len, struct sha512_hash* hash){
   if(total_add < bs){
     memcpy(hash->buffer + hash->bufflen, input, len);
     hash->bufflen += len;
+    memcpy(old, hash->buffer, hash->bufflen);
     return;
   }
 
@@ -252,7 +260,7 @@ lua_common_hash_clone_oargs(sha512, sha512, l_sha512_init(L), {
     b->buffer = old;
     memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
 });
-lua_common_hash_init_ni(sha512, sha512, sha512_t_init_l(sha512_iv, L));
+lua_common_hash_init_ni(sha512, sha512, sha512_t_init_l(sha512_iv, L), sha512_t_free_l);
 lua_common_hash_update(sha512, sha512);
 
 int l_sha512_final(lua_State* L){
@@ -272,7 +280,7 @@ lua_common_hash_clone_oargs(sha384, sha384, l_sha384_init(L), {
     b->buffer = old;
     memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
 });
-lua_common_hash_init_ni(sha384, sha384, sha512_t_init_l(sha384_iv, L));
+lua_common_hash_init_ni(sha384, sha384, sha512_t_init_l(sha384_iv, L), sha512_t_free_l);
 lua_common_hash_update(sha384, sha384);
 
 int l_sha384_final(lua_State* L){
@@ -309,7 +317,7 @@ int l_sha512_t_init(lua_State* L){
   *a = sha512_t_init_l(sha_iv_gen(tt), L);
   a->t = tt;
   
-  lua_common_hash_meta_def(sha512_t);
+  lua_common_hash_meta_def(sha512_t, sha512_t_free_l);
 
   lua_pushvalue(L, ud);
   return 1;

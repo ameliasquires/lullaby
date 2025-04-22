@@ -23,6 +23,10 @@ struct pearson_hash pearson_init(){
   return (struct pearson_hash){.ret = 0};
 }
 
+int pearson_free_l(lua_State* L){
+  return 0;
+}
+
 void pearson_update(uint8_t* aa, size_t len, struct pearson_hash* hash){
   for(int i = 0; i != len; i++)
     hash->ret = pearson_table[(uint8_t)(hash->ret^aa[i])];

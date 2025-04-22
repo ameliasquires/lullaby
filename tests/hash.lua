@@ -2,6 +2,10 @@ llib = require "lullaby"
 
 --llib.io.log = function() end
 
+if table.unpack == nil then
+  table.unpack = llib.array.unpack
+end
+
 local hashes_working = 0
 local hashes_failed = 0
 local functions_working = 0

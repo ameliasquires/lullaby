@@ -327,6 +327,11 @@ int meta_proxy(lua_State* L){
   //printf("%i\n",count);
   lua_call(buffer->L, count + 1, 1);
   luaI_deepcopy(buffer->L, L, 0);
+
+  lua_pushnil(buffer->L);
+  lua_setmetatable(buffer->L, -2);
+
+  lua_settop(buffer->L, 1);
   //printf("%p\n", lua_topointer(buffer->L, -1));
   return 1;
 }
@@ -349,8 +354,8 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
 
     char* fn = calloc(128, sizeof * fn); 
     const char* key = lua_tostring(L, k);
-    sprintf(fn, "return function(_a,_b,_c)\
-return __proxy_call(__this_obj,'%s',__unpack({_a,_b,_c}));end", key);
+    sprintf(fn, "return function(...)\
+return __proxy_call(__this_obj,'%s',...);end", key);
     luaL_dostring(L, fn);
 
     free(fn);

@@ -45,8 +45,8 @@ int tp(lua_State*);
 
 #define common_hash_init_update(hashname) lua_common_hash_init_update(hashname, hashname)
 #define lua_common_hash_init_update(hashname, luaname) lua_common_hash_init(hashname, luaname) lua_common_hash_update(hashname, luaname)
-#define lua_common_hash_init(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init())
-#define lua_common_hash_init_l(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init_l(L))
+#define lua_common_hash_init(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init(), hashname##_free_l)
+#define lua_common_hash_init_l(hashname, luaname) lua_common_hash_init_ni(hashname, luaname, hashname##_init_l(L), hashname##_free_l)
 
 #define common_hash_clone(hashname) lua_common_hash_clone(hashname, hashname)
 #define lua_common_hash_clone(hashname, luaname) lua_common_hash_clone_oargs(hashname, luaname, l_##luaname##_init(L), *b = *a)
@@ -78,15 +78,16 @@ int _##luaname##_common_hash(lua_State* L){\
     return 1;\
   }
 
-#define lua_common_hash_meta_def(luaname)\
+#define lua_common_hash_meta_def(luaname, exitf)\
   lua_newtable(L);\
   int mt = lua_gettop(L);\
   luaI_tsetcf(L, mt, "__index", _##luaname##_common_hash);\
   luaI_tsetcf(L, mt, "__add", _##luaname##_hash_add);\
+  luaI_tsetcf(L, mt, "__gc", exitf);\
   lua_pushvalue(L, mt);\
   lua_setmetatable(L, ud);\
 
-#define lua_common_hash_init_ni(hashname, luaname, initf)\
+#define lua_common_hash_init_ni(hashname, luaname, initf, exitf)\
  lua_common_hash_meta(luaname);\
  int l_##luaname##_init(lua_State* L){\
   \
@@ -94,11 +95,7 @@ int _##luaname##_common_hash(lua_State* L){\
   int ud = lua_gettop(L);\
   *a = initf;\
   int ini = lua_gettop(L);\
-  lua_newtable(L);\
-  luaI_tsetlud(L, LUA_REGISTRYINDEX, "__", (void*)lua_topointer(L, ud));\
-  int i;\
-  for(i = ud; i != ini; i++) luaI_tsetv(L, ini + 1, lua_topointer(L, i), i);\
-  lua_common_hash_meta_def(luaname);\
+  lua_common_hash_meta_def(luaname, exitf);\
   lua_pushvalue(L, ud);\
   return 1;\
 }

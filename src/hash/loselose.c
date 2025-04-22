@@ -6,6 +6,10 @@ struct loselose_hash loselose_init(){
   return (struct loselose_hash){.hash = 0};
 }
 
+int loselose_free_l(lua_State* L){
+  return 0;
+}
+
 void loselose_update(uint8_t* in, size_t len, struct loselose_hash* hash){
   for(int i = 0; i != len; i++){
     hash->hash += (uint64_t)*in;

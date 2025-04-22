@@ -161,9 +161,9 @@ struct blake2b_hash blake2b_init(char* key, int key_len, int digest_len){
 
 struct blake2b_hash blake2b_init_l(lua_State* L, char* key, int key_len, int digest_len){
     struct blake2b_hash a = {.bufflen = key_len, .total = 0, .compressed = 0, .keylen = key_len, .digest_len = digest_len};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs_2);
-    a.hash = lua_newuserdata(L, sizeof * a.hash * 8);
-    a.key = lua_newuserdata(L, sizeof* a.key * key_len);
+    a.buffer = calloc(sizeof * a.buffer, bs_2);
+    a.hash = calloc(sizeof * a.hash, 8);
+    a.key = calloc(sizeof* a.key, key_len);
     memset(a.buffer, 0, bs_2);
     memcpy(a.key, key, key_len);
     memcpy(a.buffer, key, key_len);
@@ -186,6 +186,22 @@ struct blake2b_hash blake2b_init_l(lua_State* L, char* key, int key_len, int dig
         a.bufflen = 0;
     }
     return a;
+}
+
+int blake2b_free_l(lua_State* L){
+  struct blake2b_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  free(h->hash);
+  free(h->key);
+  return 0;
+}
+
+int blake2s_free_l(lua_State* L){
+  struct blake2b_hash* h = lua_touserdata(L, -1);
+  free(h->buffer);
+  free(h->hash);
+  free(h->key);
+  return 0;
 }
 
 void blake2b_update(uint8_t* input, size_t len, struct blake2b_hash* hash){
@@ -286,9 +302,9 @@ struct blake2s_hash blake2s_init(char* key, int key_len, int digest_len){
 
 struct blake2s_hash blake2s_init_l(lua_State* L, char* key, int key_len, int digest_len){
     struct blake2s_hash a = {.bufflen = key_len, .total = 0, .compressed = 0, .keylen = key_len, .digest_len = digest_len};
-    a.buffer = lua_newuserdata(L, sizeof * a.buffer * bs);
-    a.hash = lua_newuserdata(L, sizeof * a.hash * 8);
-    a.key = lua_newuserdata(L, sizeof* a.key * key_len);
+    a.buffer = calloc(sizeof * a.buffer, bs);
+    a.hash = calloc(sizeof * a.hash, 8);
+    a.key = calloc(sizeof* a.key, key_len);
     memcpy(a.key, key, key_len);
     memset(a.buffer, 0, bs);
     memcpy(a.buffer, key, key_len);
@@ -413,7 +429,7 @@ int l_blake2b_init(lua_State* L){
   struct blake2b_hash* a = (struct blake2b_hash*)lua_newuserdata(L, sizeof * a);
   int ud = lua_gettop(L);
   *a = blake2b_init_l(L, key, keylen, outlen);
-  lua_common_hash_meta_def(blake2b);
+  lua_common_hash_meta_def(blake2b, blake2b_free_l);
   lua_pushvalue(L, ud);
   return 1;
 }
@@ -490,7 +506,7 @@ int l_blake2s_init(lua_State* L){
   struct blake2s_hash* a = (struct blake2s_hash*)lua_newuserdata(L, sizeof * a);
   int ud = lua_gettop(L);
   *a = blake2s_init_l(L, key, keylen, outlen);
-  lua_common_hash_meta_def(blake2s);
+  lua_common_hash_meta_def(blake2s, blake2s_free_l);
   lua_pushvalue(L, ud);
   return 1;
 }

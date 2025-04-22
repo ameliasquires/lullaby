@@ -2,7 +2,9 @@ CC := clang
 
 GIT_COMMIT := "$(shell git describe --tags)-$(shell git describe --always --match 'NOT A TAG')"
 
-CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)'
+version ?= lua5.4
+
+CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags $(version)`
 LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 

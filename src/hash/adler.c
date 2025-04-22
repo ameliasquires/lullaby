@@ -6,6 +6,10 @@ struct adler32_hash adler32_init(){
   return (struct adler32_hash){.a = 1, .b = 0};
 }
 
+int adler32_free_l(lua_State* L){
+  return 0;
+}
+
 void adler32_update(uint8_t* aa, size_t len, struct adler32_hash* hash){
   for(int i = 0; i != len; i++){
     hash->a += aa[i];
