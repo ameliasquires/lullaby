@@ -10,6 +10,10 @@
 static int ii = 0;
 static int malloc_count = 0;
 
+int luaI_nothing(lua_State* L){
+  return 0;
+}
+
 void* __malloc_(size_t N){
     printf("hi");
     malloc_count++;

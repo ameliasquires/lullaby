@@ -407,7 +407,53 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
 }
 
 map_t* mime_type = NULL;
+char* _mimetypes = "/etc/mime.types";
+
 void parse_mimetypes(){
+  mime_type = map_init();
+
+  FILE* fp = fopen(_mimetypes, "r");
+  if(fp == NULL) return (void)printf("unable to load mimetypes, set llby.net.mimetypes to a proper location, or nil to skip this\n");
+
+  char* line = NULL;
+  size_t len = 0;
+  ssize_t read;
+
+  for(;(read = getline(&line, &len, fp)) != -1;){
+    if(line[0] == '#' || line[0] == '\n') continue;
+    int used = 0;
+    char* mtype = calloc(1024, sizeof * mtype);
+    int mtype_len = 0;
+    int i = 0;
+    for(; line[i] != ' ' && line[i] != '\t' && i < read; i++){
+      mtype[mtype_len] = line[i];
+      mtype_len++;
+    }
+
+    char* type = calloc(512, sizeof * type);
+    int type_len = 0;
+    for(; i < read; i++){
+      if(line[i] == ' ' || line[i] == '\t' || line[i] == '\n'){
+        if(type_len == 0) continue;
+        char* mtype_c = calloc(1024, sizeof * mtype);
+        strcpy(mtype_c, mtype);
+        map_set(&mime_type, type, mtype_c);
+        used = 1;
+        type_len = 0;
+        type = calloc(512, sizeof * type);
+      } else {
+        type[type_len] = line[i];
+        type_len++;
+      }
+    }
+    free(mtype);
+    free(type);
+  }
+
+  fclose(fp);
+}
+
+void _parse_mimetypes(){
   mime_type = map_init();
   FILE* fp = fopen(MIMETYPES, "r");
   char* buffer = calloc(1024, sizeof * buffer);
@@ -415,7 +461,10 @@ void parse_mimetypes(){
   for(;fgets(buffer, 1024, fp); memset(buffer, 0, 1024)){
     int i;
     for(i = 0; buffer[i] == ' '; i++);
-    if(buffer[i] == '#') continue;
+    if(buffer[i] == '#') {
+      for(; buffer[i] != '\n' && buffer[i] != '\0'; i++);
+      continue;
+    }
 
     //printf("s: '%s'\n",buffer + i);
     char* type = calloc(512, sizeof * type);

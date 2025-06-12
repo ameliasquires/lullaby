@@ -229,7 +229,7 @@ int l_sendfile(lua_State* L){
   }
 
   char* ext = strrchr(path, '.');
-  if(ext){
+  if(ext && mime_type != NULL){
     char* content_type = map_get(mime_type, ext + 1);
 
     if(content_type) 

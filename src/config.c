@@ -86,5 +86,5 @@ int i_config_metatable(lua_State* L, struct config* conf){
   lua_pushvalue(L, meta_idx);
   lua_setmetatable(L, idx);
 
-  return 1;
+  return idx;
 }

@@ -12,7 +12,12 @@
   int luaopen_lullaby_##name (lua_State* L){\
     luaL_register(L, #name, name##_function_list);\
     int tidx = lua_gettop(L);\
-    i_config_metatable(L, name##_config);\
+    int idx = i_config_metatable(L, name##_config);\
+    lua_pushvalue(L, idx);\
+    lua_getmetatable(L, -1);\
+    int midx = lua_gettop(L);\
+    luaI_tsetcf(L, midx, "__gc", clean_lullaby_##name);\
+    lua_setmetatable(L, idx);\
     lua_settop(L, tidx);\
     return 1;\
   }
@@ -29,7 +34,7 @@ open_common(test);
   lua_pushstring(L, #name);\
   luaopen_lullaby_##name(L);\
   lua_settable(L, T);
-  
+
 
 int luaopen_lullaby(lua_State* L) { 
   lua_newtable(L);
@@ -42,7 +47,7 @@ int luaopen_lullaby(lua_State* L) {
   push(top, net);
   push(top, thread);
   push(top, test);
-  luaI_tsets(L, top, "version", GIT_COMMIT)
+  luaI_tsets(L, top, "version", GIT_COMMIT);
 
   lua_settop(L, top); 
   return 1;

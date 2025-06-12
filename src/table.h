@@ -22,6 +22,7 @@ int l_to_char_array(lua_State*);
 int l_unpack(lua_State*);
 int l_split(lua_State*);
 
+#define clean_lullaby_table luaI_nothing
 static const luaL_Reg table_function_list [] = {
       {"len",l_len},
       {"reverse",l_reverse},

@@ -36,6 +36,8 @@ extern int _collapse_all;
 extern int _collapse_to_memory;
 extern int _print_meta;
 
+#define clean_lullaby_io luaI_nothing
+
 static struct config io_config[] = {
   {.name = "filechunksize", .type = c_int, .value = {.c_int = &_file_malloc_chunk}},
   {.name = "print_type", .type = c_int, .value = {.c_int = &_print_type}},
