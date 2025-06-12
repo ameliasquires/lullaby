@@ -413,7 +413,9 @@ int _srequest_free(void** _state){
     free(state->state);
   }
 
-  str_free(state->buffer);
+  if(state->buffer != NULL){
+    str_free(state->buffer);
+  }
   free(state);
   return 0;
 }
@@ -440,7 +442,7 @@ int _srequest_read(uint64_t reqlen, str** _output, void** _state){
     memset(buffer, 0, BUFFER_LEN);
   }
 
-  if(state->state == NULL){
+  if(state->state != NULL){
     str_pushl(output, state->state->content->c, state->state->content->len);
     str_clear(state->state->content);
   }
