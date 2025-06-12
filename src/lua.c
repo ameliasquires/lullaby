@@ -112,9 +112,7 @@ int _stream_free(lua_State* L){
   lua_gettable(L, 1);
   void* state = lua_touserdata(L, -1);
 
-  printf("call free\n");
   if(rf != NULL){
-    printf("run free\n");
     ((stream_free_function)rf)(&state);
   }
   return 0;
