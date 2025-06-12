@@ -939,8 +939,10 @@ net_end:
     }
     parray_clear(table, STR);
   }
-  shutdown(client_fd, 2);
-  close(client_fd);
+  if(client_fd != -1){
+    shutdown(client_fd, 2);
+    closesocket(client_fd);
+  }
   free(args);
   free(buffer);
   lua_close(L);
@@ -951,6 +953,13 @@ net_end:
   //printf("out\n");
 //time_end("full", full)
   return NULL;
+}
+
+int clean_lullaby_net(lua_State* L){
+  if(mime_type != NULL){
+    map_clear(mime_type, FREE);
+  }
+  return 0;
 }
 
 int start_serv(lua_State* L, int port){

@@ -41,6 +41,8 @@ int start_serv(lua_State* L, int port);
 //
 static char* http_codes[600] = {0};
 
+int clean_lullaby_net(lua_State* L);
+
 static const luaL_Reg net_function_list [] = {
   {"listen",l_listen},
   //{"request",l_request},
@@ -50,6 +52,9 @@ static const luaL_Reg net_function_list [] = {
   {NULL,NULL}
 };
 
+extern char* _mimetypes;
+
 static struct config net_config[] = {
+  {.name = "mimetypes", .type = c_string, .value = {.c_string = &_mimetypes}},
   {.type = c_none}
 };

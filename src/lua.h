@@ -37,6 +37,8 @@ typedef int (*stream_read_function)(uint64_t, str**, void**);
 typedef int (*stream_free_function)(void**);
 void luaI_newstream(lua_State* L, stream_read_function, stream_free_function, void*);
 
+int luaI_nothing(lua_State*);
+
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
     lua_pushstring(L, K);\

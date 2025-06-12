@@ -2,6 +2,7 @@ local common = require("common")
 ---@meta
 
 ---@class net
+---@field mimetypes string filepath for mimetype definitions (defaults to /etc/mime.types). nil to skip
 local net = {}
 
 ---@class server-table

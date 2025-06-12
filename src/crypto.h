@@ -112,6 +112,8 @@ int l_##luaname##_update(lua_State* L){\
   return 1;\
 }
 
+#define clean_lullaby_crypto luaI_nothing
+
 static const luaL_Reg crypto_function_list [] = {
       {"setpearson",l_setpearson}, {"xxh64",l_xxh64},
       {"xxh32",l_xxh32},  {"fletcher8",l_fletcher8},

@@ -9,6 +9,8 @@ int l_testcopy(lua_State*);
 
 void lib_thread_clean();
 
+#define clean_lullaby_thread luaI_nothing
+
 static const luaL_Reg thread_function_list [] = {
   {"async",l_async},
   {"lock",l_tlock},
