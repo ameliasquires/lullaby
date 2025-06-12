@@ -56,6 +56,7 @@ void str_popf(str* s, int len){
 
 void str_popb(str* s, int len){
   s->len -= len;
+  s->len = s->len > 0 ? s->len : 0;
   s->c[s->len] = 0;
 }
 

@@ -75,7 +75,11 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
     //parray_set(content, "_current", (void*)(current));
     
     content.boundary_id = str_init("");
-    str_popb(content.boundary, 4);
+
+    //quick fix?
+    //str_popb(content.boundary, 4);
+    if(content.boundary->len >= 4) str_popb(content.boundary, 4);
+
     //parray_set(content, "_boundary", (void*)boundary);
     //parray_set(content, "_boundary_id", (void*)boundary_id);
     

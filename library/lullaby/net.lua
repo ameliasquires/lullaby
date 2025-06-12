@@ -1,3 +1,4 @@
+local common = require("common")
 ---@meta
 
 ---@class net
@@ -122,12 +123,15 @@ local function listen_callback(server) end
 ---@param port integer
 function net.listen(callback, port) end
 
+---@class request-return
+---@field content stream
+
 ---creates an https request
 ---@param url string
 ---@param value string | nil
 ---@param header table<string, string> | nil
 ---@param request string | nil
----@return table<string, string> | error
+---@return request-return | error
 function net.srequest(url, value, header, request) end
 
 ---@class wss-table

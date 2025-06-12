@@ -22,6 +22,124 @@ void __free_(void* p){
     return (free)(p);
 }
 
+int _stream_read(lua_State* L){
+  uint64_t len = 0;
+  if(lua_gettop(L) > 1){
+    len = lua_tointeger(L, 2);
+  }
+
+  lua_pushstring(L, "_read");
+  lua_gettable(L, 1);
+  stream_read_function rf = lua_touserdata(L, -1);
+
+  lua_pushstring(L, "_state");
+  lua_gettable(L, 1);
+  void* state = lua_touserdata(L, -1);
+
+  str* cont = str_init("");
+  int ret = rf(len, &cont, &state);
+
+  if(ret < 0){
+    luaI_error(L, ret, "read error");
+  }
+
+  if(ret == 0){
+    luaI_tsetb(L, 1, "more", 0);
+  }
+  
+  lua_pushlstring(L, cont->c, cont->len);
+  free(cont);
+  return 1;
+}
+
+int _stream_file(lua_State* L){
+  const int CHUNK_SIZE = 4096;
+  uint64_t maxlen = 0;
+  uint64_t totallen = 0;
+  if(lua_gettop(L) > 2){
+    maxlen = lua_tointeger(L, 3);
+  }
+
+  lua_pushstring(L, "_read");
+  lua_gettable(L, 1);
+  stream_read_function rf = lua_touserdata(L, -1);
+
+  lua_pushstring(L, "_state");
+  lua_gettable(L, 1);
+  void* state = lua_touserdata(L, -1);
+
+  const char* filename = lua_tostring(L, 2);
+  FILE *f;
+  f = fopen(filename, "w");
+  if(f == NULL){
+    luaI_error(L, -1, "unable to open file");
+  }
+
+  str* cont = str_init("");
+  for(;;){
+    int ret = rf(CHUNK_SIZE, &cont, &state);
+    //printf("%s\n", cont->c);
+
+    if(ret < 0){
+      fclose(f);
+      luaI_error(L, ret, "read error"); 
+    }
+
+    fwrite(cont->c, sizeof * cont->c, cont->len, f);
+    totallen += cont->len;
+    str_clear(cont);
+
+    if(ret == 0 || totallen >= maxlen){
+      if(ret == 0) {luaI_tsetb(L, 1, "more", 0);}
+      break;
+    }
+  }
+
+  fclose(f); 
+  return 0;
+}
+
+int _stream_free(lua_State* L){
+  lua_pushstring(L, "_free");
+  lua_gettable(L, 1);
+  void* rf = lua_touserdata(L, -1);
+
+  lua_pushstring(L, "_state");
+  lua_gettable(L, 1);
+  void* state = lua_touserdata(L, -1);
+
+  printf("call free\n");
+  if(rf != NULL){
+    printf("run free\n");
+    ((stream_free_function)rf)(&state);
+  }
+  return 0;
+}
+
+void luaI_newstream(lua_State* L, stream_read_function readf, stream_free_function freef, void* state){
+  lua_newtable(L);
+  int tidx = lua_gettop(L);
+
+  luaI_tsetlud(L, tidx, "_read", readf);
+  luaI_tsetlud(L, tidx, "_free", freef);
+  luaI_tsetlud(L, tidx, "_state", state);
+  luaI_tsetcf(L, tidx, "read", _stream_read); 
+  luaI_tsetcf(L, tidx, "close", _stream_free); 
+  luaI_tsetb(L, tidx, "more", 1);
+  luaI_tsetcf(L, tidx, "file", _stream_file);
+  
+  lua_newtable(L);
+  int midx = lua_gettop(L);
+
+  luaI_tsetcf(L, midx, "__gc", _stream_free);
+
+  lua_pushvalue(L, midx);
+  lua_setmetatable(L, tidx);
+
+  lua_pushvalue(L, tidx);
+}
+
+
 int writer(lua_State *L, const void* p, size_t sz, void* ud){
     char o[2] = {0};
     for (int i =0; i<sz; i++){
