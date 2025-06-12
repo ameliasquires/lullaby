@@ -17,7 +17,7 @@
     return 1;\
   }
 
-open_common(array);
+open_common(table);
 open_common(crypto);
 open_common(io);
 open_common(math);
@@ -35,7 +35,7 @@ int luaopen_lullaby(lua_State* L) {
   lua_newtable(L);
   int top = lua_gettop(L);
 
-  push(top, array);
+  push(top, table);
   push(top, crypto);
   push(top, io);
   push(top, math);

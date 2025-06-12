@@ -20,8 +20,9 @@ int l_split(lua_State*);
 int l_to_char_array(lua_State*);
 
 int l_unpack(lua_State*);
+int l_split(lua_State*);
 
-static const luaL_Reg array_function_list [] = {
+static const luaL_Reg table_function_list [] = {
       {"len",l_len},
       {"reverse",l_reverse},
       {"greatest",l_greatest},
@@ -52,6 +53,6 @@ static const luaL_Reg array_function_list [] = {
       {NULL,NULL}
 };
 
-static struct config array_config[] = {
+static struct config table_config[] = {
   {.type = c_none}
 };

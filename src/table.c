@@ -3,6 +3,41 @@
 #include <string.h>
 #include <stdint.h>
 
+int l_split(lua_State* L){
+  size_t str_len = 0;
+  size_t search_len = 0;
+
+  const char* str = luaL_checklstring(L, 1, &str_len);
+  const char* search = luaL_checklstring(L, 2, &search_len);
+  int skip = 1;
+  if(lua_gettop(L) >= 3) skip = lua_toboolean(L, 3); 
+
+  lua_newtable(L);
+  int idx = lua_gettop(L);
+
+  const char* last = str;
+
+  for(;;){
+    char* end = (char*)memmem(last, str_len - (last - str), search, search_len);
+    if(end == NULL) break;
+
+    if(!(skip && (end - last) == 0)){
+      lua_pushinteger(L, lua_objlen(L, idx) + 1);
+      lua_pushlstring(L, last, end - last);
+      lua_settable(L, idx);
+    }
+
+    last = end + 1;
+  }
+
+  lua_pushinteger(L, lua_objlen(L, idx) + 1);
+  lua_pushlstring(L, last, str_len - (last - str));
+  lua_settable(L, idx);
+
+  lua_pushvalue(L, idx);
+  return 1;
+}
+
 int l_unpack(lua_State* L){
   int top = lua_gettop(L);
   lua_pushnil(L);
@@ -195,7 +230,7 @@ int l_sindexof(lua_State* L) {
     return 1;
 }
 
-int l_split(lua_State* L){
+/*int l_split(lua_State* L){
   size_t input_len = 0;
   size_t split_len = 0;
   char* input = (char*)luaL_checklstring(L, 1, &input_len);
@@ -229,7 +264,7 @@ int l_split(lua_State* L){
   lua_settable(L, -3);
 
   return 1;
-}
+}*/
 
 int l_to_char_array(lua_State* L){
   size_t input_len = 0;
