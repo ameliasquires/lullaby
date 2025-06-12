@@ -25,7 +25,6 @@ int l_log(lua_State*);
 int l_warn(lua_State*);
 int l_error(lua_State*);
 int l_pprint(lua_State*);
-int l_arg_handle(lua_State*);
 
 int l_json_parse(lua_State*);
 
@@ -56,6 +55,5 @@ static const luaL_Reg io_function_list [] = {
   {"error",l_error},
   {"pprint",l_pprint},
   {"json_parse",l_json_parse},
-  {"arg_handle",l_arg_handle},
   {NULL,NULL}
 };

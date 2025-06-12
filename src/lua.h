@@ -2,6 +2,8 @@
 #include <lualib.h>
 #include <lauxlib.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include "types/str.h"
 
 #ifndef __lua_h
 #define __lua_h
@@ -30,6 +32,10 @@ void luaI_copyvars(lua_State* src, lua_State* dest);
 
 void lua_upvalue_key_table(lua_State* L, int fidx);
 int lua_assign_upvalues(lua_State* L, int fidx);
+
+typedef int (*stream_read_function)(uint64_t, str**, void**);
+typedef int (*stream_free_function)(void**);
+void luaI_newstream(lua_State* L, stream_read_function, stream_free_function, void*);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\

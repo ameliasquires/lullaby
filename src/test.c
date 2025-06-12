@@ -55,3 +55,15 @@ int l_upvalue_key_table(lua_State* L){
   lua_upvalue_key_table(L, 1);
   return 1;
 }
+
+int rea(uint64_t len, str** _output, void** v){
+  str* output = *_output;
+  str_push(output, "awa!!!! test\n");  
+  *_output = output;
+  return 1;
+}
+
+int l_stream_test(lua_State* L){
+  luaI_newstream(L, rea, NULL, 0);
+  return 1;
+}

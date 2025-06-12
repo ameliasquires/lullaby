@@ -11,21 +11,21 @@ int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
   for(;;){
     n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
 
-    if(n < 0){
-      printf("%s %i\n", strerror(errno), errno);
+    if(n <= 0){
+      //printf("%s %i\n", strerror(errno), errno);
       return -1;
     }
-    
+
+    if((len += n) >= MAX_HEADER_SIZE){
+      return -2;
+    }
+
     // search the last 4 characters too if they exist
     // this could probably be changed to 3
     int64_t start_len = len - 4 > 0 ? len - 4 : 0;
     int64_t search_end = len - 4 > 0 ? n + 4 : n;
     if((*header_eof = memmem(buffer + start_len, search_end, "\r\n\r\n", 4)) != NULL){
-      return len + n; 
-    }
-
-    if((len += n) >= MAX_HEADER_SIZE){
-      return -2;
+      return len; 
     }
 
     buffer = realloc(buffer, sizeof* buffer * (len + BUFFER_SIZE + 1));
