@@ -56,10 +56,6 @@ struct sarray_t {
   int len;
 };
 
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t con_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t lua_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 extern map_t* mime_type;
 
 #endif
