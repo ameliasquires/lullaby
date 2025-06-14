@@ -408,8 +408,10 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
 
 map_t* mime_type = NULL;
 char* _mimetypes = "/etc/mime.types";
+uint64_t _mimetypes_len = 15;
 
 void parse_mimetypes(){
+  if(_mimetypes == NULL || _mimetypes_len == 0) return;
   mime_type = map_init();
 
   FILE* fp = fopen(_mimetypes, "r");

@@ -27,7 +27,8 @@ int m_config_index(lua_State* L){
       lua_pushinteger(L, *cc.value.c_int);
       break;
     case c_string:
-      lua_pushlstring(L, *cc.value.c_string, *cc.value.len);
+      if(*cc.value.c_string == NULL) lua_pushnil(L);
+      else lua_pushlstring(L, *cc.value.c_string, *cc.value.len);
       break;
     case c_number:
       lua_pushnumber(L, *cc.value.c_number);
@@ -63,7 +64,12 @@ int m_config_newindex(lua_State* L){
       *cc.value.c_int = lua_tointeger(L, 3);
       break;
     case c_string:
-      *cc.value.c_string = (char*)luaL_tolstring(L, 3, cc.value.len);
+      if(lua_isnil(L, 3)){
+        *cc.value.c_string = NULL;
+        *cc.value.len = 0;
+      } else {
+        *cc.value.c_string = (char*)luaL_tolstring(L, 3, cc.value.len);
+      }
       break;
     case c_number:
       *cc.value.c_number = lua_tonumber(L, 3);
