@@ -33,15 +33,7 @@ end, port)
 
 </blockquote>
 
-note: any net code is prone to memory leaks, this will be addressed and fixed soon, on the other hand it has no know memory issues
-
 ---
-
-~~net code also has some recv issues, ill fix these when i get time:3 only issue so far is with file parsing but i plan to rewrite alot of stuff~~
-
-update:
-
-recv code has been rewritten and i have fixed file parsing (with some testing) file parsing may be rewritten but works as of now
 
 ## building
 
@@ -59,33 +51,14 @@ for working on the code base, i recommend using bear to generate compile_command
 
 ## todo:
 
-* (working on seperatley) gui for graphs
+* better tests
 
-* finish up http server
+* rewrite docs
 
-    * https
-
-    * ~~check memory saftey~~ (*should* be good) (now work on indirect & more lifetime stuff)
-
-    * memory optimizations (its getting there)
-
-    * settings (parse/read files, etc..)
-
-    * define usage of new routes inside of routes, and allow route removal
-
-    * connection limit
-
-    * allow choosing what to copy over to the thread, or not to copy the global state at all
-
-    * allow stopping the server
-
-* more doxygen like docs, everywhere
-
-* encode tests (and fix sprintf ub)
+    * net mostly complete
 
 ----
 
 # credits
 
-* [luaproc](https://github.com/askyrme/luaproc) helped with multithreading
-
+* [luaproc](https://github.com/askyrme/luaproc) helped wrap my head around multiple lua_State concepts
