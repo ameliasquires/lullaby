@@ -1,14 +1,20 @@
 CC := clang
 
-GIT_COMMIT := "$(shell git describe --tags)-$(shell git describe --always --match 'NOT A TAG')"
+GIT_COMMIT := "$(shell git -c safe.directory='*' describe --tags)-$(shell git -c safe.directory='*' describe --always --match 'NOT A TAG')"
 
-version ?= lua5.4
+version ?= 5.4
+install_version = $(version)
 
-CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags $(version)`
+ifeq ($(version),jit)
+	install_version = 5.1
+endif
+
+CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags lua$(version)`
 LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 
 TARGET := lullaby.so
+INSTALL_DIR := /usr/lib64/lua/
 
 SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:.c=.o)
@@ -25,6 +31,10 @@ all: $(TARGET)
 
 release: CFLAGS += -O3
 release: all
+
+install::
+	mkdir $(INSTALL_DIR)$(install_version) -p
+	cp $(TARGET) $(INSTALL_DIR)$(install_version)/$(TARGET)
 
 # ok so im pretty sure asan should be linked too, however dlclose needs to be masked anyways
 # and since libasan needs to be the first thing to load, you'll have to add it anyways

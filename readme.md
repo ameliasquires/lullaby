@@ -41,7 +41,9 @@ build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
 windows works through msys2, install `mingw-w64-x86_64-lua` then run `make CC=gcc`
 
-lua version can be specified with `version=...`, similar to lua5.1, lua5.3, luajit, the default it lua5.4
+you can install with `doas make install` which will install lullaby.so into /usr/lib64/lua/5.X/
+
+lua version can be specified with `version=...`, similar to 5.1, 5.3, jit, the default it 5.4
 
 for working on the code base, i recommend using bear to generate compile_commands.json [(as outlined here)](https://clangd.llvm.org/installation#compile_commandsjson) which should probably let your ide find the headers
 
