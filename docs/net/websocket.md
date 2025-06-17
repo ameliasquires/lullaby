@@ -11,11 +11,11 @@ can return an error
 
 ```lua
 net.wss("amyy.cc") -- connects to wss://amyy.cc
-net.wss("ws://amyy.cc") -- identical to net.wss("amyy.cc"
+net.wss("ws://amyy.cc") -- identical to net.wss("amyy.cc")
 ```
 
 ```lua
-local con = new.ws("amyy.cc")
+local con = net.ws("amyy.cc")
 
 while true do
     local frame = con:read()
