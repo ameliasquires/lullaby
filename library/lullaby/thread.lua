@@ -64,4 +64,26 @@ function thread.unlock(tid) end
 ---@deprecated
 function thread.testcopy() end
 
+---@class mutex-table
+local mutex = {}
+
+---locks the mutex
+---@param T mutex-table
+---@return nil
+function mutex.lock(T) end
+
+---unlocks the mutex
+---@param T mutex-table
+---@return nil
+function mutex.unlock(T) end
+
+---frees the mutex, automatically called by __gc
+---@param T mutex-table
+---@return nil
+function mutex.free(T) end
+
+---returns a mutex object, useful for solving race conditions in multi-threaded environments
+---@return mutex-table
+function thread.mutex() end
+
 return thread
