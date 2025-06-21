@@ -85,6 +85,65 @@ int l_tunlock(lua_State* L){
     return 0;
 }
 
+int _mutex_lock(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  pthread_mutex_t *lock = lua_touserdata(L, -1);
+
+  pthread_mutex_lock(lock);
+
+  return 0;
+}
+
+int _mutex_unlock(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  pthread_mutex_t *lock = lua_touserdata(L, -1);
+
+  pthread_mutex_unlock(lock);
+
+  return 0;
+}
+
+int _mutex_free(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  pthread_mutex_t *lock = lua_touserdata(L, -1);
+
+  if(lock != NULL){
+    pthread_mutex_destroy(&*lock);
+    free(lock);
+
+    luaI_tsetlud(L, 1, "_", NULL);
+  }
+
+  return 0;
+}
+
+int l_mutex(lua_State* L){
+  pthread_mutex_t *lock = malloc(sizeof * lock);
+
+  if(pthread_mutex_init(&*lock, NULL) != 0)
+    luaI_error(L, -1, "mutex init failed");
+
+  lua_newtable(L);
+  int idx = lua_gettop(L);
+  luaI_tsetlud(L, idx, "_", lock);
+  luaI_tsetcf(L, idx, "lock", _mutex_lock);
+  luaI_tsetcf(L, idx, "unlock", _mutex_unlock);
+  luaI_tsetcf(L, idx, "free", _mutex_free);
+
+  lua_newtable(L);
+  int midx = lua_gettop(L);
+  luaI_tsetcf(L, midx, "__gc", _mutex_free);
+
+  lua_pushvalue(L, midx);
+  lua_setmetatable(L, idx);
+  lua_pushvalue(L, idx);
+
+  return 1;
+}
+
 int l_res(lua_State* L){
     int return_count = lua_gettop(L) - 1;
     lua_pushstring(L, "_");
