@@ -126,14 +126,17 @@ function net.listen(callback, port) end
 
 ---@class request-return
 ---@field content stream
+---@field code integer response code
+---@field code-name string response message
+---@field version string http version
 
 ---creates an https request
 ---@param url string
----@param value string | nil
+---@param content string | nil
 ---@param header table<string, string> | nil
 ---@param request string | nil
 ---@return request-return | error
-function net.srequest(url, value, header, request) end
+function net.srequest(url, content, header, request) end
 
 ---@class wss-table
 local wss = {}
