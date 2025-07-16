@@ -182,7 +182,8 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
             else lua_pushnumber(dest, n);
             break;
         case LUA_TBOOLEAN:
-          lua_pushboolean(dest, lua_toboolean(src, -1));
+            lua_pushboolean(dest, lua_toboolean(src, -1));
+            break;
         case LUA_TSTRING:;
             size_t slen;
             const char* ss = lua_tolstring(src, -1, &slen);
