@@ -171,6 +171,8 @@ int l_res(lua_State* L){
 void* handle_thread(void* _args){
   struct thread_info* args = (struct thread_info*)_args;
   lua_State* L = args->L;
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+  pthread_detach(args->tid);
 
   lua_newtable(L);
   int res_idx = lua_gettop(L);
@@ -185,6 +187,7 @@ void* handle_thread(void* _args){
   luaL_loadbuffer(L, args->function->c, args->function->len, "thread");
   int x = lua_gettop(L);
   str_free(args->function);
+  args->function = NULL;
 
   lua_assign_upvalues(L, x);
   lua_pushvalue(L, res_idx);
@@ -195,46 +198,56 @@ void* handle_thread(void* _args){
   return NULL;
 }
 
-int l_await(lua_State* L){
-    lua_pushstring(L, "_");
-    lua_gettable(L, 1);
-    struct thread_info* info = lua_touserdata(L, -1);
+int _thread_await(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
 
-    if(info->L == NULL) p_fatal("thread has already been cleaned");
-    if(!info->done) pthread_mutex_lock(&*info->lock);
-    info->done = 1;
+  if(info->L == NULL) luaI_error(L, -1, "thread was already closed")
+  if(!info->done) pthread_mutex_lock(&*info->lock);
+  info->done = 1;
 
-    for(int i = 0; i != info->return_count; i++){
-        int ot = lua_gettop(info->L);
+  for(int i = 0; i != info->return_count; i++){
+      int ot = lua_gettop(info->L);
 
-        lua_pushvalue(info->L, ot - info->return_count + i);
-        luaI_deepcopy(info->L, L, 0);
-        
-        lua_settop(info->L, ot);
-    }
+      lua_pushvalue(info->L, ot - info->return_count + i);
+      luaI_deepcopy(info->L, L, 0);
+      
+      lua_settop(info->L, ot);
+  }
 
-    return info->return_count;
+  return info->return_count;
 }
 
-int l_clean(lua_State* L){
-    lua_pushstring(L, "_");
-    lua_gettable(L, 1);
-    struct thread_info* info = lua_touserdata(L, -1);
-    if(info != NULL && info->L != NULL){
-      
-      //lua_gc(info->L, LUA_GCRESTART);
-      lua_gc(info->L, LUA_GCCOLLECT);
-      lua_close(info->L);
-      info->L = NULL;
-       
-      pthread_mutex_destroy(&*info->lock);
-      free(info->lock);
-      pthread_cancel(info->tid);
-      free(info);
+int _thread_clean(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
+  if(info != NULL && info->L != NULL){
+    
+    //lua_gc(info->L, LUA_GCRESTART);
+    lua_gc(info->L, LUA_GCCOLLECT);
+    lua_close(info->L);
+    info->L = NULL;
+     
+    pthread_mutex_destroy(&*info->lock);
+    free(info->lock);
+    pthread_cancel(info->tid);
+    free(info);
 
-      luaI_tsetlud(L, 1, "_", NULL);
-    }
-    return 0;
+    luaI_tsetlud(L, 1, "_", NULL);
+  }
+  return 0;
+}
+
+int _thread_close(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
+
+  pthread_cancel(info->tid);
+
+  return 0;
 }
 
 int l_async(lua_State* oL){
@@ -242,14 +255,10 @@ int l_async(lua_State* oL){
   lua_gc(L, LUA_GCSTOP);
 
   luaL_openlibs(L);
-  //lua_getglobal(oL, "_G");
-  //luaI_deepcopy(oL, L, SKIP_GC);
-  //lua_set_global_table(L);
   luaI_copyvars(oL, L);
   
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
-  //args->lock = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
   args->lock = malloc(sizeof * args->lock);
   pthread_mutex_init(&*args->lock, NULL);
   pthread_mutex_lock(&*args->lock);
@@ -260,17 +269,17 @@ int l_async(lua_State* oL){
   lua_dump(oL, writer, (void*)args->function, 0);
  
   pthread_create(&args->tid, NULL, handle_thread, (void*)args);
-  pthread_detach(args->tid);
 
   lua_newtable(oL);
   int res_idx = lua_gettop(oL);
-  luaI_tsetcf(oL, res_idx, "await", l_await);
-  luaI_tsetcf(oL, res_idx, "clean", l_clean);
+  luaI_tsetcf(oL, res_idx, "await", _thread_await);
+  luaI_tsetcf(oL, res_idx, "clean", _thread_clean);
+  luaI_tsetcf(oL, res_idx, "close", _thread_close);
   luaI_tsetlud(oL, res_idx, "_", args);
 
   lua_newtable(oL);
   int meta_idx = lua_gettop(oL);
-  luaI_tsetcf(oL, meta_idx, "__gc", l_clean);
+  luaI_tsetcf(oL, meta_idx, "__gc", _thread_clean);
 
   lua_pushvalue(oL, meta_idx);
   lua_setmetatable(oL, res_idx);
