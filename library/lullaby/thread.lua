@@ -16,6 +16,11 @@ function async.await(T) end
 ---@return nil
 function async.clean(T) end
 
+---stops the thread
+---@param T async-table
+---@return nil
+function async.close(T) end
+
 ---contains data for the thread
 ---@deprecated
 ---@type lightuserdata
