@@ -54,7 +54,7 @@ const uint64_t blake_u512[16] = {
   v[b] = rotr32( v[b] ^ v[c], 7);
 
 void compress256(uint32_t* hash, char *block, uint64_t compressed){
-  uint32_t v[16], m[16], i;
+  uint32_t v[16], m[16];
 
   for(int i = 0; i < 16; i++)  m[i] = wtf((block + i * 4));
 
@@ -203,7 +203,6 @@ void _blake256_final(struct blake256_hash* hash, char* out_stream){
     memset(hash->buffer, 0, 64);
   }
 
-  size_t lhhh = 8*hash->total;
   U32TO8_BIG(hash->buffer + bs - 8, 0x0);
   U32TO8_BIG(hash->buffer + bs - 4, hash->total << 3);
   /*for(int i = 0; i != bs; i++) printf("%x ", hash->buffer[i]);
@@ -434,7 +433,6 @@ void _blake512_final(struct blake512_hash* hash, char* out_stream){
     memset(hash->buffer, 0, 64);
   }
 
-  size_t lhhh = 8*hash->total;
   U64TO8_BIG(hash->buffer + bs_2 - 8, hash->total << 3);
 
   blake512_round(hash);
@@ -533,7 +531,6 @@ int l_blake256(lua_State* L){
     if(lua_gettop(L) == 0) return l_blake256_init(L);
     size_t len = 0;
     uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-    int argv = lua_gettop(L); 
 
     char digest[257] = {0};
 
@@ -575,7 +572,6 @@ int l_blake224(lua_State* L){
     if(lua_gettop(L) == 0) return l_blake224_init(L);
     size_t len = 0;
     char* a = (char*)luaL_checklstring(L, 1, &len);
-    int argv = lua_gettop(L); 
 
     char digest[257] = {0};
 
@@ -617,7 +613,6 @@ int l_blake512(lua_State* L){
     if(lua_gettop(L) == 0) return l_blake512_init(L);
     size_t len = 0;
     uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-    int argv = lua_gettop(L); 
 
     char digest[513] = {0};
     //memset(digest, 0, 513);
@@ -660,7 +655,6 @@ int l_blake384(lua_State* L){
     if(lua_gettop(L) == 0) return l_blake384_init(L);
     size_t len = 0;
     uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-    int argv = lua_gettop(L); 
 
     char digest[513] = {0};
 

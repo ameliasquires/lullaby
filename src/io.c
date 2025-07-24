@@ -15,37 +15,6 @@ int _print_meta = 0;
 
 int _file_malloc_chunk = 512;
 
-int l_readfile(lua_State* L){
-  size_t len;
-  char* a = (char*)luaL_checklstring(L, 1, &len);
-
-  FILE *fp;
-  const uint64_t chunk_iter = _file_malloc_chunk;
-  uint64_t chunk = chunk_iter;
-  uint64_t count = 0;
-
-  if(access(a, F_OK)) {
-    p_fatal("file not found");
-  }
-  if(access(a, R_OK)){
-    p_fatal("missing permissions");
-  }
-
-  fp = fopen(a, "rb");
-  fseek(fp, 0L, SEEK_END);
-  size_t sz = ftell(fp);
-  fseek(fp, 0L, SEEK_SET);
-  char* out = calloc(sz + 1, sizeof * out);
-
-  fread(out, sizeof * out, sz, fp);
-
-  lua_pushlstring(L, out, sz);
-  
-  fclose(fp);
-  free(out);
-  return 1; 
-};
-
 lua_Debug i_get_debug(lua_State* L){
   lua_Debug ar;
   lua_getstack(L, 1, &ar);
@@ -92,7 +61,7 @@ void print_indentation(int i){
 void i_pprint(lua_State* L, int indent, int skip_indent){
   int last_idx = lua_gettop(L);
   const char* type = lua_typename(L,lua_type(L,-1));
-  int t = lua_type(L,-1);
+
   switch(lua_type(L,-1)){
     case LUA_TTABLE:
       printf(" ");
@@ -243,10 +212,10 @@ void json_parse(lua_State* L, str* raw){
       case '{': case '}':
       case '[': case ']':
 
-        if(last == '{' && topush[0] == '}' || last == '[' && topush[0] == ']') token_depth--;
+        if((last == '{' && topush[0] == '}') || (last == '[' && topush[0] == ']')) token_depth--;
 
-        if((last == '\0' || last == '"' && topush[0] == '"'
-            || last == '{' && topush[0] == '}' || last == '[' && topush[0] == ']')){
+        if((last == '\0' || (last == '"' && topush[0] == '"')
+            || (last == '{' && topush[0] == '}') || (last == '[' && topush[0] == ']'))){
           if(token_depth == 0){
             if(last == '\0'){
               last = topush[0];
@@ -277,7 +246,7 @@ void json_parse(lua_State* L, str* raw){
         break;
     }
     //if(escape_next == 2) continue;
-    if(last == '{' && topush[0] == '{' || last == '[' && topush[0] == '[') token_depth++;
+    if((last == '{' && topush[0] == '{') || (last == '[' && topush[0] == '[')) token_depth++;
 
     if(count == 0 && !is_array) str_push(key, topush);
     else str_push(value, topush);
@@ -296,4 +265,5 @@ int l_json_parse(lua_State* L){
 }
 
 int resolve_path(lua_State* L){
+  return 0;
 }

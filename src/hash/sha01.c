@@ -43,7 +43,7 @@ void sha01_round(struct sha01_hash* hash){
         
     for(int i = 0; i != 16; i++){
         int t = 24;
-        for(int x = 0;t>=0; x++){
+        for(;t>=0;){
             W[i] += (((uint32_t)hash->buffer[hat]) << t);
             hat++;
             t-=8;

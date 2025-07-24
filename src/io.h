@@ -19,7 +19,6 @@
 #define color_white "\e[97m"
 #define color_reset "\e[0m"
 
-int l_readfile(lua_State*);
 int l_debug(lua_State*);
 int l_log(lua_State*);
 int l_warn(lua_State*);
@@ -50,7 +49,6 @@ static struct config io_config[] = {
 };
 
 static const luaL_Reg io_function_list [] = {
-  {"readfile",l_readfile},
   {"debug",l_debug},
   {"log",l_log},
   {"warn",l_warn},

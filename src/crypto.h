@@ -89,7 +89,6 @@ int _##luaname##_common_hash(lua_State* L){\
   struct hashname##_hash* a = (struct hashname##_hash*)lua_newuserdata(L, sizeof * a);\
   int ud = lua_gettop(L);\
   *a = initf;\
-  int ini = lua_gettop(L);\
   lua_common_hash_meta_def(luaname, exitf);\
   lua_pushvalue(L, ud);\
   return 1;\

@@ -243,7 +243,6 @@ struct iv sha_iv_gen(int i){
         .h3 = sha512_iv.h3 ^ 0xa5a5a5a5a5a5a5a5, .h4 = sha512_iv.h4 ^ 0xa5a5a5a5a5a5a5a5, .h5 = sha512_iv.h5 ^ 0xa5a5a5a5a5a5a5a5,
         .h6 = sha512_iv.h6 ^ 0xa5a5a5a5a5a5a5a5, .h7 = sha512_iv.h7 ^ 0xa5a5a5a5a5a5a5a5};
     
-    uint8_t nh[512] = {0};
     uint8_t in[12];
     sprintf((char*)in, "SHA-512/%i", i);
     struct sha512_hash a = sha512_t_init(oh);
@@ -310,7 +309,6 @@ lua_common_hash_meta(sha512_t);
 int l_sha512_t_init(lua_State* L){
   int tt = luaL_checkinteger(L, -1);
   lua_newtable(L);
-  int t = lua_gettop(L);
   
   struct sha512_hash* a = (struct sha512_hash*)lua_newuserdata(L, sizeof * a);\
   int ud = lua_gettop(L);
