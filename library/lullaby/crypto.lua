@@ -45,14 +45,6 @@ function crypto.pearson() end
 ---@param T integer[]
 function crypto.setpearson(T) end
 
----@param input string
----@return string
-function crypto.xxh64(input) end
-
----@param input string
----@return string
-function crypto.xxh32(input) end
-
 ---@return hash
 ---@overload fun(value: string): string
 function crypto.crc8() end
@@ -96,18 +88,6 @@ function crypto.buzhash16(input) end
 ---@param T integer[]
 function crypto.setbuzhasah(T) end
 
----@param input string
----@return string
-function crypto.cityhash32(input) end
-
----@param input string
----@return string
-function crypto.cityhash64(input) end
-
----@param input string
----@return string
-function crypto.cityhash128(input) end
-
 ---@return hash
 ---@overload fun(value: string): string
 function crypto.md5() end
@@ -115,24 +95,6 @@ function crypto.md5() end
 ---@return hash
 ---@overload fun(value: string): string
 function crypto.djb2() end
-
----@param input string
----@return string
-function crypto.farmhash32(input) end
-
----@param input string
----@return string
-function crypto.farmhash64(input) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.fasthash32(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.fasthash64(input, seed) end
 
 ---@return hash
 ---@overload fun(value: string): string
@@ -153,26 +115,6 @@ function crypto.oaat() end
 ---@return hash
 ---@overload fun(value: string): string
 function crypto.loselose() end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.metrohash64_v1(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.metrohash64_v2(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.metrohash128_v1(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.metrohash128_v2(input, seed) end
 
 ---@param input string
 ---@param seed integer | nil
@@ -204,36 +146,6 @@ function crypto.sha384() end
 ---@return hash
 ---@overload fun(t, value: string): string
 function crypto.sha512_t(t) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.spookyhash128_v1(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.spookyhash128_v2(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.spookyhash64_v1(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.spookyhash64_v2(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.spookyhash32_v1(input, seed) end
-
----@param input string
----@param seed integer | nil
----@return string
-function crypto.spookyhash32_v2(input, seed) end
 
 ---@return hash
 ---@overload fun(value: string): string

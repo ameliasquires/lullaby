@@ -4,7 +4,6 @@
 #include "hash/sha01.h"
 #include "hash/sha2xx.h"
 #include "hash/pearson.h"
-#include "hash/xxh.h"
 #include "hash/adler.h"
 #include "hash/bsdchecksum.h"
 #include "hash/crc.h"
@@ -12,19 +11,15 @@
 #include "hash/sysvchecksum.h"
 #include "hash/xor.h"
 #include "hash/buzhash.h"
-#include "hash/cityhash.h"
 #include "hash/djb2.h"
-#include "hash/farmhash.h"
 #include "hash/fasthash.h"
 #include "hash/fnv.h"
 #include "hash/jenkins.h"
 #include "hash/loselose.h"
-#include "hash/metrohash.h"
 #include "hash/murmur.h"
 #include "hash/pjw.h"
 #include "hash/sdbm.h"
 #include "hash/sha2-256.h"
-#include "hash/spookyhash.h"
 #include "hash/blake2.h"
 #include "hash/blake.h"
 
@@ -115,21 +110,12 @@ int l_##luaname##_update(lua_State* L){\
 #define clean_lullaby_crypto luaI_nothing
 
 static const luaL_Reg crypto_function_list [] = {
-      {"setpearson",l_setpearson}, {"xxh64",l_xxh64},
-      {"xxh32",l_xxh32},  {"fletcher8",l_fletcher8},
+      {"setpearson",l_setpearson}, {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
       {"setbuzhash",l_setbuzhash},
-      {"cityhash32", l_cityhash32},
-      {"cityhash64", l_cityhash64}, {"cityhash128", l_cityhash128}, 
-      {"farmhash32", l_farmhash32}, {"farmhash64", l_farmhash64},
       {"fasthash32", l_fasthash32}, {"fasthash64", l_fasthash64},
       {"loselose", l_loselose},
-      {"metrohash64_v1", l_metrohash64_v1}, {"metrohash64_v2", l_metrohash64_v2},
-      {"metrohash128_v1", l_metrohash128_v1}, {"metrohash128_v2", l_metrohash128_v2},
       {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, 
-      {"spookyhash128_v1", l_spookyhash128_v1}, {"spookyhash128_v2", l_spookyhash128_v2},
-      {"spookyhash64_v1", l_spookyhash64_v1}, {"spookyhash64_v2", l_spookyhash64_v2},
-      {"spookyhash32_v1", l_spookyhash32_v1}, {"spookyhash32_v2", l_spookyhash32_v2},
 
       {"adler32",l_adler32}, {"adler32_init",l_adler32_init}, {"adler32_update",l_adler32_update}, {"adler32_final",l_adler32_final},
       {"bsdchecksum",l_bsdchecksum}, {"bsdchecksum_init",l_bsdchecksum_init}, {"bsdchecksum_update",l_bsdchecksum_update}, {"bsdchecksum_final",l_bsdchecksum_final},
