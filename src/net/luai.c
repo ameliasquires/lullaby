@@ -49,7 +49,6 @@ int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer
   str* boundary_id = (str*)parray_get(content, "_boundary_id");
   int* dash_count = (int*)parray_get(content, "_dash_count");
   int* table_idx = (int*)parray_get(content, "_table_idx");*/
-  int override = 0;
 
   //time_start(start)
   if(content.status == _ignore){

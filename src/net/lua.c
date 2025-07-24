@@ -75,7 +75,7 @@ int l_send(lua_State* L){
   } else 
     i_write_header(L, header, &resp, content, len);
 
-  int a = send(client_fd, resp->c, resp->len, MSG_NOSIGNAL);
+  send(client_fd, resp->c, resp->len, MSG_NOSIGNAL);
   
   //
   lua_pushstring(L, "client_fd");

@@ -9,7 +9,7 @@ ifeq ($(version),jit)
 	install_version = 5.1
 endif
 
-CFLAGS := -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags lua$(version)`
+CFLAGS := -Wall -Werror -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags lua$(version)`
 LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 

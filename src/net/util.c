@@ -107,9 +107,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
 */
 int parse_header(char* buffer, int header_eof, parray_t** _table){
   if(header_eof == -1) return -1;
-  char add[] = {0,0};
-  int lines = 3;
-  for(int i = 0; i != header_eof; i++) lines += buffer[i] == '\n';
+
   parray_t* table = parray_init();
   str* current = str_init("");
   int oi = 0;
@@ -143,7 +141,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   str* sw = NULL;
   for(int i = oi + 1; i != header_eof; i++){
     if(buffer[i] == ' ' && strcmp(current->c, "") == 0) continue;
-    if(key && buffer[i] == ':' || !key && buffer[i] == '\n'){
+    if((key && buffer[i] == ':') || (!key && buffer[i] == '\n')){
       if(key){
         sw = current;
         current = str_init("");
@@ -423,7 +421,7 @@ void parse_mimetypes(){
 
   for(;(read = getline(&line, &len, fp)) != -1;){
     if(line[0] == '#' || line[0] == '\n') continue;
-    int used = 0;
+
     char* mtype = calloc(1024, sizeof * mtype);
     int mtype_len = 0;
     int i = 0;
@@ -440,7 +438,6 @@ void parse_mimetypes(){
         char* mtype_c = calloc(1024, sizeof * mtype);
         strcpy(mtype_c, mtype);
         map_set(&mime_type, type, mtype_c);
-        used = 1;
         type_len = 0;
         type = calloc(512, sizeof * type);
       } else {

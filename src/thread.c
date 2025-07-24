@@ -51,7 +51,7 @@ int l_tlock(lua_State* L){
         pthread_mutex_lock(&mutex);
         pthread_mutex_t* mp = malloc(sizeof * mp);
         *mp = mutex;
-        int id = larray_set(&thread_locks, idx, (void*)mp);
+        larray_set(&thread_locks, idx, (void*)mp);
     } else {
         pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
         pthread_mutex_lock(&thread_priority_lock);
@@ -417,7 +417,7 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
 
   lua_pushnil(L);
   for(; lua_next(L, meta_idx) != 0;){
-    int k, v = lua_gettop(L);
+    int k = lua_gettop(L);
     k = lua_gettop(L) - 1;
 
     char* fn = calloc(128, sizeof * fn); 

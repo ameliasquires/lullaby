@@ -218,7 +218,7 @@ int i_ws_read(lua_State* L){
 
     if(len < 0) luaI_error(L, len, "SSL_read error");
 
-    payload = (buffer[0] & 0xff) << 8 | buffer[1] & 0xff;
+    payload = (buffer[0] & 0xff) << 8 | (buffer[1] & 0xff);
   } else {
     for(; (len = SSL_read(data->ssl, buffer + total_len, 8 - total_len)) > 0;){
         total_len += len;
@@ -321,7 +321,6 @@ int l_wss(lua_State* L){
   char* port = awa.port == NULL ? "443" : awa.port->c;
   char* path = awa.path == NULL ? "/" : awa.path->c;
   int sock = get_host(awa.domain->c, port);
-  int set = 1;
   signal(SIGPIPE, SIG_IGN);
 
   ssl_init();
@@ -341,13 +340,12 @@ int l_wss(lua_State* L){
   }
 
   char buffer[BUFFER_LEN];
-  int extra_len = len = 0;
+  len = 0;
   str* a = str_init("");
   char* header_eof = NULL;
   for(; (len = SSL_read(ssl, buffer, BUFFER_LEN)) > 0;){
     str_pushl(a, buffer, len);
     if((header_eof = memmem(a->c, a->len, "\r\n\r\n", 4)) != NULL){
-      extra_len = a->len - (header_eof - a->c);
       break;
     }
     memset(buffer, 0, BUFFER_LEN);
@@ -671,7 +669,6 @@ void* handle_client(void *_arg){
   thread_arg_struct* args = (thread_arg_struct*)_arg;
   int client_fd = args->fd;
   char* buffer;
-  char dummy[2] = {0, 0};
   int header_eof = -1;
   lua_State* L = args->L;
   luaL_openlibs(L);
@@ -694,7 +691,6 @@ void* handle_client(void *_arg){
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
       str* sC = (str*)parray_get(table, "Cookie");
-      int some = bite - header_eof - 10;
       struct file_parse* file_cont = calloc(1, sizeof * file_cont);
 
       lua_newtable(L);
@@ -800,7 +796,6 @@ void* handle_client(void *_arg){
           luaI_tsetv(L, req_idx, "parameters", new_param_idx);
 
           for(int z = 0; z != awa->len; z++){
-            char* path;
             struct lchar* wowa = awa->cs[z];
             //if request is HEAD, it is valid for GET and HEAD listeners 
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||

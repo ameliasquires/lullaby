@@ -114,22 +114,3 @@ void map_clear(map_t* M, enum free_type free){
     }
     map_lclear(M);
 }
-
-int __main(){
-    int i = 5;
-    int b = 24;
-    int c = 9;
-    map_t* m = map_init();
-    
-    map_set(&m, "wowa", &b);
-    printf("%i\n",*(int*)map_get(m, "wowa"));
-    map_set(&m, "aw", &i);
-    map_set(&m, "awc", &i);
-    map_set(&m, "awa", &i);
-    map_set(&m, "aww", &i);
-    printf("%i\n",*(int*)map_get(m, "wowa"));
-
-    map_clear(m, NONE);
-
-    return 0;
-}

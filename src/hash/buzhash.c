@@ -47,7 +47,6 @@ int l_setbuzhash(lua_State* L){
     exit(0); 
   }
 
-  double s = 0;
   for(int i = 0; i <= len-1; i++){
 
     lua_pushinteger(L,i+1);

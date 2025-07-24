@@ -184,8 +184,6 @@ int l_indexof(lua_State* L) {
     size_t start = argc == 3 ? luaL_checknumber(L,3) : 0;
     start = start > 0 ? start : start;
 
-    double cur = 0;
-
     for(size_t i = 0; i <= len-1; i++){
       lua_pushinteger(L,i+1);
       lua_gettable(L,1);
@@ -202,15 +200,13 @@ int l_indexof(lua_State* L) {
 }
 
 int l_sindexof(lua_State* L) {
-    int argc = lua_gettop(L);
     double target = luaL_checknumber(L, 2);
     luaL_checktype(L, 1, LUA_TTABLE);
     size_t len = lua_objlen(L,1);
     int l = 0;
     int r = len - 1;
 
-    size_t cid = len/2;
-    for(size_t i = 0; l<=r; i++){
+    for(; l<=r;){
       int m = l + (r - l) /2;
       lua_pushinteger(L,m+1);
       lua_gettable(L,1);

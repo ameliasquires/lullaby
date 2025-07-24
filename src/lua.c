@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include "types/parray.h"
 
-static int ii = 0;
 static int malloc_count = 0;
 
 int luaI_nothing(lua_State* L){
@@ -163,13 +162,10 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
  * @param {int} whether or not to skip meta data
 */
 void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
-    size_t len;
     //printf("%i\n",seen->len);
     int at, at2;
     //int *sp = malloc(1);
     //int *sp;
-    char* s;
-    void* whar;
     double n;
     int old_top = lua_gettop(src);
     int modi = 0;
@@ -276,7 +272,6 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
           break;
     }
     int tidx = lua_gettop(dest);
-    int aa = lua_gettop(src);
 
     if(modi && !(flags & SKIP_META) && lua_getmetatable(src, -1)){
       luaI_deepcopy(src, dest, flags | IS_META | SKIP_META);
@@ -432,7 +427,6 @@ void lua_upvalue_key_table(lua_State* L, int fidx){
   char* name;
 
   for(int i = 1; (name = (char*)lua_getupvalue(L, fidx, i)) != NULL; i++){
-    int idx = lua_gettop(L);
     lua_pushinteger(L, lua_rawlen(L, tidx) + 1);
     lua_pushstring(L, name);
     lua_settable(L, tidx);
