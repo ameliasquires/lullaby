@@ -1,5 +1,6 @@
 #include "table.h"
 #include <stdlib.h>
+#define _GNU_SOURCE
 #include <string.h>
 #include <stdint.h>
 
