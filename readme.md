@@ -58,6 +58,8 @@ for working on the code base, i recommend using bear to generate compile_command
 * rewrite docs
 
     * net mostly complete
+    
+* portability (memmem)
 
 ----
 
