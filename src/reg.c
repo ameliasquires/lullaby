@@ -8,11 +8,11 @@
 #include "test.h"
 #include "config.h"
 
-#define open_common(name)\
+#define open_common(name, config)\
   int luaopen_lullaby_##name (lua_State* L){\
     luaL_register(L, #name, name##_function_list);\
     int tidx = lua_gettop(L);\
-    int idx = i_config_metatable(L, name##_config);\
+    int idx = i_config_metatable(L, config);\
     lua_pushvalue(L, idx);\
     lua_getmetatable(L, -1);\
     int midx = lua_gettop(L);\
@@ -22,13 +22,13 @@
     return 1;\
   }
 
-open_common(table);
-open_common(crypto);
-open_common(io);
-open_common(math);
-open_common(net);
-open_common(thread);
-open_common(test);
+open_common(table, table_config);
+open_common(crypto, crypto_config);
+open_common(io, io_config);
+open_common(math, math_config);
+open_common(net, net_config);
+open_common(thread, thread_config);
+open_common(test, test_config);
 
 #define push(T, name)\
   lua_pushstring(L, #name);\
