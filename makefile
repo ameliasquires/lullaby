@@ -14,7 +14,7 @@ LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 
 TARGET := lullaby.so
-INSTALL_DIR := /usr/local/lib/lua/
+INSTALL := /usr/local/lib/lua/
 
 SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:.c=.o)
@@ -33,8 +33,8 @@ release: CFLAGS += -O3
 release: all
 
 install::
-	mkdir $(INSTALL_DIR)$(install_version) -p
-	cp $(TARGET) $(INSTALL_DIR)$(install_version)/$(TARGET)
+	mkdir $(INSTALL)$(install_version) -p
+	cp $(TARGET) $(INSTALL)$(install_version)/$(TARGET)
 
 # ok so im pretty sure asan should be linked too, however dlclose needs to be masked anyways
 # and since libasan needs to be the first thing to load, you'll have to add it anyways
