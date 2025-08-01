@@ -73,7 +73,7 @@ int _stream_file(lua_State* L){
 
   const char* filename = lua_tostring(L, 2);
   FILE *f;
-  f = fopen(filename, "a");
+  f = fopen(filename, "w");
   if(f == NULL){
     luaI_error(L, -1, "unable to open file");
   }

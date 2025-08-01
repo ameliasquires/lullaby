@@ -590,6 +590,11 @@ int l_srequest(lua_State* L){
     luaI_treplk(L, idx, "Path", "code");
     luaI_treplk(L, idx, "Request", "version");
     luaI_treplk(L, idx, "Version", "code-name");
+
+    lua_pushstring(L, "code");
+    lua_gettable(L, idx);
+    int code = atoi(lua_tostring(L, -1));
+    luaI_tseti(L, idx, "code", code);
     
     void* encoding = parray_get(owo, "Transfer-Encoding");
 
