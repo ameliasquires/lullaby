@@ -14,7 +14,7 @@ LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 
 TARGET := lullaby.so
-INSTALL_DIR := /usr/lib64/lua/
+INSTALL_DIR := /usr/local/lib/lua/
 
 SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:.c=.o)
