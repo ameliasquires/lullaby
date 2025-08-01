@@ -41,7 +41,7 @@ build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
 windows works through msys2, install `mingw-w64-x86_64-lua` then run `make CC=gcc`
 
-you can install with `doas make install` which will install lullaby.so into /usr/lib64/lua/5.X/
+you can install with `doas make install` which will install lullaby.so into /usr/local/lib/lua/5.X
 
 lua version can be specified with `version=...`, similar to 5.1, 5.3, jit, the default it 5.4
 
