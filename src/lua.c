@@ -59,8 +59,13 @@ int _stream_file(lua_State* L){
   const int CHUNK_SIZE = 4096;
   uint64_t maxlen = 0;
   uint64_t totallen = 0;
+  const char* mode = "w";
   if(lua_gettop(L) > 2){
     maxlen = lua_tointeger(L, 3);
+  }
+
+  if(lua_gettop(L) > 3){
+    mode = lua_tostring(L, 4);
   }
 
   lua_pushstring(L, "_read");
@@ -73,7 +78,7 @@ int _stream_file(lua_State* L){
 
   const char* filename = lua_tostring(L, 2);
   FILE *f;
-  f = fopen(filename, "w");
+  f = fopen(filename, mode);
   if(f == NULL){
     luaI_error(L, -1, "unable to open file");
   }
