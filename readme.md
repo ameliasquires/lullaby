@@ -43,6 +43,8 @@ windows works through msys2, install `mingw-w64-x86_64-lua` then run `make CC=gc
 
 you can install with `doas make install` which will install lullaby.so into /usr/local/lib/lua/5.X
 
+install directory can be configured with `INSTALL=...` which defaults to /usr/local/lib/lua/, but may be wanted in /usr/lib64/lua/
+
 lua version can be specified with `version=...`, similar to 5.1, 5.3, jit, the default it 5.4
 
 for working on the code base, i recommend using bear to generate compile_commands.json [(as outlined here)](https://clangd.llvm.org/installation#compile_commandsjson) which should probably let your ide find the headers
