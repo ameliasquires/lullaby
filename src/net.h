@@ -45,7 +45,7 @@ int clean_lullaby_net(lua_State* L);
 
 static const luaL_Reg net_function_list [] = {
   {"listen",l_listen},
-  //{"request",l_request},
+  {"request",l_request},
   {"srequest",l_srequest},
   {"wss",l_wss},
   
