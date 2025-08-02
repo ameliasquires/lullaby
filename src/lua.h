@@ -38,6 +38,8 @@ typedef int (*stream_free_function)(void**);
 void luaI_newstream(lua_State* L, stream_read_function, stream_free_function, void*);
 
 int luaI_nothing(lua_State*);
+void luaI_jointable(lua_State* L, int main, int merge);
+
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
