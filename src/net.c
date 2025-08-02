@@ -546,7 +546,7 @@ int l_srequest(lua_State* L){
   //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
 
   char* request = calloc(cont_len + header->len + strlen(host) + strlen(path) + 512, sizeof * request);
-  sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
+  sprintf(request, "%s %s HTTP/1.1\r\nUser-Agent: lullaby/"MAJOR_VERSION"\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
   //printf("%s\n", request);
   str_free(header);
 
