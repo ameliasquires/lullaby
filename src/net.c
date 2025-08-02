@@ -484,7 +484,6 @@ int _srequest_chunked_encoding(char* input, int length, struct chunked_encoding_
 int l_srequest(lua_State* L){
   int params = lua_gettop(L);
 
-  int check = 1;
   uint64_t ilen = 0;
   char* request_url = (char*)lua_tolstring(L, 1, &ilen);
   struct url awa = parse_url(request_url, ilen);
@@ -510,12 +509,11 @@ int l_srequest(lua_State* L){
  
   char* cont = "";
   size_t cont_len = 0;
-  if(params >= check + 1){
-    check++;
-    switch(lua_type(L, check)){
+  if(params >= 2){
+    switch(lua_type(L, 2)){
       case LUA_TNUMBER:
       case LUA_TSTRING:
-        cont = (char*)luaL_tolstring(L, check, &cont_len);
+        cont = (char*)luaL_tolstring(L, 2, &cont_len);
         break;
       default:
         p_fatal("cant send type");
@@ -523,31 +521,35 @@ int l_srequest(lua_State* L){
     }
   }
 
-  str* header = str_init("");
-  if(params >= check + 1){
-    check++;
-    lua_pushnil(L);
+  lua_newtable(L);
+  int header_idx = lua_gettop(L);
+  luaI_tsets(L, header_idx, "User-Agent", "lullaby/"MAJOR_VERSION);
 
-    for(;lua_next(L, check) != 0;){
-      str_push(header, "\r\n");
-      str_push(header, lua_tostring(L, -2));
-      str_push(header, ": ");
-      str_push(header, lua_tostring(L, -1));
-      lua_pop(L, 1);
-    }
+  if(params >= 3){
+    luaI_jointable(L, header_idx, 3); 
   }
+
+  str* header = str_init("");
+  lua_pushnil(L);
+
+  for(;lua_next(L, header_idx) != 0;){
+    str_push(header, "\r\n");
+    str_push(header, lua_tostring(L, -2));
+    str_push(header, ": ");
+    str_push(header, lua_tostring(L, -1));
+    lua_pop(L, 1);
+  } 
   
   char* action = "GET";
-  if(params >= check + 1){
-    check++;
-    action = (char*)lua_tostring(L, check);
+  if(params >= 4){
+    action = (char*)lua_tostring(L, 4);
   }
 
   //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
 
   char* request = calloc(cont_len + header->len + strlen(host) + strlen(path) + 512, sizeof * request);
-  sprintf(request, "%s %s HTTP/1.1\r\nUser-Agent: lullaby/"MAJOR_VERSION"\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
-  //printf("%s\n", request);
+  sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
+
   str_free(header);
 
   int s = SSL_write(ssl, request, strlen(request));

@@ -1,5 +1,6 @@
 CC := clang
 
+MAJOR_VERSION := "$(shell git -c safe.directory='*' describe --tags --abbrev=0)"
 GIT_COMMIT := "$(shell git -c safe.directory='*' describe --tags)-$(shell git -c safe.directory='*' describe --always --match 'NOT A TAG')"
 
 version ?= 5.4
@@ -9,7 +10,7 @@ ifeq ($(version),jit)
 	install_version = 5.1
 endif
 
-CFLAGS := -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags lua$(version)`
+CFLAGS := -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' -DMAJOR_VERSION='$(MAJOR_VERSION)' `pkg-config --cflags lua$(version)`
 LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 
