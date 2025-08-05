@@ -97,7 +97,8 @@ int chunked_encoding_round(char* input, int length, struct chunked_encoding_stat
         str_popb(state->buffer, 2);
         state->chunk_length = strtoll(state->buffer->c, NULL, 16);
         str_clear(state->buffer);
-        state->reading_length = 0;
+        if(state->chunk_length != 0)
+          state->reading_length = 0;
       }
     } else {
       int len = lesser(state->chunk_length - state->buffer->len, length - i);
@@ -454,38 +455,6 @@ int _srequest_read(uint64_t reqlen, str** _output, void** _state){
 
   *_output = output;
   return 1; 
-}
-
-int _srequest_chunked_encoding(char* input, int length, struct chunked_encoding_state* state){
-  //printf("'%s'\n", input);
-  for(int i = 0; i < length; i++){
-    //printf("%i/%i\n", i, length);
-    if(state->reading_length){
-    str_pushl(state->buffer, input + i, 1);
-
-      if(state->buffer->len >= 2 && memmem(state->buffer->c + state->buffer->len - 2, 2, "\r\n", 2)){
-
-        str_popb(state->buffer, 2);
-        state->chunk_length = strtoll(state->buffer->c, NULL, 16);
-        str_clear(state->buffer);
-        state->reading_length = 0;
-      }
-    } else {
-      int len = lesser(state->chunk_length - state->buffer->len, length - i);
-      str_pushl(state->buffer, input + i, len);
-      i += len;
-
-      if(state->buffer->len >= state->chunk_length){
-        state->reading_length = 1;
-        str_pushl(state->content, state->buffer->c, state->buffer->len);
-        str_clear(state->buffer);
-      }
-    }
-  }
-
-  //printf("buffer '%s'\n", state->buffer->c);
-
-  return 0;
 }
 
 int _request(lua_State* L, struct request_state* state);
