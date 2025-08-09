@@ -762,7 +762,6 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int header_idx = lua_gettop(L);
         luaI_tseti(L, header_idx, "Code", 200);
-        luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
         luaI_tsetv(L, res_idx, "header", header_idx);
 
