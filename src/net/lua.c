@@ -228,8 +228,11 @@ int l_sendfile(lua_State* L){
     p_fatal("missing permissions");
   }
 
+  lua_pushstring(L, "Content-Type");
+  lua_gettable(L, header);
+
   char* ext = strrchr(path, '.');
-  if(ext && mime_type != NULL){
+  if(lua_isnil(L, -1) && ext && mime_type != NULL){
     char* content_type = map_get(mime_type, ext + 1);
 
     if(content_type) 
