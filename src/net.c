@@ -721,7 +721,7 @@ void* handle_client(void *_arg){
           luaI_tsetv(L, req_idx, "cookies", lcookie);
           parray_clear(cookie, STR);
 
-          parray_remove(table, "Cookie", NONE);
+          parray_remove(table, "Cookie", STR);
         }
 
         lua_pushlightuserdata(L, file_cont);
