@@ -710,6 +710,7 @@ void* handle_client(void *_arg){
           rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
       }
 
+      str_free(decoded_path);
       str_free(aa);
       if(v != NULL){
         lua_newtable(L);
