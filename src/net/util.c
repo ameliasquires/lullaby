@@ -534,6 +534,7 @@ int percent_decode(str* input, str** _output){
       //casting a long to a char pointer is a horrible idea
       long c = strtol(hex->c, NULL, 16);
       if(c == 0){
+        str_free(hex);
         *_output = output;
         return 1;
       }
