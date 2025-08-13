@@ -16,6 +16,19 @@ str* str_initl(const char* init, size_t len){
   return s;
 }
 
+str* str_initfl(const char* init, size_t len){
+
+  str* s = malloc(sizeof * s);
+  s->_bytes = len + 1 + alloc_buffer;
+  s->c = malloc(s->_bytes);
+  if(s->c == NULL) p_fatal("failed to allocate string\n");
+  s->len = len ;
+  
+  memcpy(s->c, init, (len) * sizeof * init);
+  s->c[len] = '\0';
+  return s;
+}
+
 str* str_init(const char* init){
   return str_initl(init, strlen(init));
 }

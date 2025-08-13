@@ -12,6 +12,9 @@ typedef struct {
 } str;
 
 str* str_initl(const char*, size_t len);
+//str_initfl has the 'correct' behaviour where it forces the len and doesnt read extra bytes
+//plan to switch everything to str_initfl, when everything will work with it
+str* str_initfl(const char*, size_t len);
 str* str_init(const char*);
 void str_free(str*);
 void str_push(str*, const char*);
