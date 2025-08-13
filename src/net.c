@@ -678,7 +678,7 @@ void* handle_client(void *_arg){
     if(val == -2) net_error(client_fd, 414);
 
     if(val >= 0){
-      str* sk = (str*)parray_get(table, "Path");
+      str* path = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
       str* sC = (str*)parray_get(table, "Cookie");
@@ -693,13 +693,22 @@ void* handle_client(void *_arg){
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
-      str_push(aa, sk->c);
+      str* decoded_path;
+      int decoded_err = percent_decode(path, &decoded_path);
+      larray_t* params = NULL;
+      parray_t* v = NULL;
 
-      larray_t* params = larray_init();
-      parray_t* v = route_match(paths, aa->c, &params);
-      
-      if(sT != NULL)
-        rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
+      if(decoded_err == 1){
+        net_error(client_fd, 400);
+      } else {
+        str_push(aa, decoded_path->c);
+
+        params = larray_init();
+        v = route_match(paths, aa->c, &params);
+        
+        if(sT != NULL)
+          rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
+      }
 
       str_free(aa);
       if(v != NULL){

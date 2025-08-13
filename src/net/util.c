@@ -522,3 +522,29 @@ int net_error(int fd, int code){
   send(fd, out, strlen(out), MSG_NOSIGNAL);
   return 0;
 }
+
+int percent_decode(str* input, str** _output){
+  str* output = str_init("");
+
+  //could maybe make this better by using memmem to find occurrences of %
+  for(int i = 0; i <= input->len; i++){
+    if(input->c[i] == '%' && input->len - i >= 3){
+      str* hex = str_initfl(input->c + i + 1, 2); 
+
+      //casting a long to a char pointer is a horrible idea
+      long c = strtol(hex->c, NULL, 16);
+      if(c == 0){
+        *_output = output;
+        return 1;
+      }
+
+      str_pushl(output, ((char*)&c), 1);
+      str_free(hex);
+      i += 2;
+    } else {
+      str_pushl(output, input->c + i, 1);
+    }
+  }
+  *_output = output; 
+  return 0;
+}
