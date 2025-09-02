@@ -2,6 +2,7 @@
 #include "net/util.h"
 #include "net/lua.h"
 #include "net/luai.h"
+#include "types/str.h"
 
 #include <fcntl.h>
 
@@ -652,6 +653,50 @@ int _request(lua_State* L, struct request_state* state){
   return 1;
 }
 
+struct net_path_t {
+  str* path;
+  parray_t* query;
+};
+
+void path_parse(struct net_path_t* path, str* raw){
+  path->path = str_init("");
+  path->query = parray_init();
+
+  str* query_key = str_init("");
+  str* query_value = str_init("");
+
+  str** reading = &path->path;
+
+  for(int i = 0; i <= raw->len; i++){
+    if(raw->len - i > 1){
+      switch(raw->c[i]){
+        case '&':
+          parray_set(path->query, query_key->c, query_value);
+          str_clear(query_key);
+          query_value = str_init("");
+          //dont want to break here
+        case '?':
+          reading = &query_key;
+          i++;
+          break;
+        case '=':
+          reading = &query_value;
+          i++;
+          break;
+      }
+    }
+
+    str_pushl(*reading, raw->c + i, 1);    
+  }
+
+  if(*reading == query_value){
+    parray_set(path->query, query_key->c, query_value);
+  } else {
+    str_free(query_value);
+  }
+  str_free(query_key);
+}
+
 #define max_uri_size 2048
 
 _Atomic size_t threads = 0;
@@ -693,12 +738,15 @@ void* handle_client(void *_arg){
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
+      struct net_path_t parsed_path;
+      path_parse(&parsed_path, path);
+
       str* decoded_path;
-      int decoded_err = percent_decode(path, &decoded_path);
+      int decoded_err = percent_decode(parsed_path.path, &decoded_path);
       larray_t* params = NULL;
       parray_t* v = NULL;
 
-      if(decoded_err == 1){
+      if(decoded_err == 1 || paths == NULL){
         net_error(client_fd, 400);
       } else {
         str_push(aa, decoded_path->c);
@@ -734,6 +782,16 @@ void* handle_client(void *_arg){
           parray_remove(table, "Cookie", STR);
         }
 
+        if(parsed_path.query->len != 0){
+          lua_newtable(L);
+          int lquery = lua_gettop(L);
+          for(int i = 0; i != parsed_path.query->len; i++){
+            luaI_tsetsl(L, lquery, parsed_path.query->P[i].key->c, ((str*)parsed_path.query->P[i].value)->c, ((str*)parsed_path.query->P[i].value)->len);
+          }
+
+          luaI_tsetv(L, req_idx, "query", lquery);
+        }
+
         lua_pushlightuserdata(L, file_cont);
 
         int ld = lua_gettop(L);
@@ -747,6 +805,8 @@ void* handle_client(void *_arg){
         }
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
+        luaI_tsets(L, req_idx, "path", parsed_path.path->c);
+        luaI_tsets(L, req_idx, "rawpath", path->c);
 
         if(bite == -1){
           client_fd = -2;
@@ -836,6 +896,9 @@ net_end:
         client_fd = luaL_checkinteger(L, -1);
 
       }
+
+      str_free(parsed_path.path);
+      parray_clear(parsed_path.query, STR);
 
       if(file_cont->boundary != NULL) str_free(file_cont->current);
       if(file_cont->boundary != NULL) str_free(file_cont->boundary);
