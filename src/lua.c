@@ -59,8 +59,13 @@ int _stream_file(lua_State* L){
   const int CHUNK_SIZE = 4096;
   uint64_t maxlen = 0;
   uint64_t totallen = 0;
+  const char* mode = "w";
   if(lua_gettop(L) > 2){
     maxlen = lua_tointeger(L, 3);
+  }
+
+  if(lua_gettop(L) > 3){
+    mode = lua_tostring(L, 4);
   }
 
   lua_pushstring(L, "_read");
@@ -73,7 +78,7 @@ int _stream_file(lua_State* L){
 
   const char* filename = lua_tostring(L, 2);
   FILE *f;
-  f = fopen(filename, "a");
+  f = fopen(filename, mode);
   if(f == NULL){
     luaI_error(L, -1, "unable to open file");
   }
@@ -370,19 +375,21 @@ int env_table(lua_State* L, int provide_table){
   return 1;
 }
 
-//top table is prioritized
-void luaI_jointable(lua_State* L){
-  int idx = lua_gettop(L) - 1;
+//main is the default values, merge is the new and overridden ones
+void luaI_jointable(lua_State* L, int main, int merge){
+  int idx = lua_gettop(L);
+
+  lua_pushvalue(L, merge);
 
   lua_pushnil(L);
   for(;lua_next(L, -2) != 0;){
     lua_pushvalue(L, -2);
     lua_pushvalue(L, -2);
-    lua_settable(L, idx);
+    lua_settable(L, main);
     lua_pop(L, 1);
   }
 
-  lua_pushvalue(L, idx);
+  lua_settop(L, idx);
 }
 
 //copys all variables from state A to B, including locals (stored in _locals)

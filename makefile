@@ -1,5 +1,6 @@
 CC := clang
 
+MAJOR_VERSION := "$(shell git -c safe.directory='*' describe --tags --abbrev=0)"
 GIT_COMMIT := "$(shell git -c safe.directory='*' describe --tags)-$(shell git -c safe.directory='*' describe --always --match 'NOT A TAG')"
 
 version ?= 5.4
@@ -9,12 +10,12 @@ ifeq ($(version),jit)
 	install_version = 5.1
 endif
 
-CFLAGS := -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' `pkg-config --cflags lua$(version)`
+CFLAGS := -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' -DMAJOR_VERSION='$(MAJOR_VERSION)' `pkg-config --cflags lua$(version)`
 LFLAGS := -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 
 TARGET := lullaby.so
-INSTALL_DIR := /usr/lib64/lua/
+INSTALL := /usr/local/lib/lua/
 
 SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:.c=.o)
@@ -33,8 +34,8 @@ release: CFLAGS += -O3
 release: all
 
 install::
-	mkdir $(INSTALL_DIR)$(install_version) -p
-	cp $(TARGET) $(INSTALL_DIR)$(install_version)/$(TARGET)
+	mkdir $(INSTALL)$(install_version) -p
+	cp $(TARGET) $(INSTALL)$(install_version)/$(TARGET)
 
 # ok so im pretty sure asan should be linked too, however dlclose needs to be masked anyways
 # and since libasan needs to be the first thing to load, you'll have to add it anyways

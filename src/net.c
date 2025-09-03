@@ -2,6 +2,7 @@
 #include "net/util.h"
 #include "net/lua.h"
 #include "net/luai.h"
+#include "types/str.h"
 
 #include <fcntl.h>
 
@@ -97,7 +98,8 @@ int chunked_encoding_round(char* input, int length, struct chunked_encoding_stat
         str_popb(state->buffer, 2);
         state->chunk_length = strtoll(state->buffer->c, NULL, 16);
         str_clear(state->buffer);
-        state->reading_length = 0;
+        if(state->chunk_length != 0)
+          state->reading_length = 0;
       }
     } else {
       int len = lesser(state->chunk_length - state->buffer->len, length - i);
@@ -389,20 +391,27 @@ int l_wss(lua_State* L){
   return 1;
 }
 
-struct _srequest_state {
+struct request_state {
   SSL* ssl;
   SSL_CTX* ctx;
   int sock;
+  int secure;
   str* buffer; //anything pre-existing
   struct chunked_encoding_state* state;
 };
 
+ssize_t _request_read(struct request_state* state, void* buffer, size_t count);
+
 int _srequest_free(void** _state){
-  struct _srequest_state* state = *((struct _srequest_state**)_state);
-  SSL_set_shutdown(state->ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
-  SSL_shutdown(state->ssl);
-  SSL_free(state->ssl);
-  SSL_CTX_free(state->ctx);
+  struct request_state* state = *((struct request_state**)_state);
+
+  if(state->secure){
+    SSL_set_shutdown(state->ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
+    SSL_shutdown(state->ssl);
+    SSL_free(state->ssl);
+    SSL_CTX_free(state->ctx);
+  }
+
   close(state->sock);
 
   if(state->state != NULL){
@@ -419,7 +428,7 @@ int _srequest_free(void** _state){
 }
 
 int _srequest_read(uint64_t reqlen, str** _output, void** _state){
-  struct _srequest_state* state = *((struct _srequest_state**)_state);
+  struct request_state* state = *((struct request_state**)_state);
   str* output = *_output;
   //states using chunked encoding should skip this
   if(state->buffer != NULL){
@@ -431,7 +440,7 @@ int _srequest_read(uint64_t reqlen, str** _output, void** _state){
   char buffer[BUFFER_LEN];
   memset(buffer, 0, BUFFER_LEN);
   uint64_t len;
-  for(; (len = SSL_read(state->ssl, buffer, BUFFER_LEN)) > 0;){
+  for(; (len = _request_read(state, buffer, BUFFER_LEN)) > 0;){
     if(state->state != NULL){
       chunked_encoding_round(buffer, len, state->state);
     } else {
@@ -449,73 +458,75 @@ int _srequest_read(uint64_t reqlen, str** _output, void** _state){
   return 1; 
 }
 
-int _srequest_chunked_encoding(char* input, int length, struct chunked_encoding_state* state){
-  //printf("'%s'\n", input);
-  for(int i = 0; i < length; i++){
-    //printf("%i/%i\n", i, length);
-    if(state->reading_length){
-    str_pushl(state->buffer, input + i, 1);
-
-      if(state->buffer->len >= 2 && memmem(state->buffer->c + state->buffer->len - 2, 2, "\r\n", 2)){
-
-        str_popb(state->buffer, 2);
-        state->chunk_length = strtoll(state->buffer->c, NULL, 16);
-        str_clear(state->buffer);
-        state->reading_length = 0;
-      }
-    } else {
-      int len = lesser(state->chunk_length - state->buffer->len, length - i);
-      str_pushl(state->buffer, input + i, len);
-      i += len;
-
-      if(state->buffer->len >= state->chunk_length){
-        state->reading_length = 1;
-        str_pushl(state->content, state->buffer->c, state->buffer->len);
-        str_clear(state->buffer);
-      }
-    }
-  }
-
-  //printf("buffer '%s'\n", state->buffer->c);
-
-  return 0;
-}
+int _request(lua_State* L, struct request_state* state);
 
 int l_srequest(lua_State* L){
+  struct request_state* state = calloc(sizeof * state, 1);
+  state->secure = 1;
+
+  return _request(L, state);
+}
+
+int l_request(lua_State* L){
+  struct request_state* state = calloc(sizeof * state, 1);
+  state->secure = 0;
+
+  return _request(L, state);
+}
+
+ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
+  if(state->secure){
+    return SSL_read(state->ssl, buffer, count);
+  } else {
+    return read(state->sock, buffer, count);
+  }
+}
+
+ssize_t _request_write(struct request_state* state, const void* buffer, size_t count){
+  if(state->secure){
+    return SSL_write(state->ssl, buffer, count);
+  } else {
+    return write(state->sock, buffer, count);
+  }
+}
+
+int _request(lua_State* L, struct request_state* state){
   int params = lua_gettop(L);
 
-  int check = 1;
   uint64_t ilen = 0;
   char* request_url = (char*)lua_tolstring(L, 1, &ilen);
   struct url awa = parse_url(request_url, ilen);
   if(awa.proto != NULL && strcmp(awa.proto->c, "http") == 0){
-    //send to l_request, todo
-    abort();
+    state->secure = 0;
+  } else if (awa.proto != NULL && strcmp(awa.proto->c, "https") == 0){
+    state->secure = 1;
   }
+
   const char* host = awa.domain == NULL ? request_url : awa.domain->c;
-  const char* port = awa.port == NULL ? "443" : awa.port->c; 
+  const char* port = awa.port == NULL ? 
+    (state->secure ? "443" : "80") 
+    : awa.port->c; 
   char* path = awa.path == NULL ? "/" : awa.path->c; 
 
-  int sock = get_host((char*)host, (char*)port);
-  if(sock == -1){
-    //p_fatal("could not resolve address");
-    //abort();
+  state->sock = get_host((char*)host, (char*)port);
+  if(state->sock == -1){
     luaI_error(L, -1, "error resolving address");
   }
 
-  ssl_init();
-  SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
-  SSL* ssl = ssl_connect(ctx, sock, host);
-  if(ssl == NULL) luaI_error(L, -1, "ssl_connect error");
+  if(state->secure){
+    ssl_init();
+    state->ctx = SSL_CTX_new(SSLv23_client_method());
+    state->ssl = ssl_connect(state->ctx, state->sock, host);
+    if(state->ssl == NULL) luaI_error(L, -1, "ssl_connect error");
+  }
  
   char* cont = "";
   size_t cont_len = 0;
-  if(params >= check + 1){
-    check++;
-    switch(lua_type(L, check)){
+  if(params >= 2){
+    switch(lua_type(L, 2)){
       case LUA_TNUMBER:
       case LUA_TSTRING:
-        cont = (char*)luaL_tolstring(L, check, &cont_len);
+        cont = (char*)luaL_tolstring(L, 2, &cont_len);
         break;
       default:
         p_fatal("cant send type");
@@ -523,37 +534,41 @@ int l_srequest(lua_State* L){
     }
   }
 
-  str* header = str_init("");
-  if(params >= check + 1){
-    check++;
-    lua_pushnil(L);
+  lua_newtable(L);
+  int header_idx = lua_gettop(L);
+  luaI_tsets(L, header_idx, "User-Agent", "lullaby/"MAJOR_VERSION);
 
-    for(;lua_next(L, check) != 0;){
-      str_push(header, "\r\n");
-      str_push(header, lua_tostring(L, -2));
-      str_push(header, ": ");
-      str_push(header, lua_tostring(L, -1));
-      lua_pop(L, 1);
-    }
+  if(params >= 3){
+    luaI_jointable(L, header_idx, 3); 
   }
+
+  str* header = str_init("");
+  lua_pushnil(L);
+
+  for(;lua_next(L, header_idx) != 0;){
+    str_push(header, "\r\n");
+    str_push(header, lua_tostring(L, -2));
+    str_push(header, ": ");
+    str_push(header, lua_tostring(L, -1));
+    lua_pop(L, 1);
+  } 
   
   char* action = "GET";
-  if(params >= check + 1){
-    check++;
-    action = (char*)lua_tostring(L, check);
+  if(params >= 4){
+    action = (char*)lua_tostring(L, 4);
   }
 
   //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
 
-  char* request = calloc(cont_len + header->len + 512, sizeof * request);
+  char* request = calloc(cont_len + header->len + strlen(host) + strlen(path) + 512, sizeof * request);
   sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
-  //printf("%s\n", request);
+
   str_free(header);
 
-  int s = SSL_write(ssl, request, strlen(request));
+  int s = _request_write(state, request, strlen(request));
   free(request);
 
-  if(s <= 0) luaI_error(L, s, "SSL_write error");
+  if(s <= 0) luaI_error(L, s, "_request_write error");
 
   str* a = str_init("");
   char buffer[BUFFER_LEN];
@@ -561,7 +576,7 @@ int l_srequest(lua_State* L){
   int extra_len = 0;
   char* header_eof = NULL;
 
-  for(; (len = SSL_read(ssl, buffer, BUFFER_LEN)) > 0;){
+  for(; (len = _request_read(state, buffer, BUFFER_LEN)) > 0;){
     int blen = a->len;
     str_pushl(a, buffer, len);
     int offset = blen >= 4 ? 4 : blen;
@@ -572,7 +587,7 @@ int l_srequest(lua_State* L){
     memset(buffer, 0, BUFFER_LEN);
   }
 
-  if(len < 0) luaI_error(L, len, "SSL_read error");
+  if(len < 0) luaI_error(L, len, "read error");
 
   if(header_eof != NULL){
     lua_newtable(L);
@@ -590,32 +605,37 @@ int l_srequest(lua_State* L){
     luaI_treplk(L, idx, "Path", "code");
     luaI_treplk(L, idx, "Request", "version");
     luaI_treplk(L, idx, "Version", "code-name");
+
+    lua_pushstring(L, "code");
+    lua_gettable(L, idx);
+    int code = atoi(lua_tostring(L, -1));
+    luaI_tseti(L, idx, "code", code);
     
     void* encoding = parray_get(owo, "Transfer-Encoding");
 
-    struct _srequest_state *read_state = calloc(sizeof * read_state, 1);
-    read_state->ctx = ctx;
-    read_state->ssl = ssl;
-    read_state->sock = sock;
+    //struct _srequest_state *read_state = calloc(sizeof * read_state, 1);
+    //read_state->ctx = state->ctx;
+    //read_state->ssl = state->ssl;
+    //read_state->sock = state->sock;
     if(encoding != NULL){
       if(strcmp(((str*)encoding)->c, "chunked") == 0){
-        struct chunked_encoding_state* state = calloc(sizeof * state, 1);
-        state->reading_length = 1;
-        state->buffer = str_init("");
-        state->content = str_init("");
+        struct chunked_encoding_state* chunk_state = calloc(sizeof * state, 1);
+        chunk_state->reading_length = 1;
+        chunk_state->buffer = str_init("");
+        chunk_state->content = str_init("");
 
-        chunked_encoding_round(header_eof + 4, extra_len - 4, state);
+        chunked_encoding_round(header_eof + 4, extra_len - 4, chunk_state);
         memset(buffer, 0, BUFFER_LEN);
         
-        read_state->buffer = str_init("");
-        read_state->state = state; 
+        state->buffer = str_init("");
+        state->state = chunk_state; 
       }
     } else {
-      read_state->buffer = str_initl(header_eof + 4, extra_len - 4);
+      state->buffer = str_initl(header_eof + 4, extra_len - 4);
     }
     parray_clear(owo, STR);
 
-    luaI_newstream(L, _srequest_read, _srequest_free, read_state);
+    luaI_newstream(L, _srequest_read, _srequest_free, state);
     int v = lua_gettop(L);
     luaI_tsetv(L, idx, "content", v);
     lua_pushvalue(L, idx);
@@ -633,32 +653,48 @@ int l_srequest(lua_State* L){
   return 1;
 }
 
-int l_request(lua_State* L){
-  const char* host = luaL_checkstring(L, 1);
-  int sock = get_host((char*)host, (char*)lua_tostring(L, 2));
-  
-  char* path = "/";
-  if(lua_gettop(L) >= 3)
-    path = (char*)luaL_checkstring(L, 3);
+struct net_path_t {
+  str* path;
+  parray_t* query;
+};
 
-  //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
+void path_parse(struct net_path_t* path, str* raw){
+  path->path = str_init("");
+  path->query = parray_init();
 
-  char request[2000];
-  sprintf(request, "GET %s HTTP/1.1\nHost: %s\nConnection: Close\n\n", path, host); 
-  write(sock, request, strlen(request));
+  str* query_key = str_init("");
+  str* query_value = str_init("");
 
-  str* a = str_init("");
-  char buffer[512];
-  int len = 0;
+  str** reading = &path->path;
 
-  for(; (len = read(sock, buffer, 511)) != 0;){
-    str_pushl(a, buffer, len);
-    memset(buffer, 0, 512);
+  for(int i = 0; i <= raw->len; i++){
+    if(raw->len - i > 1){
+      switch(raw->c[i]){
+        case '&':
+          parray_set(path->query, query_key->c, query_value);
+          str_clear(query_key);
+          query_value = str_init("");
+          //dont want to break here
+        case '?':
+          reading = &query_key;
+          i++;
+          break;
+        case '=':
+          reading = &query_value;
+          i++;
+          break;
+      }
+    }
+
+    str_pushl(*reading, raw->c + i, 1);    
   }
 
-  lua_pushstring(L, a->c);
-
-  return 1;
+  if(*reading == query_value){
+    parray_set(path->query, query_key->c, query_value);
+  } else {
+    str_free(query_value);
+  }
+  str_free(query_key);
 }
 
 #define max_uri_size 2048
@@ -687,7 +723,7 @@ void* handle_client(void *_arg){
     if(val == -2) net_error(client_fd, 414);
 
     if(val >= 0){
-      str* sk = (str*)parray_get(table, "Path");
+      str* path = (str*)parray_get(table, "Path");
       str* sR = (str*)parray_get(table, "Request");
       str* sT = (str*)parray_get(table, "Content-Type");
       str* sC = (str*)parray_get(table, "Cookie");
@@ -702,14 +738,27 @@ void* handle_client(void *_arg){
       sprintf(portc, "%i", args->port);
 
       str* aa = str_init(portc);
-      str_push(aa, sk->c);
-
-      larray_t* params = larray_init();
-      parray_t* v = route_match(args->paths, aa->c, &params);
+      struct net_path_t parsed_path;
+      path_parse(&parsed_path, path);
       
-      if(sT != NULL)
-        rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
+      str* decoded_path;
+      int decoded_err = percent_decode(parsed_path.path, &decoded_path);
+      larray_t* params = NULL;
+      parray_t* v = NULL;
 
+      if(decoded_err == 1 || args->paths == NULL){
+        net_error(client_fd, 400);
+      } else {
+        str_push(aa, decoded_path->c);
+
+        params = larray_init();
+        v = route_match(args->paths, aa->c, &params);
+        
+        if(sT != NULL)
+          rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
+      }
+
+      str_free(decoded_path);
       str_free(aa);
       if(v != NULL){
         lua_newtable(L);
@@ -730,7 +779,17 @@ void* handle_client(void *_arg){
           luaI_tsetv(L, req_idx, "cookies", lcookie);
           parray_clear(cookie, STR);
 
-          parray_remove(table, "Cookie", NONE);
+          parray_remove(table, "Cookie", STR);
+        }
+
+        if(parsed_path.query->len != 0){
+          lua_newtable(L);
+          int lquery = lua_gettop(L);
+          for(int i = 0; i != parsed_path.query->len; i++){
+            luaI_tsetsl(L, lquery, parsed_path.query->P[i].key->c, ((str*)parsed_path.query->P[i].value)->c, ((str*)parsed_path.query->P[i].value)->len);
+          }
+
+          luaI_tsetv(L, req_idx, "query", lquery);
         }
 
         lua_pushlightuserdata(L, file_cont);
@@ -746,6 +805,8 @@ void* handle_client(void *_arg){
         }
 
         luaI_tsets(L, req_idx, "ip", inet_ntoa(args->cli.sin_addr));
+        luaI_tsets(L, req_idx, "path", parsed_path.path->c);
+        luaI_tsets(L, req_idx, "rawpath", path->c);
 
         if(bite == -1){
           client_fd = -2;
@@ -771,7 +832,6 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int header_idx = lua_gettop(L);
         luaI_tseti(L, header_idx, "Code", 200);
-        luaI_tsets(L, header_idx, "Content-Type", "text/html");
         
         luaI_tsetv(L, res_idx, "header", header_idx);
 
@@ -836,6 +896,9 @@ net_end:
         client_fd = luaL_checkinteger(L, -1);
 
       }
+
+      str_free(parsed_path.path);
+      parray_clear(parsed_path.query, STR);
 
       if(file_cont->boundary != NULL) str_free(file_cont->current);
       if(file_cont->boundary != NULL) str_free(file_cont->boundary);
