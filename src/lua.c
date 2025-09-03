@@ -174,7 +174,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     switch(type = lua_type(src, -1)){
         case LUA_TNUMBER:
             n = lua_tonumber(src, -1);
-            if(n == (uint64_t)n) lua_pushinteger(dest, lua_tonumber(src, -1));
+            if(n == (uint64_t)n) lua_pushinteger(dest, (uint64_t)lua_tonumber(src, -1));
             else lua_pushnumber(dest, n);
             break;
         case LUA_TBOOLEAN:
@@ -249,6 +249,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
           lua_dump(src, writer, (void*)awa, 0);
 
           luaL_loadbuffer(dest, awa->c, awa->len, "fun");
+          if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
           //lua_remove(dest, -2);
           str_free(awa);
           break;
@@ -387,19 +388,29 @@ void luaI_jointable(lua_State* L){
 //copys all variables from state A to B, including locals (stored in _locals)
 //populates _ENV the same as _G
 void luaI_copyvars(lua_State* from, lua_State* to){
-  lua_getglobal(from, "_G");
-  luaI_deepcopy(from, to, SKIP_GC | SKIP__G);
-  lua_set_global_table(to);
+  lua_getglobal(from, "_locals");
+  int x = lua_gettop(from);
 
-  env_table(from, 0);
-  luaI_deepcopy(from, to, SKIP_GC);
+  if(lua_isnil(from, x)){
+    lua_pop(from, 1);
+    x = 0;
+  }
+
+  env_table(from, x != 0);
+  luaI_deepcopy(from, to, SKIP_GC | SKIP_LOCALS);
   int idx = lua_gettop(to);
   lua_pushglobaltable(to);
   int tidx = lua_gettop(to);
 
   luaI_tsetv(to, idx, "_ENV", tidx);
-
   luaI_tsetv(to, tidx, "_locals", idx);
+
+  lua_getglobal(from, "_G");
+  luaI_deepcopy(from, to, SKIP_GC | SKIP__G);
+  lua_set_global_table(to);
+
+  lua_pushvalue(to, idx);
+  lua_setglobal(to, "_locals");
 }
 
 /**
@@ -452,7 +463,7 @@ int lua_assign_upvalues(lua_State* L, int fidx){
     lua_setupvalue(L, fidx, lua_tointeger(L, -2));
   }
 
-  lua_pushvalue(L, fidx);
+  lua_settop(L, fidx);
 
   return 0;
 }
