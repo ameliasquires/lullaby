@@ -56,3 +56,6 @@ int match_param(char* path, char* match, parray_t* arr);
 void parse_mimetypes();
 
 int net_error(int fd, int code);
+
+int percent_decode(str* input, str** _output);
+

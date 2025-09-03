@@ -16,16 +16,16 @@ int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
       return -1;
     }
 
-    if((len += n) >= MAX_HEADER_SIZE){
-      return -2;
-    }
-
     // search the last 4 characters too if they exist
     // this could probably be changed to 3
-    int64_t start_len = len - 4 > 0 ? len - 4 : 0;
+    int64_t start_len = len - 4 > 0 ? len - 4 : len;
     int64_t search_end = len - 4 > 0 ? n + 4 : n;
     if((*header_eof = memmem(buffer + start_len, search_end, "\r\n\r\n", 4)) != NULL){
-      return len; 
+      return len + n; 
+    }
+
+    if((len += n) >= MAX_HEADER_SIZE){
+      return -2;
     }
 
     buffer = realloc(buffer, sizeof* buffer * (len + BUFFER_SIZE + 1));
@@ -520,5 +520,32 @@ int net_error(int fd, int code){
   char out[512] = {0};
   sprintf(out, "HTTP/1.1 %i %s\n\n", code, http_code(code));
   send(fd, out, strlen(out), MSG_NOSIGNAL);
+  return 0;
+}
+
+int percent_decode(str* input, str** _output){
+  str* output = str_init("");
+
+  //could maybe make this better by using memmem to find occurrences of %
+  for(int i = 0; i <= input->len; i++){
+    if(input->c[i] == '%' && input->len - i >= 3){
+      str* hex = str_initfl(input->c + i + 1, 2); 
+
+      //casting a long to a char pointer is a horrible idea
+      long c = strtol(hex->c, NULL, 16);
+      if(c == 0){
+        str_free(hex);
+        *_output = output;
+        return 1;
+      }
+
+      str_pushl(output, ((char*)&c), 1);
+      str_free(hex);
+      i += 2;
+    } else {
+      str_pushl(output, input->c + i, 1);
+    }
+  }
+  *_output = output; 
   return 0;
 }

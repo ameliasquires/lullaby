@@ -40,7 +40,7 @@ void luaI_newstream(lua_State* L, stream_read_function, stream_free_function, vo
 
 int luaI_nothing(lua_State*);
 int env_table(lua_State* L, int provide_table);
-void luaI_jointable(lua_State* L);
+void luaI_jointable(lua_State* L, int main, int merge);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\

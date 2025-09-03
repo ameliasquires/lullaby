@@ -60,12 +60,20 @@ req_table.ip = 0
 ---@type string
 req_table.Body = ""
 
+---@type string
+req_table.path = ""
+
+---@type string
+req_table.rawpath = ""
+
 ---@type any|nil
 req_table.files = {}
 
 ---@type any|nil
 req_table.cookies = {}
 
+---@type any|nil
+req_table.query = {}
 
 ---@param T server-table
 ---@param route string

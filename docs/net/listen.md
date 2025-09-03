@@ -132,7 +132,7 @@ res.header["test"] = "wowa"
 
 res:sendfile(filepath, options?)
 
-res.header["Content-Type"] is set automatically depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
+res.header["Content-Type"] is set automatically (unless already set) depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
 
 options table
 
