@@ -12,6 +12,7 @@ enum deep_copy_flags {
   SKIP_GC = (1 << 1),
   IS_META = (1 << 2),
   SKIP__G = (1 << 3),
+  SKIP_LOCALS = (1 << 4),
 };
 #endif 
 
@@ -38,6 +39,8 @@ typedef int (*stream_free_function)(void**);
 void luaI_newstream(lua_State* L, stream_read_function, stream_free_function, void*);
 
 int luaI_nothing(lua_State*);
+int env_table(lua_State* L, int provide_table);
+void luaI_jointable(lua_State* L);
 
 //generic macro that takes other macros (see below)
 #define _tset_b(L, Tidx, K, V, F)\
@@ -63,6 +66,10 @@ int luaI_nothing(lua_State*);
     _tset_b(L, Tidx, K, V, lua_pushcfunction)
 #define luaI_tsetlud(L, Tidx, K, V)\
     _tset_b(L, Tidx, K, V, lua_pushlightuserdata)
+#define luaI_tsetnil(L, Tidx, K)\
+    lua_pushstring(L, K);\
+    lua_pushnil(L);\
+    lua_settable(L, Tidx);
 
 #define luaI_treplk(L, Tidx, K, nK){\
   lua_pushstring(L, K);\

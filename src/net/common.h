@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#define _GNU_SOURCE
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>

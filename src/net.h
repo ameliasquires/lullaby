@@ -38,9 +38,6 @@ void* handle_client(void *_arg);
 
 int start_serv(lua_State* L, int port);
 
-//
-static char* http_codes[600] = {0};
-
 int clean_lullaby_net(lua_State* L);
 
 static const luaL_Reg net_function_list [] = {
