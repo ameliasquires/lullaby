@@ -138,6 +138,14 @@ function net.listen(callback, port) end
 ---@return request-return | error
 function net.srequest(url, content, header, request) end
 
+---creates an http request
+---@param url string
+---@param content string | nil
+---@param header table<string, string> | nil
+---@param request string | nil
+---@return request-return | error
+function net.request(url, content, header, request) end
+
 ---@class wss-table
 local wss = {}
 
