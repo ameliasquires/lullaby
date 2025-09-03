@@ -705,7 +705,7 @@ void* handle_client(void *_arg){
       str_push(aa, sk->c);
 
       larray_t* params = larray_init();
-      parray_t* v = route_match(paths, aa->c, &params);
+      parray_t* v = route_match(args->paths, aa->c, &params);
       
       if(sT != NULL)
         rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
@@ -866,7 +866,7 @@ int clean_lullaby_net(lua_State* L){
   return 0;
 }
 
-int start_serv(lua_State* L, int port){
+int start_serv(lua_State* L, int port, parray_t* paths){
   parse_mimetypes();
   //need these on windows for sockets (stupid)
 #ifdef _WIN32
@@ -919,6 +919,7 @@ int start_serv(lua_State* L, int port){
     args->port = port;
     args->cli = client_addr;
     args->L = luaL_newstate();
+    args->paths = paths;
 
     int old_top = lua_gettop(L);
     lua_getglobal(L, "_G");
@@ -941,6 +942,10 @@ int start_serv(lua_State* L, int port){
 }
 
 int l_req_com(lua_State* L, char* req){
+  lua_pushstring(L, "paths");
+  lua_gettable(L, 1);
+  parray_t* paths = lua_touserdata(L, -1);
+
   lua_pushstring(L, "port");
   lua_gettable(L, 1);
   int port = luaL_checkinteger(L, -1);
@@ -960,9 +965,6 @@ int l_req_com(lua_State* L, char* req){
   awa->len = uwu->len;
   strcpy(awa->req, req);
   free(uwu); //yes this *should* be str_free but awa kinda owns it now:p 
-
-  if(paths == NULL)
-    paths = parray_init();
 
   //please free this
   void* v_old_paths = parray_get(paths, portss->c);
@@ -1022,15 +1024,16 @@ int l_listen(lua_State* L){
   luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
   luaI_tsetcf(L, mt, "all", l_allq);
     
-  lua_pushstring(L, "port");
-  lua_pushvalue(L, 2);
-  lua_settable(L, -3);
+  luaI_tsetv(L, mt, "port", 2);
+
+  parray_t* paths = parray_init();
+  luaI_tsetlud(L, mt, "paths", paths);
 
   lua_pushvalue(L, 1); //the function
-  lua_pushvalue(L, -2); //the server table
+  lua_pushvalue(L, mt); //the server table
 
   lua_pcall(L, 1, 0, 0);
 
-  start_serv(L, port);
+  start_serv(L, port, paths);
   return 0;
 }
