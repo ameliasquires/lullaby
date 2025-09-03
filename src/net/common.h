@@ -25,9 +25,6 @@
 #define HTTP_BUFFER_SIZE 4098
 #define max_content_length 200000
 
-static int ports[65535] = { 0 };
-static parray_t* paths = NULL;
-
 enum file_status {
   _ignore, BARRIER_READ, FILE_HEADER, FILE_BODY, NORMAL
 };
@@ -43,6 +40,7 @@ typedef struct {
   int port;
   lua_State* L;
   struct sockaddr_in cli;
+  parray_t* paths;
 } thread_arg_struct;
 
 struct lchar {
