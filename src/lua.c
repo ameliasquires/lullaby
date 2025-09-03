@@ -375,21 +375,19 @@ int env_table(lua_State* L, int provide_table){
   return 1;
 }
 
-//main is the default values, merge is the new and overridden ones
-void luaI_jointable(lua_State* L, int main, int merge){
-  int idx = lua_gettop(L);
-
-  lua_pushvalue(L, merge);
+//top table is prioritized
+void luaI_jointable(lua_State* L){
+  int idx = lua_gettop(L) - 1;
 
   lua_pushnil(L);
   for(;lua_next(L, -2) != 0;){
     lua_pushvalue(L, -2);
     lua_pushvalue(L, -2);
-    lua_settable(L, main);
+    lua_settable(L, idx);
     lua_pop(L, 1);
   }
 
-  lua_settop(L, idx);
+  lua_pushvalue(L, idx);
 }
 
 //copys all variables from state A to B, including locals (stored in _locals)

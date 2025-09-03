@@ -539,7 +539,9 @@ int _request(lua_State* L, struct request_state* state){
   luaI_tsets(L, header_idx, "User-Agent", "lullaby/"MAJOR_VERSION);
 
   if(params >= 3){
-    luaI_jointable(L, header_idx, 3); 
+    lua_pushvalue(L, header_idx);
+    lua_pushvalue(L, 3);
+    luaI_jointable(L); 
   }
 
   str* header = str_init("");
