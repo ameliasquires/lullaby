@@ -565,6 +565,7 @@ int _request(lua_State* L, struct request_state* state){
   char* request = calloc(cont_len + header->len + strlen(host) + strlen(path) + 512, sizeof * request);
   sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
 
+
   str_free(header);
 
   int s = _request_write(state, request, strlen(request));
@@ -597,7 +598,7 @@ int _request(lua_State* L, struct request_state* state){
 
     parray_t* owo = NULL;
     //handle errors
-    int err = parse_header(a->c, header_eof - a->c, &owo);
+    int err = parse_header(a->c, header_eof - a->c + 2, &owo);
     assert(err == 0);
 
     for(int i = 0; i != owo->len; i++){
@@ -669,7 +670,7 @@ void path_parse(struct net_path_t* path, str* raw){
 
   str** reading = &path->path;
 
-  for(int i = 0; i <= raw->len; i++){
+  for(int i = 0; i <= raw->len - 1; i++){
     if(raw->len - i > 1){
       switch(raw->c[i]){
         case '&':
@@ -720,7 +721,7 @@ void* handle_client(void *_arg){
     parray_t* table;
 
     //checks for a valid header
-    int val = parse_header(buffer, header_eof, &table);
+    int val = parse_header(buffer, header_eof + 2, &table);
 
     if(val == -2) net_error(client_fd, 414);
 
