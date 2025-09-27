@@ -1,4 +1,5 @@
 llby = require("lullaby")
+PORT = 5552
 
 local failed = {}
 local total = 0
@@ -19,6 +20,7 @@ end
 local handle = assert(io.popen("find tests/units/".. search .." -type f"))
 
 for file in handle:lines() do
+  print(_G._locals)
   total = total + 1
   local f = loadfile(file)()
 
