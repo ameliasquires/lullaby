@@ -36,8 +36,6 @@ int content_disposition(str* src, parray_t** _dest);
 
 void* handle_client(void *_arg);
 
-int start_serv(lua_State* L, int port, parray_t* paths);
-
 int clean_lullaby_net(lua_State* L);
 
 static const luaL_Reg net_function_list [] = {
