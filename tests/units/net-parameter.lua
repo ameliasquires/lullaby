@@ -7,9 +7,8 @@ local net = llby.thread.async(function(tres)
   local c = 943
   llby.net.listen(function(server)
     bserver:set(server)
-
-    server:GET("/", function(res, req)
-      res:send(tostring(tonumber(req.query.t1) * a + tonumber(req.query.t2) * b + tonumber(req.query.t3) * c))
+    server:GET("/{a}/{b}/{c}", function(res, req)
+      res:send(tostring(tonumber(req.parameters.a) * a + tonumber(req.parameters.b) * b + tonumber(req.parameters.c) * c))
     end)
   end, PORT)
 end)
@@ -21,7 +20,7 @@ local t3 = 777
 --should wait for the server to start
 os.execute("sleep 0.1")
 
-local s = llby.net.request(string.format("localhost:%i/?t1=%i&t2=%i&t3=%i", PORT, t1, t2, t3))
+local s = llby.net.request(string.format("localhost:%i/%i/%i/%i", PORT, t1, t2, t3))
 local num = s.content:read()
 
 bserver:get():close()
