@@ -5,6 +5,26 @@ net.listen(function, port)
 (intentionally styled after expressjs:3)
 the function will be ran on initilization, the argument has info on the server and functions to set it up
 
+if the 'server' upvalue needs to be accessible inside of the network threads, you will need to make the value global or redefine it. the upvalue itself (as a argument to the listen function) will simply not exist when the route functions are called, despite it looking like they would be.
+because the route functions (GET, POST, etc..) are just assigning functions to these paths, and not running them, they will just not see the server value.
+this also explains another weird behaviour where routes can read locals before they've been defined. (the upvalues of the functions are defined when the listen function is complete)
+
+```lua
+llby.net.listen(function(server)
+  _G.server = server
+
+  server:GET("/", function(res, req)
+    --first will always be null, second will be null without the second line
+    print(server, _G.server)
+
+    --will be valid despite being defined later
+    print(awa)
+  end)
+
+  local awa = 22
+end)
+```
+
 |name|default value|extra info|
 |--|--|--|
 |mimetypes|/etc/mime.types|file used to auto assign content-type when using res:sendfile, nil to skip|
@@ -22,13 +42,7 @@ the server will send these codes for these reasons
 |414|request uri is longer than max_uri|
 
 ```lua
-llib.net.listen(function(server)
-    ...
-end, 80)
-```
-
-```lua
-llib.net.listen(function(server)
+llby.net.listen(function(server)
     ...
 end, 80)
 ```
