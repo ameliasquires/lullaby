@@ -232,6 +232,9 @@ int _thread_await(lua_State* L){
       lua_settop(info->L, ot);
   }
 
+  lua_pushnil(L);
+  lua_setglobal(L, "_locals");
+
   return info->return_count;
 }
 
@@ -492,9 +495,11 @@ int l_buffer(lua_State* L){
   luaI_tsetcf(L, meta_idx, "__index", l_buffer_index);
   luaI_tsetcf(L, meta_idx, "__gc", l_buffer_gc);
 
-  lua_getmetatable(L, 1);
-  int idx = lua_gettop(L);
-  luaI_tsetnil(L, idx, "__gc");
+  if(use != 0){
+    lua_getmetatable(L, 1);
+    int idx = lua_gettop(L);
+    luaI_tsetnil(L, idx, "__gc");
+  }
 
   lua_pushvalue(L, meta_idx);
   lua_setmetatable(L, buffer_idx);

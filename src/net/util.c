@@ -341,7 +341,7 @@ int match_param(char* path, char* match, parray_t* arr){
       case GET_KEY:
         if(path[pi] == '}'){
           step = GET_VALUE;
-          name = calloc(pi - start, sizeof * name);
+          name = calloc(pi - start + 1, sizeof * name);
           memcpy(name, path + start + 1, pi - start - 1);
           start = mi;
         }
@@ -352,7 +352,7 @@ int match_param(char* path, char* match, parray_t* arr){
         if(match[mi] == '/'){
           step = NORMAL;
 
-          char* out = calloc(mi - start, sizeof * out);
+          char* out = calloc(mi - start + 1, sizeof * out);
           memcpy(out, match + start, mi - start);
           parray_set(arr, name, out);
           free(name);
@@ -410,6 +410,7 @@ uint64_t _mimetypes_len = 15;
 
 void parse_mimetypes(){
   if(_mimetypes == NULL || _mimetypes_len == 0) return;
+  if(mime_type != NULL) return;
   mime_type = map_init();
 
   FILE* fp = fopen(_mimetypes, "r");
@@ -436,9 +437,10 @@ void parse_mimetypes(){
       if(line[i] == ' ' || line[i] == '\t' || line[i] == '\n'){
         if(type_len == 0) continue;
         char* mtype_c = calloc(1024, sizeof * mtype);
-        strcpy(mtype_c, mtype);
+        mtype_c = strcpy(mtype_c, mtype);
         map_set(&mime_type, type, mtype_c);
         type_len = 0;
+        free(type);
         type = calloc(512, sizeof * type);
       } else {
         type[type_len] = line[i];
@@ -449,10 +451,12 @@ void parse_mimetypes(){
     free(type);
   }
 
+  free(line);
   fclose(fp);
 }
 
 void _parse_mimetypes(){
+  abort();
   mime_type = map_init();
   FILE* fp = fopen(MIMETYPES, "r");
   char* buffer = calloc(1024, sizeof * buffer);
