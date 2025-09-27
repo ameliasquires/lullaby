@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <sys/poll.h>
+#include <sys/eventfd.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -563,8 +565,12 @@ int _request(lua_State* L, struct request_state* state){
   //char* req = "GET / HTTP/1.1\nHost: amyy.cc\nConnection: Close\n\n";
 
   char* request = calloc(cont_len + header->len + strlen(host) + strlen(path) + 512, sizeof * request);
-  sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont); 
+  sprintf(request, "%s %s HTTP/1.1\r\nHost: %s\r\nConnection: Close%s\r\n\r\n%s", action, path, host, header->c, cont);
 
+  if(awa.path != NULL) str_free(awa.path);
+  if(awa.domain != NULL) str_free(awa.domain);
+  if(awa.proto != NULL) str_free(awa.proto);
+  if(awa.port != NULL) str_free(awa.port);
 
   str_free(header);
 
@@ -922,17 +928,15 @@ net_end:
   lua_close(L);
 
   threads--;
+  printf("out\n");
   return NULL;
 }
 
 int clean_lullaby_net(lua_State* L){
-  if(mime_type != NULL){
-    map_clear(mime_type, FREE);
-  }
   return 0;
 }
 
-int start_serv(lua_State* L, int port, parray_t* paths){
+int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state* state){
   parse_mimetypes();
   //need these on windows for sockets (stupid)
 #ifdef _WIN32
@@ -942,10 +946,11 @@ int start_serv(lua_State* L, int port, parray_t* paths){
 
   int server_fd;
   struct sockaddr_in server_addr;
+  struct pollfd fds[2];
 
   //open the socket
   if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    p_fatal("error opening socket\n");
+    luaI_error(L, -2, "error opening socket\n");
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -953,60 +958,112 @@ int start_serv(lua_State* L, int port, parray_t* paths){
 
 
   if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&(int){1}, sizeof(int)) < 0)
-    p_fatal("SO_REUSEADDR refused\n");
+    luaI_error(L, -3, "SO_REUSEADDR refused\n");
 
   //bind to port
   if(bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
-    p_fatal("failed to bind to port\n");
+    luaI_error(L, -4, "failed to bind to port\n");
 
   if(listen(server_fd, max_con) < 0)
-    p_fatal("failed to listen\n");
+    luaI_error(L, -5, "failed to listen\n");
+
+  int efd = eventfd(NETEV_DEFAULT, 0);
+  state->event_fd = efd;
+
+  memset(fds, 0, sizeof(fds));
+  fds[0].fd = server_fd;
+  fds[0].events = POLLIN;
+
+  fds[1].fd = efd;
+  fds[1].events = POLLIN;
 
   for(;;){
-    struct sockaddr_in client_addr;
-    socklen_t client_addr_len = sizeof(client_addr);
-    int* client_fd = malloc(sizeof(int));
+    int rc = poll(fds, 2, -1);
 
-    if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
-      p_fatal("failed to accept\n");
+    if(rc <= 0)
+      p_fatal("poll() <= 0\n");
 
-    if(threads >= max_con){
-      //deny request
-      net_error(*client_fd, 503);
-      close(*client_fd);
+    if(fds[1].revents == POLLIN){
+      uint64_t v;
+      read(efd, &v, sizeof(uint64_t));
+
+      switch(v){
+        case NETEV_DEFAULT:
+          break;
+        case NETEV_CLOSE_EVENT:
+          goto net_end;   
+      }
+    } 
+
+    if(fds[0].revents == POLLIN){
+      struct sockaddr_in client_addr;
+      socklen_t client_addr_len = sizeof(client_addr);
+      int* client_fd = malloc(sizeof(int));
+
+      if((*client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_addr_len)) < 0)
+        p_fatal("failed to accept\n");
+
+      if(threads >= max_con){
+        //deny request
+        net_error(*client_fd, 503);
+        close(*client_fd);
+        free(client_fd);
+
+        continue;
+      }
+
+      thread_arg_struct* args = malloc(sizeof * args);
+
+      args->fd = *client_fd;
+      args->port = port;
+      args->cli = client_addr;
+      args->L = luaL_newstate();
+      args->paths = paths;
+
+      int old_top = lua_gettop(L);
+      lua_getglobal(L, "_G");
+
+      luaI_copyvars(L, args->L); 
+      lua_settop(L, old_top);
+      lua_set_global_table(args->L);
+
+      threads++;
+
+      //send request to handle_client()
+      pthread_t thread_id;
+      pthread_create(&thread_id, NULL, handle_client, (void*)args);
+      pthread_detach(thread_id);
+       
+      //handle_client((void*)args);
       free(client_fd);
-
-      continue;
     }
-
-    thread_arg_struct* args = malloc(sizeof * args);
-
-    args->fd = *client_fd;
-    args->port = port;
-    args->cli = client_addr;
-    args->L = luaL_newstate();
-    args->paths = paths;
-
-    int old_top = lua_gettop(L);
-    lua_getglobal(L, "_G");
-
-    luaI_copyvars(L, args->L); 
-    lua_settop(L, old_top);
-    lua_set_global_table(args->L);
-
-    threads++;
-
-    //send request to handle_client()
-    pthread_t thread_id;
-    pthread_create(&thread_id, NULL, handle_client, (void*)args);
-    pthread_detach(thread_id);
-     
-    //handle_client((void*)args);
-    free(client_fd);
   }
 
+net_end:
+  if(mime_type != NULL) map_clear(mime_type, FREE);
+  mime_type = NULL;
+  close(server_fd);
+  close(efd);
+  free(state);
+
+  for(int i = 0; i != paths->len; i++){
+    struct sarray_t* path = paths->P[i].value;
+    for(int z = 0; z != path->len; z++){
+      free(path->cs[z]->c);
+      free(path->cs[z]);
+    }
+    free(path->cs);
+    free(path);
+    str_free(paths->P[i].key);
+  }
+  parray_lclear(paths);
+
+  luaI_error(L, 0, "close eventfd signal");
 }
 
+//TODO reformat all of this code and the structs (use more common/generic ones)
+//
+//this may have a memory leak (net-nested.lua) when called inside of a net thread. look into fixing when rewritten
 int l_req_com(lua_State* L, char* req){
   lua_pushstring(L, "paths");
   lua_gettable(L, 1);
@@ -1066,6 +1123,23 @@ gen_reqs(TRACE);
 gen_reqs(PATCH);
 gen_reqs(all); //non standard lol, like expressjs 'use' keyword :3
 
+//https://stackoverflow.com/questions/12050072/how-to-wake-up-a-thread-being-blocked-by-select-poll-poll-function-from-anothe
+//something like this would make closeing safer
+int l_net_close(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct net_server_state* state = lua_touserdata(L, -1);
+
+  if(state->event_fd == -1){
+    state->event_fd = -2;
+  } else {
+    uint64_t v = NETEV_CLOSE_EVENT;
+    write(state->event_fd, &v, sizeof(uint64_t)); 
+  }
+
+  return 0;
+}
+
 int l_listen(lua_State* L){
 
   if(lua_gettop(L) != 2) {
@@ -1074,6 +1148,9 @@ int l_listen(lua_State* L){
   if(lua_type(L, 1) != LUA_TFUNCTION) {
     p_fatal("(arg:1) expected a function");
   }
+
+  struct net_server_state *state = malloc(sizeof * state);
+  state->event_fd = -1;
 
   int port = luaL_checkinteger(L, 2);
   
@@ -1090,16 +1167,20 @@ int l_listen(lua_State* L){
   luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
   luaI_tsetcf(L, mt, "all", l_allq);
     
+  luaI_tsetcf(L, mt, "close", l_net_close);
   luaI_tsetv(L, mt, "port", 2);
 
   parray_t* paths = parray_init();
   luaI_tsetlud(L, mt, "paths", paths);
+  luaI_tsetlud(L, mt, "_", state);
 
   lua_pushvalue(L, 1); //the function
   lua_pushvalue(L, mt); //the server table
 
   lua_pcall(L, 1, 0, 0);
 
-  start_serv(L, port, paths);
-  return 0;
+  if(state->event_fd == -2) luaI_error(L, -2, "closed"); 
+
+  return start_serv(L, port, paths, state);
+;
 }

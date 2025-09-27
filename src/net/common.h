@@ -36,7 +36,7 @@ struct file_parse {
 };
 
 typedef struct {
-  int fd;
+  int fd, ser;
   int port;
   lua_State* L;
   struct sockaddr_in cli;
@@ -49,11 +49,23 @@ struct lchar {
   char req[20];
 };
 
+struct net_server_state {
+  int event_fd;
+};
+
 struct sarray_t {
   struct lchar** cs;
   int len;
 };
 
 extern map_t* mime_type;
+
+int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*);
+
+enum {
+  NETEV_NULL = 0,
+  NETEV_DEFAULT = 1,
+  NETEV_CLOSE_EVENT = 2,
+};
 
 #endif
