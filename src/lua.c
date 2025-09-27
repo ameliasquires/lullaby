@@ -51,7 +51,7 @@ int _stream_read(lua_State* L){
   }
   
   lua_pushlstring(L, cont->c, cont->len);
-  free(cont);
+  str_free(cont);
   return 1;
 }
 
@@ -184,6 +184,9 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
             break;
         case LUA_TBOOLEAN:
             lua_pushboolean(dest, lua_toboolean(src, -1));
+            break;
+        case LUA_TNIL:
+            lua_pushnil(dest);
             break;
         case LUA_TSTRING:;
             size_t slen;
@@ -403,6 +406,7 @@ void luaI_copyvars(lua_State* from, lua_State* to){
 
   env_table(from, x != 0);
   luaI_deepcopy(from, to, SKIP_GC | SKIP_LOCALS);
+  lua_pop(from, 1);
   int idx = lua_gettop(to);
   lua_pushglobaltable(to);
   int tidx = lua_gettop(to);

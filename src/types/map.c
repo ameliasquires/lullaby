@@ -32,15 +32,19 @@ map_t* map_init(){
     return map_initl(4);
 }
 
+//TODO: make this better:3
 void map_expand(map_t** _M){
     map_t* M = *_M;
     map_t* remade = map_initl(M->mod * 4);
     for(int i = 0; i != M->mod; i++){
         //what happens if the map_set calls map_regraph??? idk
-        if(M->M[i].used)
-            map_set(&remade, M->M[i].key->c, M->M[i].value);
+        if(M->M[i].used){
+          map_set(&remade, M->M[i].key->c, M->M[i].value);
+          str_free(M->M[i].key);
+        }
     }
 
+    map_lclear(M);
     *_M = remade;
 }
 
