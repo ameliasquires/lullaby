@@ -47,9 +47,9 @@ llby.net.listen(function(server)
 end, 80)
 ```
 
-### server:close **
+### server:close
 
-closes server
+closes server, will not halt other already accepted requests
 
 ### server:GET/POST/...
 

@@ -125,6 +125,10 @@ function server_table.PATCH(T, route, callback) end
 ---@param callback fun(res: res-table, req: req-table)
 function server_table.all(T, route, callback) end
 
+---sends a signal to stop accepting requests, server will shutdown, but already accepted ones will still continue
+---@param T server-table
+function server_table.close(T) end
+
 ---@param server server-table
 local function listen_callback(server) end
 
