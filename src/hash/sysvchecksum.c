@@ -41,12 +41,12 @@ int l_sysvchecksum_final(lua_State* L){
   lua_pushstring(L, digest);
   return 1;
 }
- 
+
 int l_sysvchecksum(lua_State* L){
   if(lua_gettop(L) == 0) return l_sysvchecksum_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[16];
 
   uint16_t u = sysvchecksum(a, len);

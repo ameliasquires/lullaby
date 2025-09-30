@@ -1,10 +1,10 @@
 #include "../lua.h"
 
 struct sha256_hash {
-    uint8_t* buffer;
-    size_t bufflen;
-    uint64_t total;
-    uint32_t h0, h1, h2, h3, h4, h5, h6, h7;
+  uint8_t* buffer;
+  size_t bufflen;
+  uint64_t total;
+  uint32_t h0, h1, h2, h3, h4, h5, h6, h7;
 };
 
 int l_sha256(lua_State*);

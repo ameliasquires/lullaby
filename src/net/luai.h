@@ -9,6 +9,6 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content, si
  * @param {char*} response buffer
  * @param {str*} response header Content-Type value
  * @return {int} lua index of table
-*/
+ */
 int rolling_file_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer, str* content_type, size_t blen, struct file_parse* _content);
 

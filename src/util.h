@@ -26,10 +26,10 @@
 #define lesser(A,B) ((A)>(B)?(B):(A))
 #define inter(V,I) (I * ceil((double)V / I))
 #define time_start(name)\
-    clock_t _begin##name = clock();
+  clock_t _begin##name = clock();
 #define time_end(desc, name)\
-    clock_t _end##name = clock();\
-    printf("%s took %f\n",desc, (double)(_end##name - _begin##name) / CLOCKS_PER_SEC);
+  clock_t _end##name = clock();\
+  printf("%s took %f\n",desc, (double)(_end##name - _begin##name) / CLOCKS_PER_SEC);
 
 int gen_parse(char*,int, parray_t**);
 

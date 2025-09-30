@@ -7,16 +7,16 @@
 #include "parray.h"
 
 typedef struct {
-    void* value;
-    str* key;
-    uint64_t hash;
-    int used;
+  void* value;
+  str* key;
+  uint64_t hash;
+  int used;
 } melem_t;
 
 typedef struct {
-    melem_t* M;
-    int len;
-    int mod;
+  melem_t* M;
+  int len;
+  int mod;
 } map_t;
 
 map_t* map_init();

@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 struct xor8_hash {
-    uint8_t a;
+  uint8_t a;
 };
 
 struct xor8_hash xor8_init();

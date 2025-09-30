@@ -10,7 +10,7 @@ int l_write(lua_State* L){
   lua_gettable(L, -2);
 
   int head = strcmp(luaL_checkstring(L, -1), "HEAD") == 0;
-  
+
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
@@ -20,7 +20,7 @@ int l_write(lua_State* L){
 
   size_t len;
   char* content = (char*)luaL_checklstring(L, 2, &len);
-  
+
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "header");
   lua_gettable(L, -2);
@@ -54,7 +54,7 @@ int l_send(lua_State* L){
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
   int client_fd = luaL_checkinteger(L, -1);
-  
+
   client_fd_errors(client_fd);
 
   size_t len;
@@ -76,7 +76,7 @@ int l_send(lua_State* L){
     i_write_header(L, header, &resp, content, len);
 
   send(client_fd, resp->c, resp->len, MSG_NOSIGNAL);
-  
+
   //
   lua_pushstring(L, "client_fd");
   lua_pushinteger(L, -1);
@@ -89,7 +89,7 @@ int l_send(lua_State* L){
 
 int l_close(lua_State* L){
   int res_idx = 1;
-  
+
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
@@ -143,7 +143,7 @@ int l_roll(lua_State* L){
   lua_gettable(L, 1);
   int client_fd = luaL_checkinteger(L, -1);
   client_fd_errors(client_fd);
-  
+
   fd_set rfd;
   FD_ZERO(&rfd);
   FD_SET(client_fd, &rfd);
@@ -209,7 +209,7 @@ int l_sendfile(lua_State* L){
     lua_gettable(L, 3);
     if(!lua_isnil(L, -1)) filename = (char*)lua_tostring(L, -1);
   }
-  
+
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
@@ -236,7 +236,7 @@ int l_sendfile(lua_State* L){
     char* content_type = map_get(mime_type, ext + 1);
 
     if(content_type) 
-      {luaI_tsets(L, header, "Content-Type", content_type);}
+    {luaI_tsets(L, header, "Content-Type", content_type);}
   }
 
   char* buffer = calloc(sizeof* buffer, bsize + 1);
@@ -244,7 +244,7 @@ int l_sendfile(lua_State* L){
   fseek(fp, 0L, SEEK_END);
   size_t sz = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
-  
+
   char size[256];
   sprintf(size, "%li", sz);
   luaI_tsets(L, header, "Content-Length", size);

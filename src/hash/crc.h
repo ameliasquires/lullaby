@@ -2,15 +2,15 @@
 #include <stdint.h>
 
 struct crc32_hash {
-    uint32_t crc;
+  uint32_t crc;
 };
 
 struct crc16_hash {
-    uint16_t crc;
+  uint16_t crc;
 };
 
 struct crc8_hash {
-    uint8_t crc;
+  uint8_t crc;
 };
 
 uint8_t crc8(uint8_t*, size_t len);

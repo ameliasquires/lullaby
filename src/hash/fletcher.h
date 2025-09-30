@@ -2,15 +2,15 @@
 #include <stdint.h>
 
 struct fletcher8_hash {
-    uint8_t s1, s2;
+  uint8_t s1, s2;
 };
 
 struct fletcher16_hash {
-    uint16_t s1, s2;
+  uint16_t s1, s2;
 };
 
 struct fletcher32_hash {
-    uint32_t s1, s2;
+  uint32_t s1, s2;
 };
 
 uint8_t fletcher8(uint8_t*,size_t);

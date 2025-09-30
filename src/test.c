@@ -5,7 +5,7 @@
 int ld_match(lua_State* L){
   parray_t* a = parray_init();
   int o = match_param((char*)lua_tostring(L, 1), (char*)lua_tostring(L, 2), a);
-  
+
   if(o == 0){
     lua_pushinteger(L, o);
     return 1;
@@ -25,9 +25,9 @@ int ld_match(lua_State* L){
 
 int l_stack_dump(lua_State* L){
   /*StkId a = L->top.p-2;
-  printf("%i %i\n", ttype(s2v(a)), LUA_TSTRING); 
-  printf("is string? %i\n", ttisstring(&a->val));
-  printf("%s\n", tsvalue(&a->val)->contents);*/
+    printf("%i %i\n", ttype(s2v(a)), LUA_TSTRING); 
+    printf("is string? %i\n", ttisstring(&a->val));
+    printf("%s\n", tsvalue(&a->val)->contents);*/
   //int level = 0;
   //lua_lock(L);
   //for(CallInfo* ci = L->ci; ci != &L->base_ci; ci = ci->previous) level++;

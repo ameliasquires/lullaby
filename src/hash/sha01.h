@@ -8,7 +8,7 @@
  * @param {char*} output stream
  * @param {const char*} input bytes
  * @return {void}
-*/
+ */
 void i_sha01(uint8_t, char*, int, const char*);
 
 int l_sha1(lua_State*);

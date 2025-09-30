@@ -12,8 +12,8 @@ struct fletcher8_hash fletcher8_init(){
 
 void fletcher8_update(uint8_t *aa, size_t len, struct fletcher8_hash *hash){
   for(int i = 0; i != len; i++){
-      hash->s1 = (hash->s1 + aa[i]) % 15;
-      hash->s2 = (hash->s2 + hash->s1) % 15;
+    hash->s1 = (hash->s1 + aa[i]) % 15;
+    hash->s2 = (hash->s2 + hash->s1) % 15;
   }
 }
 
@@ -33,8 +33,8 @@ struct fletcher16_hash fletcher16_init(){
 
 void fletcher16_update(uint8_t *aa, size_t len, struct fletcher16_hash *hash){
   for(int i = 0; i != len; i++){
-      hash->s1 = (hash->s1 + aa[i]) % 255;
-      hash->s2 = (hash->s2 + hash->s1) % 255;
+    hash->s1 = (hash->s1 + aa[i]) % 255;
+    hash->s2 = (hash->s2 + hash->s1) % 255;
   }
 }
 
@@ -54,8 +54,8 @@ struct fletcher32_hash fletcher32_init(){
 
 void fletcher32_update(uint8_t *aa, size_t len, struct fletcher32_hash *hash){
   for(int i = 0; i != len; i++){
-      hash->s1 = (hash->s1 + aa[i]) % 65535;
-      hash->s2 = (hash->s2 + hash->s1) % 65535;
+    hash->s1 = (hash->s1 + aa[i]) % 65535;
+    hash->s2 = (hash->s2 + hash->s1) % 65535;
   }
 }
 
@@ -108,7 +108,7 @@ int l_fletcher32(lua_State* L){
   if(lua_gettop(L) == 0) return l_fletcher32_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[32];
 
   uint32_t u = fletcher32(a, len);
@@ -122,7 +122,7 @@ int l_fletcher16(lua_State* L){
   if(lua_gettop(L) == 0) return l_fletcher16_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[16];
 
   uint16_t u = fletcher16(a, len);
@@ -136,7 +136,7 @@ int l_fletcher8(lua_State* L){
   if(lua_gettop(L) == 0) return l_fletcher8_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[8];
 
   uint8_t u = fletcher8(a, len);

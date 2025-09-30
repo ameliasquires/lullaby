@@ -19,18 +19,18 @@
 #define wtf(b) (b[0] << 24)&0xff000000 | (b[1] << 16)&0xff0000 | (b[2] << 8)&0xff00 | b[3]&0xff
 
 struct blake256_hash {
-    uint8_t* buffer;
-    size_t bufflen;
-    uint32_t total, *hash;
-    uint64_t compressed;
+  uint8_t* buffer;
+  size_t bufflen;
+  uint32_t total, *hash;
+  uint64_t compressed;
 };
 #define blake224_hash blake256_hash
 
 struct blake512_hash {
-    uint8_t* buffer;
-    size_t bufflen;
-    uint64_t total, *hash;
-    uint64_t compressed;
+  uint8_t* buffer;
+  size_t bufflen;
+  uint64_t total, *hash;
+  uint64_t compressed;
 };
 #define blake384_hash blake512_hash
 

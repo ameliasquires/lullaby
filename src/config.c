@@ -83,7 +83,7 @@ int m_config_newindex(lua_State* L){
 int i_config_metatable(lua_State* L, struct config* conf){
   int idx = lua_gettop(L);
   luaI_tsetlud(L, idx, "_config", conf);
-  
+
   lua_newtable(L);
   int meta_idx = lua_gettop(L);
   luaI_tsetcf(L, meta_idx, "__index", m_config_index);

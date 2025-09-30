@@ -11,11 +11,11 @@
 #include "table.h"
 
 struct thread_info {
-    str* function;
-    lua_State* L;
-    int return_count, done;
-    pthread_t tid;
-    pthread_mutex_t* lock;
+  str* function;
+  lua_State* L;
+  int return_count, done;
+  pthread_t tid;
+  pthread_mutex_t* lock;
 };
 
 #include "io.h"
@@ -34,55 +34,55 @@ void lib_thread_clean(){
       free(thread_locks->arr[i].value);
     }
   }
-      
+
   larray_clear(thread_locks);
 }
 int l_tlock(lua_State* L){
-    int idx = luaL_checkinteger(L, 1);
+  int idx = luaL_checkinteger(L, 1);
 
-    pthread_mutex_lock(&thread_lock_lock);
-    //pthread_mutex_lock(&thread_priority_lock);
-    //pthread_mutex_unlock(&thread_priority_lock);
-    pthread_mutex_t mutex;
-    if(thread_locks == NULL) thread_locks = larray_init();
-    int i = 0;
-    if((i = larray_geti(thread_locks, idx)) == -1){
-        pthread_mutex_init(&mutex, NULL);
-        pthread_mutex_lock(&mutex);
-        pthread_mutex_t* mp = malloc(sizeof * mp);
-        *mp = mutex;
-        larray_set(&thread_locks, idx, (void*)mp);
-    } else {
-        pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
-        pthread_mutex_lock(&thread_priority_lock);
-    
-        pthread_mutex_unlock(&thread_lock_lock);
-        pthread_mutex_lock(m);
-        pthread_mutex_lock(&thread_lock_lock);
+  pthread_mutex_lock(&thread_lock_lock);
+  //pthread_mutex_lock(&thread_priority_lock);
+  //pthread_mutex_unlock(&thread_priority_lock);
+  pthread_mutex_t mutex;
+  if(thread_locks == NULL) thread_locks = larray_init();
+  int i = 0;
+  if((i = larray_geti(thread_locks, idx)) == -1){
+    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_lock(&mutex);
+    pthread_mutex_t* mp = malloc(sizeof * mp);
+    *mp = mutex;
+    larray_set(&thread_locks, idx, (void*)mp);
+  } else {
+    pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
+    pthread_mutex_lock(&thread_priority_lock);
 
-        pthread_mutex_unlock(&thread_priority_lock);
-        thread_locks->arr[i].value = (void*)m;
-
-    }
-    
     pthread_mutex_unlock(&thread_lock_lock);
-    return 0;
+    pthread_mutex_lock(m);
+    pthread_mutex_lock(&thread_lock_lock);
+
+    pthread_mutex_unlock(&thread_priority_lock);
+    thread_locks->arr[i].value = (void*)m;
+
+  }
+
+  pthread_mutex_unlock(&thread_lock_lock);
+  return 0;
 }
 
 int l_tunlock(lua_State* L){
-    int idx = luaL_checkinteger(L, 1);
+  int idx = luaL_checkinteger(L, 1);
 
-    pthread_mutex_lock(&thread_lock_lock);
-    int i = 0;
-    if(thread_locks != NULL && (i = larray_geti(thread_locks, idx)) != -1){
-        pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
+  pthread_mutex_lock(&thread_lock_lock);
+  int i = 0;
+  if(thread_locks != NULL && (i = larray_geti(thread_locks, idx)) != -1){
+    pthread_mutex_t *m = (pthread_mutex_t*)thread_locks->arr[i].value;
 
-        pthread_mutex_unlock(m);
-        thread_locks->arr[i].value = (void*)m;
-    }
+    pthread_mutex_unlock(m);
+    thread_locks->arr[i].value = (void*)m;
+  }
 
-    pthread_mutex_unlock(&thread_lock_lock);
-    return 0;
+  pthread_mutex_unlock(&thread_lock_lock);
+  return 0;
 }
 
 int _mutex_lock(lua_State* L){
@@ -145,27 +145,27 @@ int l_mutex(lua_State* L){
 }
 
 int l_res(lua_State* L){
-    int return_count = lua_gettop(L) - 1;
-    lua_pushstring(L, "_");
-    lua_gettable(L, 1);
-    struct thread_info* info = lua_touserdata(L, -1);
-    info->return_count = return_count;
+  int return_count = lua_gettop(L) - 1;
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
+  info->return_count = return_count;
 
-    for(int i = info->return_count - 1; i != -1; i--){
-        int ot = lua_gettop(L);
+  for(int i = info->return_count - 1; i != -1; i--){
+    int ot = lua_gettop(L);
 
-        lua_pushvalue(L, 2 + i);
-        luaI_deepcopy(L, info->L, 0);
+    lua_pushvalue(L, 2 + i);
+    luaI_deepcopy(L, info->L, 0);
 
-        lua_settop(L, ot);
-    }
-    
-    pthread_mutex_unlock(&*info->lock);
+    lua_settop(L, ot);
+  }
 
-    pthread_exit(NULL);
-    p_error("thread did not exit");
+  pthread_mutex_unlock(&*info->lock);
 
-    return 1;
+  pthread_exit(NULL);
+  p_error("thread did not exit");
+
+  return 1;
 }
 
 void* handle_thread(void* _args){
@@ -204,7 +204,7 @@ int _thread_await(lua_State* L){
   struct thread_info* info = lua_touserdata(L, -1);
 
   if(info->L == NULL) luaI_error(L, -1, "thread was already closed")
-  if(!info->done) pthread_mutex_lock(&*info->lock);
+    if(!info->done) pthread_mutex_lock(&*info->lock);
   info->done = 1;
 
   env_table(info->L, 0);
@@ -216,20 +216,20 @@ int _thread_await(lua_State* L){
   lua_setglobal(L, "_locals");
 
   for(int i = 0; i != info->return_count; i++){
-      int ot = lua_gettop(info->L);
+    int ot = lua_gettop(info->L);
 
-      lua_pushvalue(info->L, ot - info->return_count + i);
+    lua_pushvalue(info->L, ot - info->return_count + i);
 
-      luaI_deepcopy(info->L, L, 0);
-     
-      int type = lua_type(info->L, ot - info->return_count + i);
-      if(type == LUA_TTABLE || type == LUA_TUSERDATA){
-        lua_getmetatable(info->L, ot - info->return_count + i);
-        int idx = lua_gettop(info->L);
-        luaI_tsetnil(info->L, idx, "__gc");
-      }
+    luaI_deepcopy(info->L, L, 0);
 
-      lua_settop(info->L, ot);
+    int type = lua_type(info->L, ot - info->return_count + i);
+    if(type == LUA_TTABLE || type == LUA_TUSERDATA){
+      lua_getmetatable(info->L, ot - info->return_count + i);
+      int idx = lua_gettop(info->L);
+      luaI_tsetnil(info->L, idx, "__gc");
+    }
+
+    lua_settop(info->L, ot);
   }
 
   lua_pushnil(L);
@@ -251,7 +251,7 @@ int _thread_clean(lua_State* L){
     lua_close(info->L);
 
     info->L = NULL;
-     
+
     pthread_mutex_destroy(&*info->lock);
     free(info->lock);
     pthread_cancel(info->tid);
@@ -276,18 +276,18 @@ int l_async(lua_State* oL){
 
   luaL_openlibs(L);
   luaI_copyvars(oL, L);
-  
+
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
   args->lock = malloc(sizeof * args->lock);
   pthread_mutex_init(&*args->lock, NULL);
   pthread_mutex_lock(&*args->lock);
   args->return_count = 0;
-  
+
   args->function = str_init("");
   lua_pushvalue(oL, 1);
   lua_dump(oL, writer, (void*)args->function, 0);
- 
+
   pthread_create(&args->tid, NULL, handle_thread, (void*)args);
 
   lua_newtable(oL);
@@ -343,7 +343,7 @@ int _buffer_mod(lua_State* L){
   //printf("%p\n", &*buffer->lock);
   assert(used == 0);
   used = 1;
-  
+
   luaI_deepcopy(buffer->L, L, SKIP_GC | SKIP_LOCALS);
   int item = lua_gettop(L);
   lua_pushvalue(L, 2);
@@ -412,7 +412,7 @@ int meta_proxy(lua_State* L){
   lua_getmetatable(buffer->L, 1);
   lua_pushstring(buffer->L, lua_tostring(L, 2));
   lua_gettable(buffer->L, 2);
-  
+
   lua_pushvalue(buffer->L, 1);
 
   int count = 0;
@@ -438,7 +438,7 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
 
   lua_pushcfunction(L, meta_proxy); 
   lua_setglobal(L, "__proxy_call");
-  
+
   lua_pushlightuserdata(L, buffer);
   lua_setglobal(L, "__this_obj");
 
@@ -453,7 +453,7 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
     char* fn = calloc(128, sizeof * fn); 
     const char* key = lua_tostring(L, k);
     sprintf(fn, "return function(...)\
-return __proxy_call(__this_obj,'%s',...);end", key);
+        return __proxy_call(__this_obj,'%s',...);end", key);
     luaL_dostring(L, fn);
 
     free(fn);
@@ -508,7 +508,7 @@ int l_buffer(lua_State* L){
 }
 
 void _lua_getfenv(lua_State* L){
-  
+
 }
 
 int l_testcopy(lua_State* L){ 

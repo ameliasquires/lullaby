@@ -2,7 +2,7 @@
 #include "stdint.h"
 
 enum fnv_version {
-    v_1, v_a, v_0
+  v_1, v_a, v_0
 };
 
 struct fnv_1_hash {

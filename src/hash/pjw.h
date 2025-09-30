@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 struct pjw_hash {
-    uint32_t hash, high;
+  uint32_t hash, high;
 };
 
 struct pjw_hash pjw_init();

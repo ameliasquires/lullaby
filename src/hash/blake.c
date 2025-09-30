@@ -88,65 +88,65 @@ void compress256(uint32_t* hash, char *block, uint64_t compressed){
 
 #define bs 64
 struct blake256_hash blake256_init(){
-    struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs);
-    a.hash = calloc(sizeof * a.hash, 8);
-    a.hash[0] = 0x6a09e667;
-    a.hash[1] = 0xbb67ae85;
-    a.hash[2] = 0x3c6ef372;
-    a.hash[3] = 0xa54ff53a;
-    a.hash[4] = 0x510e527f;
-    a.hash[5] = 0x9b05688c;
-    a.hash[6] = 0x1f83d9ab;
-    a.hash[7] = 0x5be0cd19;
-    return a;
+  struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs);
+  a.hash = calloc(sizeof * a.hash, 8);
+  a.hash[0] = 0x6a09e667;
+  a.hash[1] = 0xbb67ae85;
+  a.hash[2] = 0x3c6ef372;
+  a.hash[3] = 0xa54ff53a;
+  a.hash[4] = 0x510e527f;
+  a.hash[5] = 0x9b05688c;
+  a.hash[6] = 0x1f83d9ab;
+  a.hash[7] = 0x5be0cd19;
+  return a;
 }
 
 struct blake256_hash blake256_init_l(lua_State* L){
-    struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs);
-    a.hash = calloc(sizeof * a.hash, 8);
-    memset(a.buffer, 0, bs);
-    a.hash[0] = 0x6a09e667;
-    a.hash[1] = 0xbb67ae85;
-    a.hash[2] = 0x3c6ef372;
-    a.hash[3] = 0xa54ff53a;
-    a.hash[4] = 0x510e527f;
-    a.hash[5] = 0x9b05688c;
-    a.hash[6] = 0x1f83d9ab;
-    a.hash[7] = 0x5be0cd19;
-    return a;
+  struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs);
+  a.hash = calloc(sizeof * a.hash, 8);
+  memset(a.buffer, 0, bs);
+  a.hash[0] = 0x6a09e667;
+  a.hash[1] = 0xbb67ae85;
+  a.hash[2] = 0x3c6ef372;
+  a.hash[3] = 0xa54ff53a;
+  a.hash[4] = 0x510e527f;
+  a.hash[5] = 0x9b05688c;
+  a.hash[6] = 0x1f83d9ab;
+  a.hash[7] = 0x5be0cd19;
+  return a;
 }
 
 struct blake256_hash blake224_init(){
-    struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs);
-    a.hash = calloc(sizeof * a.hash, 8);
-    a.hash[0] = 0xc1059ed8;
-    a.hash[1] = 0x367cd507;
-    a.hash[2] = 0x3070dd17;
-    a.hash[3] = 0xf70e5939;
-    a.hash[4] = 0xffc00b31;
-    a.hash[5] = 0x68581511;
-    a.hash[6] = 0x64f98fa7;
-    a.hash[7] = 0xbefa4fa4;
-    return a;
+  struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs);
+  a.hash = calloc(sizeof * a.hash, 8);
+  a.hash[0] = 0xc1059ed8;
+  a.hash[1] = 0x367cd507;
+  a.hash[2] = 0x3070dd17;
+  a.hash[3] = 0xf70e5939;
+  a.hash[4] = 0xffc00b31;
+  a.hash[5] = 0x68581511;
+  a.hash[6] = 0x64f98fa7;
+  a.hash[7] = 0xbefa4fa4;
+  return a;
 }
 
 struct blake256_hash blake224_init_l(lua_State* L){
-    struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs);
-    a.hash = calloc(sizeof * a.hash, 8);
-    memset(a.buffer, 0, bs);
-    a.hash[0] = 0xc1059ed8;
-    a.hash[1] = 0x367cd507;
-    a.hash[2] = 0x3070dd17;
-    a.hash[3] = 0xf70e5939;
-    a.hash[4] = 0xffc00b31;
-    a.hash[5] = 0x68581511;
-    a.hash[6] = 0x64f98fa7;
-    a.hash[7] = 0xbefa4fa4;
-    return a;
+  struct blake256_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs);
+  a.hash = calloc(sizeof * a.hash, 8);
+  memset(a.buffer, 0, bs);
+  a.hash[0] = 0xc1059ed8;
+  a.hash[1] = 0x367cd507;
+  a.hash[2] = 0x3070dd17;
+  a.hash[3] = 0xf70e5939;
+  a.hash[4] = 0xffc00b31;
+  a.hash[5] = 0x68581511;
+  a.hash[6] = 0x64f98fa7;
+  a.hash[7] = 0xbefa4fa4;
+  return a;
 }
 
 int blake256_free_l(lua_State* L){
@@ -250,7 +250,7 @@ void blake224_final(struct blake256_hash* hash, char* out_stream){
   for(int i = 0; i != 7; i++){
     sprintf(out_stream + i * 8, "%08x",(hash->hash)[i]);
   }
-  
+
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs);
   memcpy(hash->hash, hhash, sizeof * hhash * 8);
@@ -285,7 +285,7 @@ void blake224(char *out, char *in, uint64_t inlen){
 void compress512(uint64_t* hash, uint8_t *block, uint64_t compressed){
   uint64_t v[16], m[16], i;
 
-   for( i = 0; i < 16; ++i )  m[i] = U8TO64_BIG( block + i * 8 );
+  for( i = 0; i < 16; ++i )  m[i] = U8TO64_BIG( block + i * 8 );
 
   for(int i = 0; i < 8; i++)  v[i] = hash[i];
 
@@ -308,7 +308,7 @@ void compress512(uint64_t* hash, uint8_t *block, uint64_t compressed){
     blake_round_512(1, 6, 11, 12, 10);
     blake_round_512(2, 7, 8, 13, 12);
     blake_round_512(3, 4, 9, 14, 14);
-    
+
   }
 
   for(int i = 0; i < 16; i++)  hash[i % 8] ^= v[i];
@@ -318,65 +318,65 @@ void compress512(uint64_t* hash, uint8_t *block, uint64_t compressed){
 #define bs_2 128
 
 struct blake512_hash blake512_init(){
-    struct blake512_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs_2);
-    a.hash = calloc(sizeof * a.hash, 8);
-    a.hash[0] = 0x6a09e667f3bcc908ULL;
-    a.hash[1] = 0xbb67ae8584caa73bULL;
-    a.hash[2] = 0x3c6ef372fe94f82bULL;
-    a.hash[3] = 0xa54ff53a5f1d36f1ULL;
-    a.hash[4] = 0x510e527fade682d1ULL;
-    a.hash[5] = 0x9b05688c2b3e6c1fULL;
-    a.hash[6] = 0x1f83d9abfb41bd6bULL;
-    a.hash[7] = 0x5be0cd19137e2179ULL;
-    return a;
+  struct blake512_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs_2);
+  a.hash = calloc(sizeof * a.hash, 8);
+  a.hash[0] = 0x6a09e667f3bcc908ULL;
+  a.hash[1] = 0xbb67ae8584caa73bULL;
+  a.hash[2] = 0x3c6ef372fe94f82bULL;
+  a.hash[3] = 0xa54ff53a5f1d36f1ULL;
+  a.hash[4] = 0x510e527fade682d1ULL;
+  a.hash[5] = 0x9b05688c2b3e6c1fULL;
+  a.hash[6] = 0x1f83d9abfb41bd6bULL;
+  a.hash[7] = 0x5be0cd19137e2179ULL;
+  return a;
 }
 
 struct blake512_hash blake512_init_l(lua_State* L){
-    struct blake512_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs_2);
-    a.hash = calloc(sizeof * a.hash, 8);
-    memset(a.buffer, 0, bs_2);
-    a.hash[0] = 0x6a09e667f3bcc908ULL;
-    a.hash[1] = 0xbb67ae8584caa73bULL;
-    a.hash[2] = 0x3c6ef372fe94f82bULL;
-    a.hash[3] = 0xa54ff53a5f1d36f1ULL;
-    a.hash[4] = 0x510e527fade682d1ULL;
-    a.hash[5] = 0x9b05688c2b3e6c1fULL;
-    a.hash[6] = 0x1f83d9abfb41bd6bULL;
-    a.hash[7] = 0x5be0cd19137e2179ULL;
-    return a;
+  struct blake512_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs_2);
+  a.hash = calloc(sizeof * a.hash, 8);
+  memset(a.buffer, 0, bs_2);
+  a.hash[0] = 0x6a09e667f3bcc908ULL;
+  a.hash[1] = 0xbb67ae8584caa73bULL;
+  a.hash[2] = 0x3c6ef372fe94f82bULL;
+  a.hash[3] = 0xa54ff53a5f1d36f1ULL;
+  a.hash[4] = 0x510e527fade682d1ULL;
+  a.hash[5] = 0x9b05688c2b3e6c1fULL;
+  a.hash[6] = 0x1f83d9abfb41bd6bULL;
+  a.hash[7] = 0x5be0cd19137e2179ULL;
+  return a;
 }
 
 struct blake384_hash blake384_init(){
-    struct blake384_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs_2);
-    a.hash = calloc(sizeof * a.hash, 8);
-    a.hash[0] = 0xcbbb9d5dc1059ed8ULL;
-    a.hash[1] = 0x629a292a367cd507ULL;
-    a.hash[2] = 0x9159015a3070dd17ULL;
-    a.hash[3] = 0x152fecd8f70e5939ULL;
-    a.hash[4] = 0x67332667ffc00b31ULL;
-    a.hash[5] = 0x8eb44a8768581511ULL;
-    a.hash[6] = 0xdb0c2e0d64f98fa7ULL;
-    a.hash[7] = 0x47b5481dbefa4fa4ULL;
-    return a;
+  struct blake384_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs_2);
+  a.hash = calloc(sizeof * a.hash, 8);
+  a.hash[0] = 0xcbbb9d5dc1059ed8ULL;
+  a.hash[1] = 0x629a292a367cd507ULL;
+  a.hash[2] = 0x9159015a3070dd17ULL;
+  a.hash[3] = 0x152fecd8f70e5939ULL;
+  a.hash[4] = 0x67332667ffc00b31ULL;
+  a.hash[5] = 0x8eb44a8768581511ULL;
+  a.hash[6] = 0xdb0c2e0d64f98fa7ULL;
+  a.hash[7] = 0x47b5481dbefa4fa4ULL;
+  return a;
 }
 
 struct blake384_hash blake384_init_l(lua_State* L){
-    struct blake384_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
-    a.buffer = calloc(sizeof * a.buffer, bs_2);
-    a.hash = calloc(sizeof * a.hash, 8);
-    memset(a.buffer, 0, bs_2);
-    a.hash[0] = 0xcbbb9d5dc1059ed8ULL;
-    a.hash[1] = 0x629a292a367cd507ULL;
-    a.hash[2] = 0x9159015a3070dd17ULL;
-    a.hash[3] = 0x152fecd8f70e5939ULL;
-    a.hash[4] = 0x67332667ffc00b31ULL;
-    a.hash[5] = 0x8eb44a8768581511ULL;
-    a.hash[6] = 0xdb0c2e0d64f98fa7ULL;
-    a.hash[7] = 0x47b5481dbefa4fa4ULL;
-    return a;
+  struct blake384_hash a = {.bufflen = 0, .total = 0, .compressed = 0};
+  a.buffer = calloc(sizeof * a.buffer, bs_2);
+  a.hash = calloc(sizeof * a.hash, 8);
+  memset(a.buffer, 0, bs_2);
+  a.hash[0] = 0xcbbb9d5dc1059ed8ULL;
+  a.hash[1] = 0x629a292a367cd507ULL;
+  a.hash[2] = 0x9159015a3070dd17ULL;
+  a.hash[3] = 0x152fecd8f70e5939ULL;
+  a.hash[4] = 0x67332667ffc00b31ULL;
+  a.hash[5] = 0x8eb44a8768581511ULL;
+  a.hash[6] = 0xdb0c2e0d64f98fa7ULL;
+  a.hash[7] = 0x47b5481dbefa4fa4ULL;
+  return a;
 }
 
 int blake512_free_l(lua_State* L){
@@ -528,17 +528,17 @@ int l_blake256_final(lua_State* L){
 }
 
 int l_blake256(lua_State* L){
-    if(lua_gettop(L) == 0) return l_blake256_init(L);
-    size_t len = 0;
-    uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
+  if(lua_gettop(L) == 0) return l_blake256_init(L);
+  size_t len = 0;
+  uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
-    char digest[257] = {0};
+  char digest[257] = {0};
 
-    blake256(digest, (char*)a, len);
+  blake256(digest, (char*)a, len);
 
-    lua_pushstring(L, digest);
+  lua_pushstring(L, digest);
 
-    return 1;
+  return 1;
 }
 
 int l_blake224_clone(lua_State* L){
@@ -569,17 +569,17 @@ int l_blake224_final(lua_State* L){
 }
 
 int l_blake224(lua_State* L){
-    if(lua_gettop(L) == 0) return l_blake224_init(L);
-    size_t len = 0;
-    char* a = (char*)luaL_checklstring(L, 1, &len);
+  if(lua_gettop(L) == 0) return l_blake224_init(L);
+  size_t len = 0;
+  char* a = (char*)luaL_checklstring(L, 1, &len);
 
-    char digest[257] = {0};
+  char digest[257] = {0};
 
-    blake224(digest, (char*)a, len);
+  blake224(digest, (char*)a, len);
 
-    lua_pushstring(L, digest);
+  lua_pushstring(L, digest);
 
-    return 1;
+  return 1;
 }
 
 int l_blake512_clone(lua_State* L){
@@ -610,18 +610,18 @@ int l_blake512_final(lua_State* L){
 }
 
 int l_blake512(lua_State* L){
-    if(lua_gettop(L) == 0) return l_blake512_init(L);
-    size_t len = 0;
-    uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
+  if(lua_gettop(L) == 0) return l_blake512_init(L);
+  size_t len = 0;
+  uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
-    char digest[513] = {0};
-    //memset(digest, 0, 513);
+  char digest[513] = {0};
+  //memset(digest, 0, 513);
 
-    //blake512(digest, a, len, b512);
-    blake512(a, len, digest);
-    lua_pushstring(L, digest);
+  //blake512(digest, a, len, b512);
+  blake512(a, len, digest);
+  lua_pushstring(L, digest);
 
-    return 1;
+  return 1;
 }
 
 int l_blake384_clone(lua_State* L){
@@ -652,14 +652,14 @@ int l_blake384_final(lua_State* L){
 }
 
 int l_blake384(lua_State* L){
-    if(lua_gettop(L) == 0) return l_blake384_init(L);
-    size_t len = 0;
-    uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
+  if(lua_gettop(L) == 0) return l_blake384_init(L);
+  size_t len = 0;
+  uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
 
-    char digest[513] = {0};
+  char digest[513] = {0};
 
-    blake384(a, len, digest);
-    lua_pushstring(L, digest);
+  blake384(a, len, digest);
+  lua_pushstring(L, digest);
 
-    return 1;
+  return 1;
 }

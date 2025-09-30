@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 struct djb2_hash {
-    uint32_t hash;
+  uint32_t hash;
 };
 
 struct djb2_hash djb2_init();
