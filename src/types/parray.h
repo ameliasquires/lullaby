@@ -2,18 +2,20 @@
 #ifndef __PARRAY_H
 #define __PARRAY_H
 
+#include "str.h"
+
 typedef struct {
-    void* value;
-    str* key;
+  void* value;
+  str* key;
 } pelem_t;
 
 typedef struct {
-    pelem_t* P;
-    int len;
+  pelem_t* P;
+  int len;
 } parray_t;
 
 enum free_type {
-    NONE = 0, FREE = 1, STR = 2
+  NONE = 0, FREE = 1, STR = 2
 };
 
 parray_t* parray_init();

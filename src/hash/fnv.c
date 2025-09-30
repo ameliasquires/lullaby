@@ -51,14 +51,14 @@ lua_common_hash_init_ni(fnv_1, fnv_0, fnv_1_init(v_0), fnv_1_free_l);
 lua_common_hash_init_ni(fnv_1, fnv_a, fnv_1_init(v_a), fnv_1_free_l);
 
 #define aaa(v)\
-int l_fnv_##v##_final(lua_State* L){\
-  struct fnv_1_hash* a = (struct fnv_1_hash*)lua_touserdata(L, 1);\
-  uint64_t u = fnv_1_final(a);\
-  char digest[64];\
-  sprintf(digest,"%16"PRIx64,u);\
-  lua_pushstring(L, digest);\
-  return 1;\
-}
+  int l_fnv_##v##_final(lua_State* L){\
+    struct fnv_1_hash* a = (struct fnv_1_hash*)lua_touserdata(L, 1);\
+    uint64_t u = fnv_1_final(a);\
+    char digest[64];\
+    sprintf(digest,"%16"PRIx64,u);\
+    lua_pushstring(L, digest);\
+    return 1;\
+  }
 
 aaa(0);
 aaa(1);

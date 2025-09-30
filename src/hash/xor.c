@@ -26,22 +26,22 @@ uint8_t xor8(uint8_t* aa, size_t len){
 }
 
 common_hash_clone(xor8)
-common_hash_init_update(xor8);
+  common_hash_init_update(xor8);
 
-int l_xor8_final(lua_State* L){
-  struct xor8_hash* a = (struct xor8_hash*)lua_touserdata(L, 1);
-  uint8_t u = xor8_final(a);
-  char digest[8];
-  sprintf(digest,"%02x",u);
-  lua_pushstring(L, digest);
-  return 1;
-}
+  int l_xor8_final(lua_State* L){
+    struct xor8_hash* a = (struct xor8_hash*)lua_touserdata(L, 1);
+    uint8_t u = xor8_final(a);
+    char digest[8];
+    sprintf(digest,"%02x",u);
+    lua_pushstring(L, digest);
+    return 1;
+  }
 
 int l_xor8(lua_State* L){
   if(lua_gettop(L) == 0) return l_xor8_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[8];
 
   uint8_t u = xor8(a, len);

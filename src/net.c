@@ -93,7 +93,7 @@ int chunked_encoding_round(char* input, int length, struct chunked_encoding_stat
   for(int i = 0; i < length; i++){
     //printf("%i/%i\n", i, length);
     if(state->reading_length){
-    str_pushl(state->buffer, input + i, 1);
+      str_pushl(state->buffer, input + i, 1);
 
       if(state->buffer->len >= 2 && memmem(state->buffer->c + state->buffer->len - 2, 2, "\r\n", 2)){
 
@@ -123,9 +123,9 @@ int chunked_encoding_round(char* input, int length, struct chunked_encoding_stat
 
 struct url {
   str* proto,
-     * domain,
-     * port,
-     * path;
+    * domain,
+    * port,
+    * path;
 };
 
 struct url parse_url(char* url, int len){
@@ -204,7 +204,7 @@ int i_ws_read(lua_State* L){
   }
 
   if(len < 0) luaI_error(L, len, "SSL_read error");
- 
+
   uint64_t payload = 0;
   struct ws_frame_info frame_info = {.fin = (buffer[0] >> 7) & 1, .rsv1 = (buffer[0] >> 6) & 1,
     .rsv2 = (buffer[0] >> 5) & 1, .rsv3 = (buffer[0] >> 4) & 1, .opcode = buffer[0] & 0b1111,
@@ -225,8 +225,8 @@ int i_ws_read(lua_State* L){
     payload = (buffer[0] & 0xff) << 8 | (buffer[1] & 0xff);
   } else {
     for(; (len = SSL_read(data->ssl, buffer + total_len, 8 - total_len)) > 0;){
-        total_len += len;
-        if(total_len >= 8) break;
+      total_len += len;
+      if(total_len >= 8) break;
     }
 
     if(len < 0) luaI_error(L, -1, "SSL_read error");
@@ -248,7 +248,7 @@ int i_ws_read(lua_State* L){
     str_free(message);
     luaI_error(L, len, "SSL_read error");
   }
- 
+
   lua_newtable(L);
   int idx = lua_gettop(L);
   luaI_tsetsl(L, idx, "content", message->c, message->len);
@@ -375,7 +375,7 @@ int l_wss(lua_State* L){
   luaI_tsetcf(L, idx, "read", i_ws_read);
   luaI_tsetcf(L, idx, "write", i_ws_write);
   luaI_tsetcf(L, idx, "close", i_ws_close);
-  
+
   lua_newtable(L);
   int meta_idx = lua_gettop(L);
 
@@ -385,11 +385,11 @@ int l_wss(lua_State* L){
   lua_setmetatable(L, idx);
 
   lua_pushvalue(L, idx);
- 
+
   //verify stuff here
   //parray_t* owo = NULL;
   //parse_header(a->c, header_eof - a->c, &owo);
-  
+
   return 1;
 }
 
@@ -521,7 +521,7 @@ int _request(lua_State* L, struct request_state* state){
     state->ssl = ssl_connect(state->ctx, state->sock, host);
     if(state->ssl == NULL) luaI_error(L, -1, "ssl_connect error");
   }
- 
+
   char* cont = "";
   size_t cont_len = 0;
   if(params >= 2){
@@ -556,7 +556,7 @@ int _request(lua_State* L, struct request_state* state){
     str_push(header, lua_tostring(L, -1));
     lua_pop(L, 1);
   } 
-  
+
   char* action = "GET";
   if(params >= 4){
     action = (char*)lua_tostring(L, 4);
@@ -619,7 +619,7 @@ int _request(lua_State* L, struct request_state* state){
     lua_gettable(L, idx);
     int code = atoi(lua_tostring(L, -1));
     luaI_tseti(L, idx, "code", code);
-    
+
     void* encoding = parray_get(owo, "Transfer-Encoding");
 
     //struct _srequest_state *read_state = calloc(sizeof * read_state, 1);
@@ -635,7 +635,7 @@ int _request(lua_State* L, struct request_state* state){
 
         chunked_encoding_round(header_eof + 4, extra_len - 4, chunk_state);
         memset(buffer, 0, BUFFER_LEN);
-        
+
         state->buffer = str_init("");
         state->state = chunk_state; 
       }
@@ -654,11 +654,11 @@ int _request(lua_State* L, struct request_state* state){
   str_free(a);
 
   /*SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
-  SSL_shutdown(ssl);
-  SSL_free(ssl);
-  SSL_CTX_free(ctx);
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
 
-  close(sock);*/
+    close(sock);*/
   return 1;
 }
 
@@ -722,7 +722,7 @@ void* handle_client(void *_arg){
 
   int64_t bite = recv_header(client_fd, &buffer, &header);
   header_eof = header - buffer; 
-  
+
   if(bite > 0){
     parray_t* table;
 
@@ -749,7 +749,7 @@ void* handle_client(void *_arg){
       str* aa = str_init(portc);
       struct net_path_t parsed_path;
       path_parse(&parsed_path, path);
-      
+
       str* decoded_path;
       int decoded_err = percent_decode(parsed_path.path, &decoded_path);
       larray_t* params = NULL;
@@ -762,7 +762,7 @@ void* handle_client(void *_arg){
 
         params = larray_init();
         v = route_match(args->paths, aa->c, &params);
-        
+
         if(sT != NULL)
           rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
       }
@@ -774,7 +774,7 @@ void* handle_client(void *_arg){
         int req_idx = lua_gettop(L);
         lua_newtable(L);
         int res_idx = lua_gettop(L);
-        
+
         //handle cookies
         if(sC != NULL){
           lua_newtable(L);
@@ -824,7 +824,7 @@ void* handle_client(void *_arg){
         luaI_tseti(L, req_idx, "_bytes", bite - header_eof - 4);
         luaI_tseti(L, req_idx, "client_fd", client_fd);
         luaI_tsetcf(L, req_idx, "roll", l_roll);
-        
+
         //functions
         luaI_tsetcf(L, res_idx, "send", l_send);
         luaI_tsetcf(L, res_idx, "sendfile", l_sendfile);
@@ -841,7 +841,7 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int header_idx = lua_gettop(L);
         luaI_tseti(L, header_idx, "Code", 200);
-        
+
         luaI_tsetv(L, res_idx, "header", header_idx);
 
         //get all function that kinda match
@@ -869,29 +869,29 @@ void* handle_client(void *_arg){
             //if request is HEAD, it is valid for GET and HEAD listeners 
             if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
                 (strcmp(sR->c, "HEAD") == 0 && strcmp(wowa->req, "GET") == 0)){
-                  
-                  luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
-                  int func = lua_gettop(L);
-                  lua_assign_upvalues(L, func);
 
-                  lua_pushvalue(L, res_idx); //push methods related to dealing with the request
-                  lua_pushvalue(L, req_idx); //push info about the request
+              luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
+              int func = lua_gettop(L);
+              lua_assign_upvalues(L, func);
 
-                  //call the function
-                  if(lua_pcall(L, 2, 0, 0) != 0){
-                    printf("(net thread) %s\n", lua_tostring(L, -1));
-                    //send an error message if send has not been called
-                    if(client_fd >= 0) net_error(client_fd, 500);
-                    
-                    goto net_end;
-                  }
+              lua_pushvalue(L, res_idx); //push methods related to dealing with the request
+              lua_pushvalue(L, req_idx); //push info about the request
 
-                  //check if res:stop() was called
-                  lua_pushstring(L, "_stop");
-                  lua_gettable(L, res_idx);
-                  if(!lua_isnil(L, -1))
-                    goto net_end;
-                 
+              //call the function
+              if(lua_pcall(L, 2, 0, 0) != 0){
+                printf("(net thread) %s\n", lua_tostring(L, -1));
+                //send an error message if send has not been called
+                if(client_fd >= 0) net_error(client_fd, 500);
+
+                goto net_end;
+              }
+
+              //check if res:stop() was called
+              lua_pushstring(L, "_stop");
+              lua_gettable(L, res_idx);
+              if(!lua_isnil(L, -1))
+                goto net_end;
+
             }
           }
         }
@@ -1033,7 +1033,7 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
       pthread_t thread_id;
       pthread_create(&thread_id, NULL, handle_client, (void*)args);
       pthread_detach(thread_id);
-       
+
       //handle_client((void*)args);
       free(client_fd);
     }
@@ -1082,7 +1082,7 @@ int l_req_com(lua_State* L, char* req){
   str* uwu = str_init("");
   lua_pushvalue(L, 3);
   lua_dump(L, writer, (void*)uwu, 0);
-  
+
   awa = malloc(sizeof * awa);
   awa->c = uwu->c;
   awa->len = uwu->len;
@@ -1108,10 +1108,10 @@ int l_req_com(lua_State* L, char* req){
 }
 
 #define gen_reqs(T)\
-int l_##T##q (lua_State* L){\
-  l_req_com(L, #T);\
-  return 1;\
-}
+  int l_##T##q (lua_State* L){\
+    l_req_com(L, #T);\
+    return 1;\
+  }
 gen_reqs(GET);
 gen_reqs(HEAD);
 gen_reqs(POST);
@@ -1153,7 +1153,7 @@ int l_listen(lua_State* L){
   state->event_fd = -1;
 
   int port = luaL_checkinteger(L, 2);
-  
+
   lua_newtable(L);
   int mt = lua_gettop(L);
   luaI_tsetcf(L, mt, "GET", l_GETq);
@@ -1166,7 +1166,7 @@ int l_listen(lua_State* L){
   luaI_tsetcf(L, mt, "TRACE", l_TRACEq);
   luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
   luaI_tsetcf(L, mt, "all", l_allq);
-    
+
   luaI_tsetcf(L, mt, "close", l_net_close);
   luaI_tsetv(L, mt, "port", 2);
 
@@ -1182,5 +1182,5 @@ int l_listen(lua_State* L){
   if(state->event_fd == -2) luaI_error(L, -2, "closed"); 
 
   return start_serv(L, port, paths, state);
-;
+  ;
 }

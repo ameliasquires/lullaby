@@ -45,7 +45,7 @@ int l_djb2(lua_State* L){
   if(lua_gettop(L) == 0) return l_djb2_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[64];
 
   uint32_t u = djb2(a, len);

@@ -12,10 +12,10 @@ int bsdchecksum_free_l(lua_State* L){
 
 void bsdchecksum_update(uint8_t* aa, size_t len, struct bsdchecksum_hash* hash){
   for(int i = 0; i != len; i++){
-      uint8_t a = aa[i];
-      hash->check = (hash->check >> 1) + ((hash->check & 1) << 15);
-      hash->check += a;
-      hash->check &= 0xffff;
+    uint8_t a = aa[i];
+    hash->check = (hash->check >> 1) + ((hash->check & 1) << 15);
+    hash->check += a;
+    hash->check &= 0xffff;
   }
 }
 
@@ -46,7 +46,7 @@ int l_bsdchecksum(lua_State* L){
   if(lua_gettop(L) == 0) return l_bsdchecksum_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[16];
 
   //uint16_t u = i_bsdchecksum(a, len);

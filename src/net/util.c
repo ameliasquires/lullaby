@@ -37,7 +37,7 @@ int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
 /**
  * @brief calls recv into buffer until everything is read
  *
-*/
+ */
 // deprecated!! replaced by recv_header (above)
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state){
   char* header, *buffer = malloc(BUFFER_SIZE * sizeof * buffer);
@@ -59,13 +59,13 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
     if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
       *header_eof = header - buffer;
       char* cont_len_raw = strstr(buffer, "Content-Length: ");
-      
+
       if(cont_len_raw == NULL) {
         len += n;
         *_buffer = buffer;
         return len;
       }
-      
+
       str* cont_len_str = str_init("");
       if(cont_len_raw == NULL) abort();
       //i is length of 'Content-Length: '
@@ -92,7 +92,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
       buffer = realloc(buffer, len + BUFFER_SIZE + 1);
       memset(buffer + len, 0, n + 1);
     }
-    
+
 
     if(content_len != -1 && len - *header_eof - 4 >= con_len_full) break;
   }
@@ -104,7 +104,7 @@ int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* st
 /**
  * @brief converts the request buffer into a parray_t
  *
-*/
+ */
 int parse_header(char* buffer, int header_eof, parray_t** _table){
   if(header_eof == -1) return -1;
 
@@ -117,7 +117,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
     if(buffer[oi] == ' ' || buffer[oi] == '\n'){
       if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
       if(item < 3) parray_set(table, item == 0 ? "Request" :
-                item == 1 ? "Path" : "Version", (void*)str_init(current->c));
+          item == 1 ? "Path" : "Version", (void*)str_init(current->c));
       str_clear(current);
       item++;
       if(buffer[oi] == '\n') break;
@@ -174,16 +174,16 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
 /**
  * @brief contructs an http request
  *
-*/
+ */
 void http_build(str** _dest, int code, const char* code_det, char* header_vs, char* content, size_t len){
   char* dest = malloc(HTTP_BUFFER_SIZE);
   memset(dest, 0, HTTP_BUFFER_SIZE);
 
   sprintf(dest, 
-    "HTTP/1.1 %i %s\r\n"
-    "%s"
-    "\r\n"
-    , code, code_det, header_vs);
+      "HTTP/1.1 %i %s\r\n"
+      "%s"
+      "\r\n"
+      , code, code_det, header_vs);
   *_dest = str_init(dest);
   str_pushl(*_dest, content, len);
 
@@ -193,7 +193,7 @@ void http_build(str** _dest, int code, const char* code_det, char* header_vs, ch
 /**
  * @brief gets a string representation of a http code
  * 
-*/
+ */
 const char* http_code(int code){
   switch(code){
     case 100: return "Continue"; break;
@@ -384,9 +384,9 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
   for(int i = 0; i != paths->len; i++){
     //if(match_param(paths->P[i].key->c, request))
     //*if(strcmp(request, paths->P[i].key->c) == 0)*/{
-      //printf("pass!\n");
+    //printf("pass!\n");
     //printf("%i\n", i);
-    
+
     temp = parray_init();
 
     if(match_param(paths->P[i].key->c, request, temp)){
@@ -478,7 +478,7 @@ void _parse_mimetypes(){
       if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n') break;
     }
     type[type_len] = '\0';
-    
+
     //check if the type has an associated file type
     if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n'){
       free(type);

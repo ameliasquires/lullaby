@@ -2,14 +2,14 @@
 #include <stdlib.h>
 
 struct larray_item {
-    uint64_t idx;
-    void* value;
-    int used;
+  uint64_t idx;
+  void* value;
+  int used;
 };
 
 typedef struct {
-    struct larray_item* arr;
-    size_t len, size;
+  struct larray_item* arr;
+  size_t len, size;
 } larray_t;
 
 larray_t* larray_initl(int len);

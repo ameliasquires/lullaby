@@ -45,7 +45,7 @@ uint8_t pearson(uint8_t* aa, size_t len){
 int l_setpearson(lua_State* L){
   luaL_checktype(L, 1, LUA_TTABLE);
   size_t len = lua_objlen(L,1);
-  
+
   if(len != 256) {
     p_error("new table must have a length of 256");
     exit(0); 
@@ -55,7 +55,7 @@ int l_setpearson(lua_State* L){
 
     lua_pushinteger(L,i+1);
     lua_gettable(L,1);
-       
+
     pearson_table[i] = luaL_checknumber(L, -1);
     lua_pop(L,1);
   }
@@ -81,7 +81,7 @@ int l_pearson(lua_State* L){
 
   char digest[8];
   uint8_t u = pearson(a, len);
-  
+
   sprintf(digest,"%x",u);
 
   lua_pushstring(L, digest);

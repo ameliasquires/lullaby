@@ -14,15 +14,15 @@ int luaI_nothing(lua_State* L){
 }
 
 void* __malloc_(size_t N){
-    printf("hi");
-    malloc_count++;
-    return (malloc)(N);
+  printf("hi");
+  malloc_count++;
+  return (malloc)(N);
 }
 
 void __free_(void* p){
-    malloc_count--;
-    printf("%i\n",malloc_count);
-    return (free)(p);
+  malloc_count--;
+  printf("%i\n",malloc_count);
+  return (free)(p);
 }
 
 int _stream_read(lua_State* L){
@@ -49,7 +49,7 @@ int _stream_read(lua_State* L){
   if(ret == 0){
     luaI_tsetb(L, 1, "more", 0);
   }
-  
+
   lua_pushlstring(L, cont->c, cont->len);
   str_free(cont);
   return 1;
@@ -133,7 +133,7 @@ void luaI_newstream(lua_State* L, stream_read_function readf, stream_free_functi
   luaI_tsetcf(L, tidx, "close", _stream_free); 
   luaI_tsetb(L, tidx, "more", 1);
   luaI_tsetcf(L, tidx, "file", _stream_file);
-  
+
   lua_newtable(L);
   int midx = lua_gettop(L);
 
@@ -147,15 +147,15 @@ void luaI_newstream(lua_State* L, stream_read_function readf, stream_free_functi
 
 
 int writer(lua_State *L, const void* p, size_t sz, void* ud){
-    char o[2] = {0};
-    for (int i =0; i<sz; i++){
-        //printf("%c\n",((char*)p)[i]);
-        o[0] = ((char*)p)[i];
-        str_pushl((str*)ud, o, 1);
-        //printf("%s\n",((str*)ud)->c);
-    }
-    
-    return 0;
+  char o[2] = {0};
+  for (int i =0; i<sz; i++){
+    //printf("%c\n",((char*)p)[i]);
+    o[0] = ((char*)p)[i];
+    str_pushl((str*)ud, o, 1);
+    //printf("%s\n",((str*)ud)->c);
+  }
+
+  return 0;
 }
 
 /**
@@ -165,130 +165,130 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
  * @param {lua_State*} dest
  * @param {void*} items already visited, use NULL
  * @param {int} whether or not to skip meta data
-*/
+ */
 void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
-    //printf("%i\n",seen->len);
-    int at, at2;
-    //int *sp = malloc(1);
-    //int *sp;
-    double n;
-    int old_top = lua_gettop(src);
-    int modi = 0;
-    
-    int type;
-    switch(type = lua_type(src, -1)){
-        case LUA_TNUMBER:
-            n = lua_tonumber(src, -1);
-            if(n == (uint64_t)n) lua_pushinteger(dest, (uint64_t)lua_tonumber(src, -1));
-            else lua_pushnumber(dest, n);
-            break;
-        case LUA_TBOOLEAN:
-            lua_pushboolean(dest, lua_toboolean(src, -1));
-            break;
-        case LUA_TNIL:
-            lua_pushnil(dest);
-            break;
-        case LUA_TSTRING:;
-            size_t slen;
-            const char* ss = lua_tolstring(src, -1, &slen);
-            lua_pushlstring(dest, ss, slen);
-            break;
-        case LUA_TTABLE:
-            modi = 1;
-            lua_newtable(dest);
-            at = lua_gettop(dest);
-            at2 = lua_gettop(src);
-            //printf("before\n"); 
-            char* aauwu = calloc(sizeof * aauwu, 50);
-            sprintf(aauwu, "%p", lua_topointer(src, at2));
-            //lua_pushstring(dest, aauwu);
-            //lua_gettable(dest, LUA_REGISTRYINDEX);
-            lua_getfield(dest, LUA_REGISTRYINDEX, aauwu);
-            if(lua_type(dest, -1) == LUA_TNIL){
-              //printf("new %p\n", lua_topointer(src, at2));
-              lua_pushstring(dest, aauwu);
-              lua_pushvalue(dest, at);
-              lua_settable(dest, LUA_REGISTRYINDEX);
-              lua_pop(dest, 1);
-            } else {
-              //printf("use %p\n", lua_topointer(src, at2));
-              //lua_pop(dest, 1);
-              lua_remove(dest, -2);
-              free(aauwu);
-              return;
-            }
-            free(aauwu);
-            //printf("after %i:%i\n", at, lua_gettop(dest));
+  //printf("%i\n",seen->len);
+  int at, at2;
+  //int *sp = malloc(1);
+  //int *sp;
+  double n;
+  int old_top = lua_gettop(src);
+  int modi = 0;
 
-            lua_pushnil(src);
-            for(;lua_next(src, at2) != 0;){
-                int first, second = first = lua_gettop(src);
-                first -= 1;
-                //this is a mess, skip if key is __gc (when SKIP_GC)
-                //and skip _G (when SKIP__G)
-                if(((flags & SKIP__G) && lua_type(src, first) == LUA_TSTRING
-                  && strcmp("_G", lua_tostring(src, first)) == 0)
-                  || ((flags & SKIP_GC) && lua_type(src, first) == LUA_TSTRING 
-                  && strcmp("__gc", lua_tostring(src, first)) == 0)){
-                  //printf("found %s\n", lua_tostring(src, first));
-                  lua_pop(src, 1);
-                  continue;
-                }
-                lua_pushvalue(src, first);
-                //l_pprint(src);
-                //lua_pop(src, 1);
-                luaI_deepcopy(src, dest, flags);
-         
-                lua_pushvalue(src, second);
-                luaI_deepcopy(src, dest, flags);
-                lua_settable(dest, at);
+  int type;
+  switch(type = lua_type(src, -1)){
+    case LUA_TNUMBER:
+      n = lua_tonumber(src, -1);
+      if(n == (uint64_t)n) lua_pushinteger(dest, (uint64_t)lua_tonumber(src, -1));
+      else lua_pushnumber(dest, n);
+      break;
+    case LUA_TBOOLEAN:
+      lua_pushboolean(dest, lua_toboolean(src, -1));
+      break;
+    case LUA_TNIL:
+      lua_pushnil(dest);
+      break;
+    case LUA_TSTRING:;
+                     size_t slen;
+                     const char* ss = lua_tolstring(src, -1, &slen);
+                     lua_pushlstring(dest, ss, slen);
+                     break;
+    case LUA_TTABLE:
+                     modi = 1;
+                     lua_newtable(dest);
+                     at = lua_gettop(dest);
+                     at2 = lua_gettop(src);
+                     //printf("before\n"); 
+                     char* aauwu = calloc(sizeof * aauwu, 50);
+                     sprintf(aauwu, "%p", lua_topointer(src, at2));
+                     //lua_pushstring(dest, aauwu);
+                     //lua_gettable(dest, LUA_REGISTRYINDEX);
+                     lua_getfield(dest, LUA_REGISTRYINDEX, aauwu);
+                     if(lua_type(dest, -1) == LUA_TNIL){
+                       //printf("new %p\n", lua_topointer(src, at2));
+                       lua_pushstring(dest, aauwu);
+                       lua_pushvalue(dest, at);
+                       lua_settable(dest, LUA_REGISTRYINDEX);
+                       lua_pop(dest, 1);
+                     } else {
+                       //printf("use %p\n", lua_topointer(src, at2));
+                       //lua_pop(dest, 1);
+                       lua_remove(dest, -2);
+                       free(aauwu);
+                       return;
+                     }
+                     free(aauwu);
+                     //printf("after %i:%i\n", at, lua_gettop(dest));
 
-                lua_pop(src, 3);
-            }
-            break;
-        case LUA_TFUNCTION:
-          if(lua_iscfunction(src, old_top)){
-            //kinda silly
-            lua_pushcfunction(dest, lua_tocfunction(src, -1));
-            break;
-          }
-            
-          str* awa = str_init("");
-          lua_dump(src, writer, (void*)awa, 0);
+                     lua_pushnil(src);
+                     for(;lua_next(src, at2) != 0;){
+                       int first, second = first = lua_gettop(src);
+                       first -= 1;
+                       //this is a mess, skip if key is __gc (when SKIP_GC)
+                       //and skip _G (when SKIP__G)
+                       if(((flags & SKIP__G) && lua_type(src, first) == LUA_TSTRING
+                             && strcmp("_G", lua_tostring(src, first)) == 0)
+                           || ((flags & SKIP_GC) && lua_type(src, first) == LUA_TSTRING 
+                             && strcmp("__gc", lua_tostring(src, first)) == 0)){
+                         //printf("found %s\n", lua_tostring(src, first));
+                         lua_pop(src, 1);
+                         continue;
+                       }
+                       lua_pushvalue(src, first);
+                       //l_pprint(src);
+                       //lua_pop(src, 1);
+                       luaI_deepcopy(src, dest, flags);
 
-          luaL_loadbuffer(dest, awa->c, awa->len, "fun");
-          if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
-          //lua_remove(dest, -2);
-          str_free(awa);
-          break;
-        case LUA_TUSERDATA:
-          modi = 1;
-          size_t raw_len = lua_rawlen(src, -1);
-          void* ud = lua_newuserdata(dest, raw_len);
-          memcpy(ud, lua_touserdata(src, -1), raw_len);
-          break;
-        case LUA_TLIGHTUSERDATA:
-          modi = 1;
-          lua_pushlightuserdata(dest, lua_touserdata(src, -1)); 
-          break;
-        case LUA_TTHREAD:
-          lua_pushnil(dest);
-          break; 
-        default:
-          printf("unknown type %i vs (old)%i\n",lua_type(src, -1), type);
-          //abort();
-          lua_pushnil(dest);
-          break;
-    }
-    int tidx = lua_gettop(dest);
+                       lua_pushvalue(src, second);
+                       luaI_deepcopy(src, dest, flags);
+                       lua_settable(dest, at);
 
-    if(modi && !(flags & SKIP_META) && lua_getmetatable(src, -1)){
-      luaI_deepcopy(src, dest, flags | IS_META | SKIP_META);
-      lua_setmetatable(dest, tidx);
+                       lua_pop(src, 3);
+                     }
+                     break;
+    case LUA_TFUNCTION:
+                     if(lua_iscfunction(src, old_top)){
+                       //kinda silly
+                       lua_pushcfunction(dest, lua_tocfunction(src, -1));
+                       break;
+                     }
 
-      lua_settop(dest, tidx);
-    }
-    lua_settop(src, old_top);
+                     str* awa = str_init("");
+                     lua_dump(src, writer, (void*)awa, 0);
+
+                     luaL_loadbuffer(dest, awa->c, awa->len, "fun");
+                     if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
+                     //lua_remove(dest, -2);
+                     str_free(awa);
+                     break;
+    case LUA_TUSERDATA:
+                     modi = 1;
+                     size_t raw_len = lua_rawlen(src, -1);
+                     void* ud = lua_newuserdata(dest, raw_len);
+                     memcpy(ud, lua_touserdata(src, -1), raw_len);
+                     break;
+    case LUA_TLIGHTUSERDATA:
+                     modi = 1;
+                     lua_pushlightuserdata(dest, lua_touserdata(src, -1)); 
+                     break;
+    case LUA_TTHREAD:
+                     lua_pushnil(dest);
+                     break; 
+    default:
+                     printf("unknown type %i vs (old)%i\n",lua_type(src, -1), type);
+                     //abort();
+                     lua_pushnil(dest);
+                     break;
+  }
+  int tidx = lua_gettop(dest);
+
+  if(modi && !(flags & SKIP_META) && lua_getmetatable(src, -1)){
+    luaI_deepcopy(src, dest, flags | IS_META | SKIP_META);
+    lua_setmetatable(dest, tidx);
+
+    lua_settop(dest, tidx);
+  }
+  lua_settop(src, old_top);
 }
 
 void luaI_deepcopy2(lua_State* src, lua_State* dest){
@@ -298,51 +298,51 @@ void luaI_deepcopy2(lua_State* src, lua_State* dest){
       break;
 
     case LUA_TSTRING:;
-      size_t size = 0;
-      const char* str = lua_tolstring(src, -1, &size);
-      lua_pushlstring(dest, str, size);
-      break;
-    
+                     size_t size = 0;
+                     const char* str = lua_tolstring(src, -1, &size);
+                     lua_pushlstring(dest, str, size);
+                     break;
+
     case LUA_TTABLE:;
-      const void* p = lua_topointer(src, -1);
-      char* p_string = calloc(80, sizeof * p_string);
-      sprintf(p_string, "%p", p);
-      
-      //lua_getfield(dest, LUA_REGISTRYINDEX, p_string);
-      lua_pushstring(dest, p_string);
-      lua_gettable(dest, LUA_REGISTRYINDEX);
-      if(!lua_isnil(dest, -1)){
-        break;
-      }
+                    const void* p = lua_topointer(src, -1);
+                    char* p_string = calloc(80, sizeof * p_string);
+                    sprintf(p_string, "%p", p);
 
-      lua_pop(dest, 1);
-      lua_pushstring(dest, p_string);
-      lua_newtable(dest);
-      //lua_setfield(dest, LUA_REGISTRYINDEX, p_string);
-      //lua_getfield(dest, LUA_REGISTRYINDEX, p_string);
-      lua_settable(dest, LUA_REGISTRYINDEX);
+                    //lua_getfield(dest, LUA_REGISTRYINDEX, p_string);
+                    lua_pushstring(dest, p_string);
+                    lua_gettable(dest, LUA_REGISTRYINDEX);
+                    if(!lua_isnil(dest, -1)){
+                      break;
+                    }
 
-      lua_pushstring(dest, p_string);
-      lua_gettable(dest, LUA_REGISTRYINDEX);
+                    lua_pop(dest, 1);
+                    lua_pushstring(dest, p_string);
+                    lua_newtable(dest);
+                    //lua_setfield(dest, LUA_REGISTRYINDEX, p_string);
+                    //lua_getfield(dest, LUA_REGISTRYINDEX, p_string);
+                    lua_settable(dest, LUA_REGISTRYINDEX);
 
-      free(p_string);
+                    lua_pushstring(dest, p_string);
+                    lua_gettable(dest, LUA_REGISTRYINDEX);
 
-      int src_top = lua_gettop(src);
-      int dest_top = lua_gettop(dest);
+                    free(p_string);
 
-      lua_pushnil(src);
-      for(;lua_next(src, src_top) != 0;){
-        luaI_deepcopy2(src, dest); 
-        lua_pop(src, 1);
-        luaI_deepcopy2(src, dest);
+                    int src_top = lua_gettop(src);
+                    int dest_top = lua_gettop(dest);
 
-        lua_settable(dest, dest_top);
-      }
-      break;
+                    lua_pushnil(src);
+                    for(;lua_next(src, src_top) != 0;){
+                      luaI_deepcopy2(src, dest); 
+                      lua_pop(src, 1);
+                      luaI_deepcopy2(src, dest);
+
+                      lua_settable(dest, dest_top);
+                    }
+                    break;
 
     default:
-      lua_pushinteger(dest, 4);
-      break;
+                    lua_pushinteger(dest, 4);
+                    break;
   }
 }
 
@@ -351,7 +351,7 @@ int env_table(lua_State* L, int provide_table){
     lua_newtable(L);
   }
   int tidx = lua_gettop(L);
- 
+
   lua_Debug debug;
   for(int i = 0;; i++){
     if(lua_getstack(L, i, &debug) == 0) break;
@@ -426,7 +426,7 @@ void luaI_copyvars(lua_State* from, lua_State* to){
  * @brief extracts a table to be global
  *
  * @param {lua_State*} source
-*/
+ */
 void lua_set_global_table(lua_State* L){
   lua_pushnil(L);
   for(;lua_next(L, -2) != 0;){

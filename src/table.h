@@ -24,34 +24,34 @@ int l_split(lua_State*);
 
 #define clean_lullaby_table luaI_nothing
 static const luaL_Reg table_function_list [] = {
-      {"len",l_len},
-      {"reverse",l_reverse},
-      {"greatest",l_greatest},
-      {"least",l_least},
-      {"shuffle",l_shuffle},
-      {"sum",l_sum},
-      {"split",l_split},
-      {"to_char_array", l_to_char_array},
+  {"len",l_len},
+  {"reverse",l_reverse},
+  {"greatest",l_greatest},
+  {"least",l_least},
+  {"shuffle",l_shuffle},
+  {"sum",l_sum},
+  {"split",l_split},
+  {"to_char_array", l_to_char_array},
 
-      {"index",l_indexof},
-      {"sindex",l_sindexof},
-      
-      {"quicksort",l_quicksort},
-      {"mergesort",l_mergesort},
-      {"shellsort",l_shellsort},
-      {"bubblesort",l_bubblesort},
-      {"heapsort",l_heapsort},
+  {"index",l_indexof},
+  {"sindex",l_sindexof},
 
-      {"countingsort",l_countingsort},
+  {"quicksort",l_quicksort},
+  {"mergesort",l_mergesort},
+  {"shellsort",l_shellsort},
+  {"bubblesort",l_bubblesort},
+  {"heapsort",l_heapsort},
 
-      {"miraclesort",l_miraclesort},
-      {"stalinsort",l_stalinsort},
-      {"slowsort",l_slowsort},
-      {"bogosort",l_bogosort},
+  {"countingsort",l_countingsort},
 
-      {"unpack", l_unpack},
+  {"miraclesort",l_miraclesort},
+  {"stalinsort",l_stalinsort},
+  {"slowsort",l_slowsort},
+  {"bogosort",l_bogosort},
 
-      {NULL,NULL}
+  {"unpack", l_unpack},
+
+  {NULL,NULL}
 };
 
 static struct config table_config[] = {

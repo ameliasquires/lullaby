@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 struct sdbm_hash {
-    uint64_t hash;
+  uint64_t hash;
 };
 
 struct sdbm_hash sdbm_init();

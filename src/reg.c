@@ -32,8 +32,8 @@ open_common(test, test_config);
 
 #define push(T, name)\
   lua_pushstring(L, #name);\
-  luaopen_lullaby_##name(L);\
-  lua_settable(L, T);
+luaopen_lullaby_##name(L);\
+lua_settable(L, T);
 
 
 int luaopen_lullaby(lua_State* L) { 

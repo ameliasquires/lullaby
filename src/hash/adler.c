@@ -44,7 +44,7 @@ int l_adler32(lua_State* L){
   if(lua_gettop(L) == 0) return l_adler32_init(L);
   size_t len = 0;
   uint8_t* a = (uint8_t*)luaL_checklstring(L, 1, &len);
-  
+
   char digest[32];
 
   uint32_t u = adler32(a, len);

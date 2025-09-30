@@ -20,28 +20,28 @@ static uint8_t T[256] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,
   252,253,254,255};
 
 uint8_t buzhash8(uint8_t* in, size_t len){
-    uint8_t hash = 0;
+  uint8_t hash = 0;
 
-    for(int i = 0; i != len; i++){
-        hash ^= rotl8(T[(uint8_t)in[i]],len - (i + 1));
-    }
+  for(int i = 0; i != len; i++){
+    hash ^= rotl8(T[(uint8_t)in[i]],len - (i + 1));
+  }
 
-    return hash;
+  return hash;
 }
 uint16_t buzhash16(uint8_t* in, size_t len){
-    uint16_t hash = 0;
+  uint16_t hash = 0;
 
-    for(int i = 0; i != len; i++){
-        hash ^= rotl16(T[(uint8_t)in[i]],len - (i + 1));
-    }
+  for(int i = 0; i != len; i++){
+    hash ^= rotl16(T[(uint8_t)in[i]],len - (i + 1));
+  }
 
-    return hash;
+  return hash;
 }
 
 int l_setbuzhash(lua_State* L){
   luaL_checktype(L, 1, LUA_TTABLE);
   size_t len = lua_objlen(L,1);
-  
+
   if(len != 256) {
     p_error("new table must have a length of 256");
     exit(0); 
@@ -51,7 +51,7 @@ int l_setbuzhash(lua_State* L){
 
     lua_pushinteger(L,i+1);
     lua_gettable(L,1);
-       
+
     T[i] = luaL_checknumber(L, -1);
     lua_pop(L,1);
   }
@@ -64,7 +64,7 @@ int l_buzhash8(lua_State* L){
 
   char digest[3];
   uint8_t u = buzhash8(a, len);
-  
+
   sprintf(digest,"%x",u);
 
   lua_pushstring(L, digest);
@@ -78,7 +78,7 @@ int l_buzhash16(lua_State* L){
 
   char digest[6];
   uint16_t u = buzhash16(a, len);
-  
+
   sprintf(digest,"%04x",u);
 
   lua_pushstring(L, digest);

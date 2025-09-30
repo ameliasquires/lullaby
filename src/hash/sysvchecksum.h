@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 struct sysvchecksum_hash {
-    uint32_t check;
+  uint32_t check;
 };
 
 struct sysvchecksum_hash sysvchecksum_init();

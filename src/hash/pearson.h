@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 struct pearson_hash {
-    uint8_t ret;
+  uint8_t ret;
 };
 
 struct pearson_hash pearson_init();

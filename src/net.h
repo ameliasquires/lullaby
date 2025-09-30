@@ -1,11 +1,11 @@
 #ifdef _WIN32 //add -lws2_32
-  #include <winsock2.h>
-  //#define socklen_t __socklen_t
-  //#define close closesocket
-  typedef int socklen_t;
+#include <winsock2.h>
+//#define socklen_t __socklen_t
+//#define close closesocket
+typedef int socklen_t;
 #else
-  #include <sys/socket.h>
-  #include <arpa/inet.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #define closesocket close
 #endif
 
@@ -43,7 +43,7 @@ static const luaL_Reg net_function_list [] = {
   {"request",l_request},
   {"srequest",l_srequest},
   {"wss",l_wss},
-  
+
   {NULL,NULL}
 };
 

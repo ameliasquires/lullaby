@@ -89,7 +89,7 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
         i_pprint(L,indent+1,1);
         printf(",");
         if(!skip) printf("\n");
-        
+
         lua_settop(L, tuwu);
         lua_pop(L,1);
       }
@@ -123,7 +123,7 @@ void i_pprint(lua_State* L, int indent, int skip_indent){
       if(!skip_indent) print_indentation(indent);
       printf(color_yellow"(lud,%p)"color_reset, lua_topointer(L,-1));
       break;
-    //case LUA_TNUMBER:
+      //case LUA_TNUMBER:
       if(!skip_indent) print_indentation(indent);
       printf(color_yellow"%i"color_reset, (int)lua_tonumber(L,-1));
       break;
@@ -170,17 +170,17 @@ enum json_state {
   memset(buf, 0, value->len);\
   switch(value->c[0]){\
     case '{': case '[':\
-      json_parse(L, value);\
-      break;\
+                       json_parse(L, value);\
+    break;\
     case '"':\
-      strncpy(buf, value->c + 1, value->len - 2);\
-      lua_pushstring(L, buf);\
-      break;\
+             strncpy(buf, value->c + 1, value->len - 2);\
+    lua_pushstring(L, buf);\
+    break;\
     default:\
-      lua_pushnumber(L, atof(value->c));\
-      break;\
-    }\
-    lua_settable(L, last_idx);
+            lua_pushnumber(L, atof(value->c));\
+    break;\
+  }\
+  lua_settable(L, last_idx);
 
 void json_parse(lua_State* L, str* raw){
   enum json_state state = normal;
@@ -215,7 +215,7 @@ void json_parse(lua_State* L, str* raw){
         if((last == '{' && topush[0] == '}') || (last == '[' && topush[0] == ']')) token_depth--;
 
         if((last == '\0' || (last == '"' && topush[0] == '"')
-            || (last == '{' && topush[0] == '}') || (last == '[' && topush[0] == ']'))){
+              || (last == '{' && topush[0] == '}') || (last == '[' && topush[0] == ']'))){
           if(token_depth == 0){
             if(last == '\0'){
               last = topush[0];
@@ -231,7 +231,7 @@ void json_parse(lua_State* L, str* raw){
       case ',':
         if(state == normal){
           push()
-          str_clear(key);
+            str_clear(key);
           str_clear(value);
           count = 0;
           iter_count++;
@@ -252,7 +252,7 @@ void json_parse(lua_State* L, str* raw){
     else str_push(value, topush);
   }
   push()
-  str_free(key);
+    str_free(key);
   str_free(value);
   //printf("key: %s, value : %s\n",key.c,value.c);
 }
