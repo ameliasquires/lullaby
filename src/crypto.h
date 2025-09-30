@@ -12,7 +12,6 @@
 #include "hash/xor.h"
 #include "hash/buzhash.h"
 #include "hash/djb2.h"
-#include "hash/fasthash.h"
 #include "hash/fnv.h"
 #include "hash/jenkins.h"
 #include "hash/loselose.h"
@@ -112,7 +111,6 @@ static const luaL_Reg crypto_function_list [] = {
       {"setpearson",l_setpearson}, {"fletcher8",l_fletcher8},
       {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
       {"setbuzhash",l_setbuzhash},
-      {"fasthash32", l_fasthash32}, {"fasthash64", l_fasthash64},
       {"loselose", l_loselose},
       {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, 
 
