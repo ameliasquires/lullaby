@@ -18,7 +18,7 @@ os.execute("sleep 0.1")
 
 llby.net.request(string.format("localhost:%i/c", PORT))
 local s = llby.net.request(string.format("localhost:%i/test", PORT))
-local num = 2--s.content:read()
+local num = s.content:read()
 
 bserver:get():close()
 
