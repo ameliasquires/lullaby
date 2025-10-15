@@ -928,7 +928,6 @@ net_end:
   lua_close(L);
 
   threads--;
-  printf("out\n");
   return NULL;
 }
 

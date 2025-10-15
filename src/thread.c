@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <signal.h>
 #include "types/str.h"
 #include "util.h"
 
@@ -15,7 +16,7 @@ struct thread_info {
   lua_State* L;
   int return_count, done;
   pthread_t tid;
-  pthread_mutex_t* lock;
+  pthread_mutex_t* lock, *ready_lock;
 };
 
 #include "io.h"
@@ -168,11 +169,23 @@ int l_res(lua_State* L){
   return 1;
 }
 
+void _thread_exit_signal(int i){
+  pthread_exit(NULL);
+}
+
 void* handle_thread(void* _args){
   struct thread_info* args = (struct thread_info*)_args;
   lua_State* L = args->L;
+  pthread_mutex_lock(&*args->lock);
+
+#ifdef SUPPORTS_PTHREAD_CANCEL
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+#endif
+
   pthread_detach(args->tid);
+  signal(SIGUSR1, _thread_exit_signal);
+
+  pthread_mutex_unlock(&*args->ready_lock);
 
   lua_newtable(L);
   int res_idx = lua_gettop(L);
@@ -202,9 +215,11 @@ int _thread_await(lua_State* L){
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
-
   if(info->L == NULL) luaI_error(L, -1, "thread was already closed")
-    if(!info->done) pthread_mutex_lock(&*info->lock);
+  //maybe error here if tid is zero
+  if(!info->done && info->tid != 0){
+    pthread_mutex_lock(&*info->lock);
+  }
   info->done = 1;
 
   env_table(info->L, 0);
@@ -245,6 +260,14 @@ int _thread_clean(lua_State* L){
   if(info != NULL && info->L != NULL){
     luaI_tsetnil(L, 1, "_");
 
+    if(info->tid != 0){
+#ifdef SUPPORTS_PTHREAD_CANCEL
+      pthread_cancel(info->tid);
+#else
+      pthread_kill(info->tid, SIGUSR1);
+#endif
+    }
+
     //lua_gc(info->L, LUA_GCRESTART);
     lua_gc(info->L, LUA_GCCOLLECT);
 
@@ -254,18 +277,37 @@ int _thread_clean(lua_State* L){
 
     pthread_mutex_destroy(&*info->lock);
     free(info->lock);
-    pthread_cancel(info->tid);
+
     free(info);
   }
   return 0;
 }
 
+
 int _thread_close(lua_State* L){
+#ifdef SUPPORTS_PTHREAD_CANCEL
+
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
 
   pthread_cancel(info->tid);
+  info->tid = 0;
+
+  return 0;
+#else
+  return _thread_kill(L);
+#endif
+}
+
+
+int _thread_kill(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
+
+  pthread_kill(info->tid, SIGUSR1);
+  info->tid = 0;
 
   return 0;
 }
@@ -280,20 +322,28 @@ int l_async(lua_State* oL){
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
   args->lock = malloc(sizeof * args->lock);
+  args->ready_lock = malloc(sizeof * args->ready_lock);
   pthread_mutex_init(&*args->lock, NULL);
-  pthread_mutex_lock(&*args->lock);
+  pthread_mutex_init(&*args->ready_lock, NULL);
   args->return_count = 0;
 
   args->function = str_init("");
   lua_pushvalue(oL, 1);
   lua_dump(oL, writer, (void*)args->function, 0);
 
+  pthread_mutex_lock(&*args->ready_lock);
   pthread_create(&args->tid, NULL, handle_thread, (void*)args);
+  pthread_mutex_lock(&*args->ready_lock);
+
+  pthread_mutex_unlock(&*args->ready_lock);
+  pthread_mutex_destroy(&*args->ready_lock);
+  free(args->ready_lock);
 
   lua_newtable(oL);
   int res_idx = lua_gettop(oL);
   luaI_tsetcf(oL, res_idx, "await", _thread_await);
   luaI_tsetcf(oL, res_idx, "clean", _thread_clean);
+  luaI_tsetcf(oL, res_idx, "kill", _thread_kill);
   luaI_tsetcf(oL, res_idx, "close", _thread_close);
   luaI_tsetlud(oL, res_idx, "_", args);
 

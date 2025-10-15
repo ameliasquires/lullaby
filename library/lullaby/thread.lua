@@ -16,10 +16,15 @@ function async.await(T) end
 ---@return nil
 function async.clean(T) end
 
----stops the thread
+---stops the thread, may be unavaliable on some systems (android) and will call async:kill instead
 ---@param T async-table
 ---@return nil
 function async.close(T) end
+
+---stops the thread forcefully, may cause problems
+---@param T async-table
+---@return nil
+function async.kill(T) end
 
 ---contains data for the thread
 ---@deprecated

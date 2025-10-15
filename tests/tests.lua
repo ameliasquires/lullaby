@@ -20,7 +20,6 @@ end
 local handle = assert(io.popen("find tests/units/".. search .." -type f"))
 
 for file in handle:lines() do
-  print(_G._locals)
   total = total + 1
   local f = loadfile(file)()
 

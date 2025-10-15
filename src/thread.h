@@ -1,6 +1,10 @@
 #include "lua.h"
 #include "config.h"
 
+#ifndef __ANDROID__
+#define SUPPORTS_PTHREAD_CANCEL
+#endif
+
 int l_async(lua_State*);
 int l_tlock(lua_State*);
 int l_tunlock(lua_State*);
