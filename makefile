@@ -57,6 +57,9 @@ debug: all
 san: CFLAGS += -ggdb3 -static-libasan -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls
 san: all
 
+tsan: CFLAGS += -ggdb3 -static-libasan -fsanitize=undefined -fsanitize=thread -fno-omit-frame-pointer -fno-optimize-sibling-calls
+tsan: all
+
 reg: 
 	rm src/reg.o 
 
