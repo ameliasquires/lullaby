@@ -205,7 +205,7 @@ void* handle_thread(void* _args){
   lua_assign_upvalues(L, x);
   lua_pushvalue(L, res_idx);
   lua_call(L, 1, 0);
-
+  args->tid = 0;
   pthread_mutex_unlock(&*args->lock);
 
   return NULL;
@@ -291,7 +291,7 @@ int _thread_close(lua_State* L){
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
 
-  pthread_cancel(info->tid);
+  if(info->tid != 0) pthread_cancel(info->tid);
   info->tid = 0;
 
   return 0;
@@ -306,7 +306,7 @@ int _thread_kill(lua_State* L){
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
 
-  pthread_kill(info->tid, SIGUSR1);
+  if(info->tid != 0) pthread_kill(info->tid, SIGUSR1);
   info->tid = 0;
 
   return 0;
