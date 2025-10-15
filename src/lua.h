@@ -7,6 +7,7 @@
 
 #ifndef __lua_h
 #define __lua_h
+
 enum deep_copy_flags {
   SKIP_META = (1 << 0),
   SKIP_GC = (1 << 1),
@@ -81,12 +82,21 @@ void luaI_jointable(lua_State* L);
   lua_settable(L, Tidx);\
   lua_pop(L, 1);}
 
+//in lullaby.h
+extern int _print_errors;
+
 #define luaI_error(L, en, str){\
   lua_pushnil(L);\
   lua_pushstring(L, str);\
+  if(_print_errors) printf("%s\n",str);\
   lua_pushinteger(L, en);\
   return 3;}
-
+#define luaI_assert(L, eq){_helperluaI_assert(L, eq, __FILE__, __LINE__);}
+#define _helperluaI_assert(L, eq, file, line){\
+  if(!(eq)){\
+    char err[1024] = {0};\
+    sprintf(err, "(%s:%i) %s assertion failed", file, line, #eq);\
+    luaI_error(L, -1, err);}}
 
 int writer(lua_State*, const void*, size_t, void*);
 

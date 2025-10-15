@@ -19,6 +19,7 @@ function res_table.send(T, value) end
 ---autosets Content-Type and sends contents of file to client and closes socket
 ---@param T res-table
 ---@param value string
+---@return error | nil error
 function res_table.sendfile(T, value) end
 
 ---sends value to client and doesn't close the socket

@@ -221,12 +221,8 @@ int l_sendfile(lua_State* L){
   lua_gettable(L, -2);
   int header = lua_gettop(L);
 
-  if(access(path, F_OK)) {
-    p_fatal("file not found"); //TODO: use diff errors here
-  }
-  if(access(path, R_OK)){
-    p_fatal("missing permissions");
-  }
+  luaI_assert(L, !access(path, F_OK) /*file not found*/);
+  luaI_assert(L, !access(path, R_OK) /*missing permissions*/);
 
   lua_pushstring(L, "Content-Type");
   lua_gettable(L, header);
