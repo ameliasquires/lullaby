@@ -146,6 +146,8 @@ res.header["test"] = "wowa"
 
 res:sendfile(filepath, options?)
 
+this can return an error if the file is not found or if the user does not have read permissions
+
 res.header["Content-Type"] is set automatically (unless already set) depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
 
 options table
@@ -183,6 +185,8 @@ these can, of course be used with wildcards however you want
 ### req:roll
 
 req:roll(bytes?)
+
+> this will be changed to be a stream internally, see common.md
 
 when bytes is null it will read as much as possible (may not be the full request)
 

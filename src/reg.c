@@ -7,6 +7,7 @@
 #include "thread.h"
 #include "test.h"
 #include "config.h"
+#include "lullaby.h"
 
 #define open_common(name, config)\
   int luaopen_lullaby_##name (lua_State* L){\
@@ -48,6 +49,9 @@ int luaopen_lullaby(lua_State* L) {
   push(top, thread);
   push(top, test);
   luaI_tsets(L, top, "version", GIT_COMMIT);
+
+  lua_pushvalue(L, top);
+  int idx = i_config_metatable(L, lullaby_config);
 
   lua_settop(L, top); 
   return 1;

@@ -1057,7 +1057,8 @@ net_end:
   }
   parray_lclear(paths);
 
-  luaI_error(L, 0, "close eventfd signal");
+  lua_pushnil(L);
+  return 1;
 }
 
 //TODO reformat all of this code and the structs (use more common/generic ones)
