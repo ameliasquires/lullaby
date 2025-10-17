@@ -288,6 +288,16 @@ int _thread_clean(lua_State* L){
   return 0;
 }
 
+int _thread_kill(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
+
+  if(info->tid != 0) pthread_kill(info->tid, SIGUSR1);
+  info->tid = 0;
+
+  return 0;
+}
 
 int _thread_close(lua_State* L){
 #ifdef SUPPORTS_PTHREAD_CANCEL
@@ -303,18 +313,6 @@ int _thread_close(lua_State* L){
 #else
   return _thread_kill(L);
 #endif
-}
-
-
-int _thread_kill(lua_State* L){
-  lua_pushstring(L, "_");
-  lua_gettable(L, 1);
-  struct thread_info* info = lua_touserdata(L, -1);
-
-  if(info->tid != 0) pthread_kill(info->tid, SIGUSR1);
-  info->tid = 0;
-
-  return 0;
 }
 
 int l_async(lua_State* oL){
