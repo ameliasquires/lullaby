@@ -9,9 +9,9 @@ end)
 
 print(t, e)
 
-os.execute("sleep 5")
-
 print("killing")
 t:close()
 t:await()
 print("after kill")
+
+os.execute("sleep 0.1");
