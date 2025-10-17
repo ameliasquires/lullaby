@@ -1,5 +1,7 @@
 # crypto
 
+> out of date!
+
 ## hashing
 
 \* is optional

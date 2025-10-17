@@ -1,4 +1,7 @@
 # lullaby (llby) 
+
+> all files besides this and the content of net/ are out of date! ill be working on them later
+
 (name subject to change)
 
 with the library in the same directory [(or one of the other valid search locations)](https://www.lua.org/pil/8.1.html)
@@ -48,6 +51,19 @@ both function identically, file sending the data to a file and read returning it
 the number of bytes can be selected, the function will return an amount close to what was requested
 
 some streams may not support the bytes param, and may just ignore it. if it is ignored or not given it will always read the entire stream
+
+### errors
+
+errors will typically be created and propogated using luaI_error (in c) but will always retain a common style (unless mentioned otherwise)
+
+it will return 3 values, in order
+
+* nil (just always a nil value first, useful to do a quick check for errors on functions with a return value)
+* string (an error message)
+* integer (an error code)
+
+similarily, when luaI_assert is called, the string will be the expression and the integer will be -1
+
 
 ---
 

@@ -21,7 +21,7 @@ function async.clean(T) end
 ---@return nil
 function async.close(T) end
 
----stops the thread forcefully, may cause problems
+---stops the thread forcefully, may cause problems, likely not thread-safe
 ---@param T async-table
 ---@return nil
 function async.kill(T) end

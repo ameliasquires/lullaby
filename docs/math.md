@@ -1,5 +1,7 @@
 # math
 
+> out of date!!
+
 ## common 
 
 ### lcm 

@@ -1,5 +1,7 @@
 # table (tables and sorting)
 
+> out of date!!
+
 ## sorting
 
 |name|accepted types|type of sorting|order|

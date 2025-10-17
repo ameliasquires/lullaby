@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/eventfd.h>
 #include "types/str.h"
 #include "util.h"
 
@@ -17,6 +18,7 @@ struct thread_info {
   int return_count, done;
   pthread_t tid;
   pthread_mutex_t* lock, *ready_lock;
+  pthread_cond_t* cond;
 };
 
 #include "io.h"
@@ -182,9 +184,12 @@ void* handle_thread(void* _args){
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 #endif
 
-  pthread_detach(args->tid);
   signal(SIGUSR1, _thread_exit_signal);
 
+  pthread_detach(args->tid);
+  //unlock main
+  pthread_mutex_lock(&*args->ready_lock);
+  pthread_cond_signal(&*args->cond);
   pthread_mutex_unlock(&*args->ready_lock);
 
   lua_newtable(L);
@@ -205,7 +210,7 @@ void* handle_thread(void* _args){
   lua_assign_upvalues(L, x);
   lua_pushvalue(L, res_idx);
   lua_call(L, 1, 0);
-  args->tid = 0;
+  args->done = 1;
   pthread_mutex_unlock(&*args->lock);
 
   return NULL;
@@ -216,11 +221,10 @@ int _thread_await(lua_State* L){
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
   if(info->L == NULL) luaI_error(L, -1, "thread was already closed")
+  if(info->tid == 0) luaI_error(L, -2, "thread was killed early")
+
   //maybe error here if tid is zero
-  if(!info->done && info->tid != 0){
-    pthread_mutex_lock(&*info->lock);
-  }
-  info->done = 1;
+  pthread_mutex_lock(&*info->lock);
 
   env_table(info->L, 0);
   luaI_deepcopy(info->L, L, SKIP_LOCALS);
@@ -249,6 +253,7 @@ int _thread_await(lua_State* L){
 
   lua_pushnil(L);
   lua_setglobal(L, "_locals");
+  pthread_mutex_unlock(&*info->lock);
 
   return info->return_count;
 }
@@ -260,14 +265,14 @@ int _thread_clean(lua_State* L){
   if(info != NULL && info->L != NULL){
     luaI_tsetnil(L, 1, "_");
 
-    if(info->tid != 0){
+    if(info->tid != 0 && !info->done){
 #ifdef SUPPORTS_PTHREAD_CANCEL
       pthread_cancel(info->tid);
 #else
       pthread_kill(info->tid, SIGUSR1);
 #endif
     }
-
+ 
     //lua_gc(info->L, LUA_GCRESTART);
     lua_gc(info->L, LUA_GCCOLLECT);
 
@@ -322,20 +327,26 @@ int l_async(lua_State* oL){
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
   args->lock = malloc(sizeof * args->lock);
-  args->ready_lock = malloc(sizeof * args->ready_lock);
   pthread_mutex_init(&*args->lock, NULL);
+  args->ready_lock = malloc(sizeof * args->ready_lock);
   pthread_mutex_init(&*args->ready_lock, NULL);
   args->return_count = 0;
+  args->cond = malloc(sizeof * args->cond);
+  pthread_cond_init(&*args->cond, NULL);
 
   args->function = str_init("");
   lua_pushvalue(oL, 1);
   lua_dump(oL, writer, (void*)args->function, 0);
 
   pthread_mutex_lock(&*args->ready_lock);
-  pthread_create(&args->tid, NULL, handle_thread, (void*)args);
-  pthread_mutex_lock(&*args->ready_lock);
 
+  pthread_create(&args->tid, NULL, handle_thread, (void*)args);
+
+  pthread_cond_wait(&*args->cond, &*args->ready_lock);
   pthread_mutex_unlock(&*args->ready_lock);
+
+  pthread_cond_destroy(&*args->cond);
+  free(args->cond);
   pthread_mutex_destroy(&*args->ready_lock);
   free(args->ready_lock);
 
@@ -518,6 +529,9 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
 int l_buffer_gc(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
+  pthread_mutex_unlock(&*buffer->lock);
+  //race condition here, if something can manage to lock the thread between these two lines
+  //add maybe a closing variable thats checked for
   pthread_mutex_destroy(&*buffer->lock);
   free(buffer->lock);
 
