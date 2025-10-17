@@ -163,6 +163,7 @@ int l_res(lua_State* L){
     lua_settop(L, ot);
   }
 
+  info->done = 1;
   pthread_mutex_unlock(&*info->lock);
 
   pthread_exit(NULL);
