@@ -434,6 +434,7 @@ int l_buffer_index(lua_State* L){
 
   hash = fnv_1((uint8_t*)str, len, v_1);
 
+  //maybe strcmp after the hash has been verified?
   switch(hash){
     case 0xd8c8ad186b9ed323: //get
       lua_pushcfunction(L, _buffer_get);
@@ -464,10 +465,10 @@ int hi(lua_State* L){
   return 0;
 }
 
-//not thread safe yet
 int meta_proxy(lua_State* L){
   int argc = lua_gettop(L);
   struct thread_buffer *buffer = lua_touserdata(L, 1);
+  pthread_mutex_lock(&*buffer->lock);
 
   lua_getmetatable(buffer->L, 1);
   lua_pushstring(buffer->L, lua_tostring(L, 2));
@@ -490,10 +491,12 @@ int meta_proxy(lua_State* L){
   lua_setmetatable(buffer->L, -2);
 
   lua_settop(buffer->L, 1);
+  pthread_mutex_unlock(&*buffer->lock);
   //printf("%p\n", lua_topointer(buffer->L, -1));
   return 1;
 }
 
+#warning "make this reapply for new objects!"
 void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, int new_meta_idx){  
 
   lua_pushcfunction(L, meta_proxy); 
