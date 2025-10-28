@@ -61,16 +61,6 @@ function buffer.mod(T, fun) end
 ---@return buffer-table
 function thread.buffer(value) end
 
----locks any thread reaching this lock id until a corresponding unlock is met
----@param tid integer
----@return nil
-function thread.lock(tid) end
-
----unlocks a lock id
----@param tid integer
----@return nil
-function thread.unlock(tid) end
-
 ---@deprecated
 function thread.testcopy() end
 
