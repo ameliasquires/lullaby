@@ -8,10 +8,9 @@
 
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
 #include <sys/poll.h>
 #include <sys/eventfd.h>
 
