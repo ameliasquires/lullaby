@@ -51,7 +51,6 @@ int luaopen_lullaby(lua_State* L) {
   luaI_tsets(L, top, "version", GIT_COMMIT);
 
   lua_pushvalue(L, top);
-  int idx = i_config_metatable(L, lullaby_config);
 
   lua_settop(L, top); 
   return 1;
