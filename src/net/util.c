@@ -352,7 +352,7 @@ int match_param(char* path, char* match, parray_t* arr){
         if(match[mi] == '/'){
           step = NORMAL;
 
-          char* out = calloc(mi - start, sizeof * out);
+          char* out = calloc(mi - start + 1, sizeof * out);
           memcpy(out, match + start, mi - start);
           parray_set(arr, name, out);
           free(name);
