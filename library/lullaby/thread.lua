@@ -16,7 +16,7 @@ function async.await(T) end
 ---@return nil
 function async.clean(T) end
 
----stops the thread, may be unavaliable on some systems (android) and will call async:kill instead
+---waits for the thread to either call res:testcancel() or for it to exit
 ---@param T async-table
 ---@return nil
 function async.close(T) end
@@ -31,8 +31,26 @@ function async.kill(T) end
 ---@type lightuserdata
 async._ = nil
 
+---@class async-res-table
+---@overload fun(a: any): nil
+local asyncres = setmetatable({}, {
+  __call = function() end
+})
+
+---checks if the thread is being requested to close with thread:close()
+---@param T async-res-table
+---@return nil
+function asyncres.testclose(T) end
+
+---calls res:testclose every line
+---@param T async-res-table
+---@return nil
+function asyncres.autoclose(T) end
+---@meta
+
 ---@async
----@param fun fun(res: fun(...)): nil function to call, parameter will set a return value for the thread
+---@nodiscard
+---@param fun fun(res: async-res-table): nil function to call, parameter will set a return value for the thread, also contains methods for thread managment
 ---@return async-table
 function thread.async(fun) end
 
@@ -56,6 +74,7 @@ function buffer.set(T, value) end
 ---@return nil
 function buffer.mod(T, fun) end
 
+---@nodiscard
 ---puts a value into a atomic thread-safe buffer
 ---@param value any
 ---@return buffer-table
@@ -85,5 +104,9 @@ function mutex.free(T) end
 ---returns a mutex object, useful for solving race conditions in multi-threaded environments
 ---@return mutex-table
 function thread.mutex() end
+
+---puts the thread to sleep for N microseconds
+---@param N integer
+function thread.usleep(N) end
 
 return thread

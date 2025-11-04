@@ -15,9 +15,9 @@
 struct thread_info {
   str* function;
   lua_State* L;
-  int return_count, done;
+  int return_count, done, request_close;
   pthread_t tid;
-  pthread_mutex_t* lock, *ready_lock;
+  pthread_mutex_t* lock, *ready_lock, *close_lock;
   pthread_cond_t* cond;
 };
 
@@ -107,6 +107,37 @@ int l_res(lua_State* L){
   return 1;
 }
 
+int _res_testclose(lua_State* L){
+  lua_pushstring(L, "_");
+  lua_gettable(L, 1);
+  struct thread_info* info = lua_touserdata(L, -1);
+
+  pthread_mutex_lock(&*info->close_lock);
+  pthread_cond_signal(&*info->cond);
+
+  if(info->request_close){
+    info->done = 1;
+
+    pthread_mutex_unlock(&*info->lock);
+    pthread_mutex_unlock(&*info->close_lock);
+
+    pthread_exit(NULL);
+  }
+
+  pthread_mutex_unlock(&*info->close_lock);
+
+  return 0;
+}
+
+void _res_testclose_debug(lua_State* L, lua_Debug* d){
+  _res_testclose(L);
+}
+
+int _res_autoclose(lua_State* L){
+  lua_sethook(L, _res_testclose_debug, LUA_HOOKLINE, 1);
+  return 0;
+}
+
 void _thread_exit_signal(int i){
   pthread_exit(NULL);
 }
@@ -115,10 +146,6 @@ void* handle_thread(void* _args){
   struct thread_info* args = (struct thread_info*)_args;
   lua_State* L = args->L;
   pthread_mutex_lock(&*args->lock);
-
-#ifdef SUPPORTS_PTHREAD_CANCEL
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-#endif
 
   signal(SIGUSR1, _thread_exit_signal);
 
@@ -130,6 +157,8 @@ void* handle_thread(void* _args){
 
   lua_newtable(L);
   int res_idx = lua_gettop(L);
+  luaI_tsetcf(L, res_idx, "testclose", _res_testclose);
+  luaI_tsetcf(L, res_idx, "autoclose", _res_autoclose);
   luaI_tsetlud(L, res_idx, "_", args);
 
   lua_newtable(L);
@@ -149,6 +178,10 @@ void* handle_thread(void* _args){
   args->done = 1;
   pthread_mutex_unlock(&*args->lock);
 
+  pthread_mutex_lock(&*args->close_lock);
+  pthread_cond_signal(&*args->cond);
+  pthread_mutex_unlock(&*args->close_lock);
+
   return NULL;
 }
 
@@ -159,7 +192,6 @@ int _thread_await(lua_State* L){
   if(info->L == NULL) luaI_error(L, -1, "thread was already closed")
   if(info->tid == 0) luaI_error(L, -2, "thread was killed early")
 
-  //maybe error here if tid is zero
   pthread_mutex_lock(&*info->lock);
 
   env_table(info->L, 0);
@@ -202,11 +234,7 @@ int _thread_clean(lua_State* L){
     luaI_tsetnil(L, 1, "_");
 
     if(info->tid != 0 && !info->done){
-#ifdef SUPPORTS_PTHREAD_CANCEL
-      pthread_cancel(info->tid);
-#else
       pthread_kill(info->tid, SIGUSR1);
-#endif
     }
  
     //lua_gc(info->L, LUA_GCRESTART);
@@ -218,6 +246,11 @@ int _thread_clean(lua_State* L){
 
     pthread_mutex_destroy(&*info->lock);
     free(info->lock);
+    pthread_mutex_destroy(&*info->close_lock);
+    free(info->close_lock);
+
+    pthread_cond_destroy(&*info->cond);
+    free(info->cond);
 
     free(info);
   }
@@ -236,19 +269,22 @@ int _thread_kill(lua_State* L){
 }
 
 int _thread_close(lua_State* L){
-#ifdef SUPPORTS_PTHREAD_CANCEL
-
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
 
-  if(info->tid != 0) pthread_cancel(info->tid);
+  if(info->tid == 0) return 0;
+  
+  pthread_mutex_lock(&*info->close_lock);
+
+  info->request_close = 1;
+
+  pthread_cond_wait(&*info->cond, &*info->close_lock);
+  pthread_mutex_unlock(&*info->close_lock);
+
   info->tid = 0;
 
   return 0;
-#else
-  return _thread_kill(L);
-#endif
 }
 
 int l_async(lua_State* oL){
@@ -264,6 +300,9 @@ int l_async(lua_State* oL){
   pthread_mutex_init(&*args->lock, NULL);
   args->ready_lock = malloc(sizeof * args->ready_lock);
   pthread_mutex_init(&*args->ready_lock, NULL);
+  args->close_lock = malloc(sizeof * args->close_lock);
+  pthread_mutex_init(&*args->close_lock, NULL);
+
   args->return_count = 0;
   args->cond = malloc(sizeof * args->cond);
   pthread_cond_init(&*args->cond, NULL);
@@ -279,8 +318,6 @@ int l_async(lua_State* oL){
   pthread_cond_wait(&*args->cond, &*args->ready_lock);
   pthread_mutex_unlock(&*args->ready_lock);
 
-  pthread_cond_destroy(&*args->cond);
-  free(args->cond);
   pthread_mutex_destroy(&*args->ready_lock);
   free(args->ready_lock);
 
@@ -508,8 +545,11 @@ int l_buffer(lua_State* L){
   return 1;
 }
 
-void _lua_getfenv(lua_State* L){
+int l_usleep(lua_State* L){
+  uint64_t n = lua_tonumber(L, 1);
+  usleep(n);
 
+  return 0;
 }
 
 int l_testcopy(lua_State* L){ 

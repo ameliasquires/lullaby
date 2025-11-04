@@ -1,14 +1,11 @@
 #include "lua.h"
 #include "config.h"
 
-#ifndef __ANDROID__
-#define SUPPORTS_PTHREAD_CANCEL
-#endif
-
 int l_async(lua_State*);
 int l_buffer(lua_State*);
 int l_testcopy(lua_State*);
 int l_mutex(lua_State*);
+int l_usleep(lua_State*);
 
 void lib_thread_clean();
 
@@ -19,6 +16,7 @@ static const luaL_Reg thread_function_list [] = {
   {"buffer",l_buffer},
   {"testcopy",l_testcopy},
   {"mutex", l_mutex},
+  {"usleep", l_usleep},
   {NULL,NULL}
 };
 
