@@ -262,7 +262,12 @@ int _thread_kill(lua_State* L){
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
 
-  if(info->tid != 0) pthread_kill(info->tid, SIGUSR1);
+  if(info->tid != 0){
+    pthread_kill(info->tid, SIGUSR1);
+    pthread_mutex_lock(&*info->close_lock);
+    pthread_cond_signal(&*info->cond);
+    pthread_mutex_unlock(&*info->close_lock);
+  }
   info->tid = 0;
 
   return 0;
@@ -359,9 +364,11 @@ int _buffer_set(lua_State* L){
   luaI_deepcopy(L, buffer->L, SKIP_LOCALS);
   pthread_mutex_unlock(&*buffer->lock);
 
-  lua_getmetatable(L, 2);
-  int idx = lua_gettop(L);
-  luaI_tsetnil(L, idx, "__gc");
+  if(lua_type(L, 2) == LUA_TTABLE || lua_type(L, 2) == LUA_TUSERDATA){
+    lua_getmetatable(L, 2);
+    int idx = lua_gettop(L);
+    luaI_tsetnil(L, idx, "__gc");
+  }
 
   return 1;
 }
@@ -548,6 +555,13 @@ int l_buffer(lua_State* L){
 int l_usleep(lua_State* L){
   uint64_t n = lua_tonumber(L, 1);
   usleep(n);
+
+  return 0;
+}
+
+int l_sleep(lua_State* L){
+  double n = lua_tonumber(L, 1);
+  usleep(n * 1000 * 1000);
 
   return 0;
 }

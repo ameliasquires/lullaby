@@ -109,4 +109,8 @@ function thread.mutex() end
 ---@param N integer
 function thread.usleep(N) end
 
+---puts the thread to sleep for N seconds
+---@param N number
+function thread.sleep(N) end
+
 return thread

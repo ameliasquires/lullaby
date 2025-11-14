@@ -6,6 +6,7 @@ int l_buffer(lua_State*);
 int l_testcopy(lua_State*);
 int l_mutex(lua_State*);
 int l_usleep(lua_State*);
+int l_sleep(lua_State*);
 
 void lib_thread_clean();
 
@@ -17,6 +18,7 @@ static const luaL_Reg thread_function_list [] = {
   {"testcopy",l_testcopy},
   {"mutex", l_mutex},
   {"usleep", l_usleep},
+  {"sleep", l_sleep},
   {NULL,NULL}
 };
 
