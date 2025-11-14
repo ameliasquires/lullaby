@@ -532,7 +532,7 @@ int l_buffer(lua_State* L){
   buffer->lock = malloc(sizeof * buffer->lock);
   if(pthread_mutex_init(&*buffer->lock, NULL) != 0) p_fatal("pthread_mutex_init failed");
   lua_pushvalue(L, 1);
-  luaI_deepcopy(L, buffer->L, SKIP_LOCALS);
+  luaI_deepcopy(L, buffer->L, SKIP_LOCALS | STRIP_GC);
 
   lua_newtable(L);
   int meta_idx = lua_gettop(L);

@@ -287,6 +287,12 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     lua_setmetatable(dest, tidx);
 
     lua_settop(dest, tidx);
+
+    if(flags & STRIP_GC){
+      int sidx = lua_gettop(src);
+      lua_getmetatable(src, sidx);
+      luaI_tsetnil(src, sidx, "__gc");
+    }
   }
   lua_settop(src, old_top);
 }

@@ -14,6 +14,7 @@ enum deep_copy_flags {
   IS_META = (1 << 2),
   SKIP__G = (1 << 3),
   SKIP_LOCALS = (1 << 4),
+  STRIP_GC = (1 << 5),
 };
 #endif 
 
