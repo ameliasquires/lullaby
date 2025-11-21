@@ -413,7 +413,10 @@ void parse_mimetypes(){
   mime_type = map_init();
 
   FILE* fp = fopen(_mimetypes, "r");
-  if(fp == NULL) return (void)printf("unable to load mimetypes, set llby.net.mimetypes to a proper location, or nil to skip this\n");
+  if(fp == NULL){
+    fprintf(stderr, "unable to load mimetypes, set llby.net.mimetypes to a proper location, or nil to skip this\n");
+    return;
+  }
 
   char* line = NULL;
   size_t len = 0;
