@@ -2,6 +2,7 @@ local pass = llby.thread.buffer(true)
 
 local th = llby.thread.async(function(res)
   while true do
+    llby.thread.usleep(100)
     res:testclose()
   end
 end)

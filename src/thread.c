@@ -87,16 +87,22 @@ int l_res(lua_State* L){
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
-  info->return_count = return_count;
+  info->return_count = return_count; 
+
+  lua_newtable(L);
+  int idx = lua_gettop(L);
 
   for(int i = info->return_count - 1; i != -1; i--){
-    int ot = lua_gettop(L);
-
-    lua_pushvalue(L, 2 + i);
-    luaI_deepcopy(L, info->L, 0);
-
-    lua_settop(L, ot);
+    lua_pushinteger(L, lua_rawlen(L, idx) + 1);
+    lua_pushvalue(L, i + 2);
+    lua_settable(L, idx);
   }
+
+  env_table(L, 0);
+  lua_setglobal(L, "_res_locals");
+
+  lua_pushvalue(L, idx);
+  lua_setglobal(L, "_return_table");
 
   info->done = 1;
   pthread_mutex_unlock(&*info->lock);
@@ -194,29 +200,22 @@ int _thread_await(lua_State* L){
 
   pthread_mutex_lock(&*info->lock);
 
-  env_table(info->L, 0);
-  luaI_deepcopy(info->L, L, SKIP_LOCALS);
-  lua_pop(info->L, 1);
+  if(info->return_count == 0) return 0;
+  lua_getglobal(info->L, "_res_locals");
+  luaI_deepcopy(info->L, L, SKIP_LOCALS | STRIP_GC);
   env_table(L, 0);
+
   luaI_jointable(L);
 
   lua_setglobal(L, "_locals");
 
-  for(int i = 0; i != info->return_count; i++){
-    int ot = lua_gettop(info->L);
+  lua_getglobal(info->L, "_return_table");
+  int idx = lua_gettop(info->L);
 
-    lua_pushvalue(info->L, ot - info->return_count + i);
-
-    luaI_deepcopy(info->L, L, 0);
-
-    int type = lua_type(info->L, ot - info->return_count + i);
-    if(type == LUA_TTABLE || type == LUA_TUSERDATA){
-      lua_getmetatable(info->L, ot - info->return_count + i);
-      int idx = lua_gettop(info->L);
-      luaI_tsetnil(info->L, idx, "__gc");
-    }
-
-    lua_settop(info->L, ot);
+  for(int i = info->return_count; i != 0; i--){
+    lua_pushinteger(info->L, i);
+    lua_gettable(info->L, idx);
+    luaI_deepcopy(info->L, L, STRIP_GC);
   }
 
   lua_pushnil(L);
@@ -298,6 +297,7 @@ int l_async(lua_State* oL){
 
   luaL_openlibs(L);
   luaI_copyvars(oL, L);
+  luaL_openlibs(L);
 
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
@@ -361,27 +361,15 @@ int _buffer_set(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
   lua_settop(buffer->L, 0);
-  luaI_deepcopy(L, buffer->L, SKIP_LOCALS);
+  luaI_deepcopy(L, buffer->L, SKIP_LOCALS | STRIP_GC);
   pthread_mutex_unlock(&*buffer->lock);
-
-  if(lua_type(L, 2) == LUA_TTABLE || lua_type(L, 2) == LUA_TUSERDATA){
-    lua_getmetatable(L, 2);
-    int idx = lua_gettop(L);
-    luaI_tsetnil(L, idx, "__gc");
-  }
 
   return 1;
 }
 
-#include <assert.h>
-_Atomic int used = 0;
-
 int _buffer_mod(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
-  //printf("%p\n", &*buffer->lock);
-  assert(used == 0);
-  used = 1;
 
   luaI_deepcopy(buffer->L, L, SKIP_GC | SKIP_LOCALS);
   int item = lua_gettop(L);
@@ -392,14 +380,12 @@ int _buffer_mod(lua_State* L){
   if(lua_type(L, -1) != LUA_TNIL){
     int idx = lua_gettop(L);
     lua_settop(buffer->L, 0);
-    luaI_deepcopy(L, buffer->L, SKIP_LOCALS);
+    luaI_deepcopy(L, buffer->L, STRIP_GC | SKIP_LOCALS);
 
     lua_getmetatable(L, idx);
     idx = lua_gettop(L);
     luaI_tsetnil(L, idx, "__gc");
   }
-
-  used = 0;
 
   pthread_mutex_unlock(&*buffer->lock);
   return 1;
@@ -464,7 +450,7 @@ int meta_proxy(lua_State* L){
 
   //printf("%i\n",count);
   lua_call(buffer->L, count + 1, 1);
-  luaI_deepcopy(buffer->L, L, SKIP_LOCALS);
+  luaI_deepcopy(buffer->L, L, SKIP_LOCALS | STRIP_GC);
 
   lua_pushnil(buffer->L);
   lua_setmetatable(buffer->L, -2);

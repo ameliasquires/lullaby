@@ -10,6 +10,8 @@ the reason for the res function it because lua_call (in the c api) requires a nu
 
 the res function also provides some child methods for thread managment
 
+though variables are copied, some may not be able to clone perfectly (complex userdata, lightuserdata, etc..) and the __gc call from the main thread may effect the copy on the new thread. this issue wont be permanent, but it may require a workaround for now.
+
 ### res:testclose
 
 res:testclose()
