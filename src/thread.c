@@ -104,11 +104,8 @@ int l_res(lua_State* L){
   lua_pushvalue(L, idx);
   lua_setglobal(L, "_return_table");
 
-  info->done = 1;
-  pthread_mutex_unlock(&*info->lock);
-
-  pthread_exit(NULL);
-  p_error("thread did not exit");
+  lua_pushstring(L, "res():exit");
+  lua_error(L);
 
   return 1;
 }
@@ -180,7 +177,12 @@ void* handle_thread(void* _args){
 
   lua_assign_upvalues(L, x);
   lua_pushvalue(L, res_idx);
-  lua_call(L, 1, 0);
+  if(lua_pcall(L, 1, 0, 0) != LUA_OK){
+    if(!(lua_type(L, -1) == LUA_TSTRING && strcmp("res():exit", lua_tostring(L, -1)) == 0)){
+      lua_error(L);
+    }
+    lua_pop(L, 1);
+  }
   args->done = 1;
   pthread_mutex_unlock(&*args->lock);
 
@@ -206,7 +208,6 @@ int _thread_await(lua_State* L){
   env_table(L, 0);
 
   luaI_jointable(L);
-
   lua_setglobal(L, "_locals");
 
   lua_getglobal(info->L, "_return_table");
