@@ -21,7 +21,11 @@ local handle = assert(io.popen("find tests/units/".. search .." -type f"))
 
 for file in handle:lines() do
   total = total + 1
+  print(file)
   local f = loadfile(file)()
+
+  --move up one line and clear it
+  io.write("\27[1A\27[K")
 
   if f == true then
     yay(file)

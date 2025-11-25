@@ -203,11 +203,15 @@ int _thread_await(lua_State* L){
   pthread_mutex_lock(&*info->lock);
 
   if(info->return_count == 0) return 0;
-  lua_getglobal(info->L, "_res_locals");
-  luaI_deepcopy(info->L, L, SKIP_LOCALS | STRIP_GC);
-  env_table(L, 0);
+  lua_getglobal(L, "_locals");
+  int old_locals = lua_gettop(L);
 
-  luaI_jointable(L);
+  lua_getglobal(info->L, "_stored_locals");
+  lua_getglobal(info->L, "_res_locals");
+  luaI_jointable(info->L);
+  luaI_deepcopy(info->L, L, SKIP_LOCALS | STRIP_GC);
+  //env_table(L, 0);
+
   lua_setglobal(L, "_locals");
 
   lua_getglobal(info->L, "_return_table");
@@ -219,7 +223,7 @@ int _thread_await(lua_State* L){
     luaI_deepcopy(info->L, L, STRIP_GC);
   }
 
-  lua_pushnil(L);
+  lua_pushvalue(L, old_locals);
   lua_setglobal(L, "_locals");
   pthread_mutex_unlock(&*info->lock);
 
@@ -299,6 +303,9 @@ int l_async(lua_State* oL){
   luaL_openlibs(L);
   luaI_copyvars(oL, L);
   luaL_openlibs(L);
+
+  lua_getglobal(L, "_locals");
+  lua_setglobal(L, "_stored_locals");
 
   struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;

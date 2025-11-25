@@ -114,6 +114,8 @@ int writer(lua_State*, const void*, size_t, void*);
   #define lua_gc(A, B) lua_gc(A, B, 0)
 
 #elif LUA_VERSION_NUM == 501
+    #define LUA_OK 0
+
     #define luaL_tolstring lua_tolstring
     
     #define lua_dump(A, B, C, D) lua_dump(A, B, C)
