@@ -272,11 +272,11 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
                      lua_pushlightuserdata(dest, lua_touserdata(src, -1)); 
                      break;
     case LUA_TTHREAD:
-                     sprintf(stderr, "unable to copy LUA_TTHREAD, pushing nil\n");
+                     fprintf(stderr, "unable to copy LUA_TTHREAD, pushing nil\n");
                      lua_pushnil(dest);
                      break; 
     default:
-                     sprintf(stderr, "unknown type %i vs (old)%i\n",lua_type(src, -1), type);
+                     fprintf(stderr, "unknown type %i vs (old)%i\n",lua_type(src, -1), type);
                      //abort();
                      lua_pushnil(dest);
                      break;

@@ -878,7 +878,7 @@ void* handle_client(void *_arg){
 
               //call the function
               if(lua_pcall(L, 2, 0, 0) != 0){
-                printf("(net thread) %s\n", lua_tostring(L, -1));
+                fprintf(stderr, "(net thread) %s\n", lua_tostring(L, -1));
                 //send an error message if send has not been called
                 if(client_fd >= 0) net_error(client_fd, 500);
 
