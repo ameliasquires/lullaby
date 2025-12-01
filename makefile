@@ -31,11 +31,13 @@ else
 	CFLAGS += -fPIC
 endif
 
+.PHONY: all
 all: $(TARGET)
 
 release: CFLAGS += $(RELEASE_FLAGS)
 release: all
 
+.PHONY: install
 install::
 	mkdir $(INSTALL)$(install_version) -p
 	cp $(TARGET) $(INSTALL)$(install_version)/$(TARGET)
@@ -74,5 +76,8 @@ reg: all
 $(TARGET): $(OBJS)
 	$(LINKER) $(OBJS) -o $(TARGET) $(LFLAGS) 
 
+.PHONY: clean
 clean: 
 	rm -f $(OBJS)
+
+

@@ -35,7 +35,7 @@ str* str_init(const char* init){
 
 void str_free(str* s){
   free(s->c);
-  return free(s);
+  free(s);
 }
 
 void str_push(str* s, const char* insert){

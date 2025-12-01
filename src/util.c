@@ -13,8 +13,10 @@ int gen_parse(char* inp, int len, parray_t** _table){
   for(int i = 0; i < len; i++){
 
     if(state != 1 && inp[i] == ';'){
-      parray_set(table, last->c, (void*)current);
-      str_free(last);
+      if(last != NULL){
+        parray_set(table, last->c, (void*)current);
+        str_free(last);
+      }
       last = NULL;
       current = str_init("");
       state = 0;
@@ -67,3 +69,4 @@ void _p_fatal(const char* m, int line, const char* file, const char* function){
 void p_error(const char* m){
   fprintf(stderr, "%s[error]%s %s\n",color_red, color_reset, m);
 }
+
