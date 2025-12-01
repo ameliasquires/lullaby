@@ -1,7 +1,7 @@
 CC := clang
 
 MAJOR_VERSION := "$(shell git -c safe.directory='*' describe --tags --abbrev=0)"
-GIT_COMMIT := "$(shell git -c safe.directory='*' describe --tags)-$(shell git -c safe.directory='*' describe --always --match 'NOT A TAG')"
+GIT_COMMIT := "$(shell git -c safe.directory='*' describe --tags --abbrev=0)-$(shell git -c safe.directory='*' describe --always --match 'NOT A TAG')"
 
 version ?= 5.4
 install_version = $(version)
@@ -17,6 +17,9 @@ LINKER := $(CC)
 TARGET := lullaby.so
 INSTALL := /usr/local/lib/lua/
 
+DEBUG_CFLAGS := -ggdb3 -fno-omit-frame-pointer -fno-optimize-sibling-calls
+RELEASE_FLAGS := -O3
+
 SRCS := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJS := $(SRCS:.c=.o)
 
@@ -30,7 +33,7 @@ endif
 
 all: $(TARGET)
 
-release: CFLAGS += -O3
+release: CFLAGS += $(RELEASE_FLAGS)
 release: all
 
 install::
@@ -51,13 +54,13 @@ install::
 # https://github.com/google/sanitizers/issues/89#issuecomment-406316683
 #
 # this also requires lua to be built with asan
-debug: CFLAGS += -ggdb3 -fno-omit-frame-pointer -fno-optimize-sibling-calls
+debug: CFLAGS += $(DEBUG_CFLAGS)
 debug: all
 
-san: CFLAGS += -ggdb3 -static-libasan -fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -fno-optimize-sibling-calls
+san: CFLAGS += -static-libasan -fsanitize=address -fsanitize=undefined $(DEBUG_CFLAGS)
 san: all
 
-tsan: CFLAGS += -ggdb3 -static-libasan -fsanitize=undefined -fsanitize=thread -fno-omit-frame-pointer -fno-optimize-sibling-calls
+tsan: CFLAGS += -static-libasan -fsanitize=thread -fsanitize=undefined $(DEBUG_CFLAGS)
 tsan: all
 
 reg: 
