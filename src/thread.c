@@ -391,8 +391,10 @@ int _buffer_mod(lua_State* L){
     luaI_deepcopy(L, buffer->L, STRIP_GC | SKIP_LOCALS);
 
     lua_getmetatable(L, idx);
-    idx = lua_gettop(L);
-    luaI_tsetnil(L, idx, "__gc");
+    if(lua_type(L, -1) == LUA_TTABLE){
+      idx = lua_gettop(L);
+      luaI_tsetnil(L, idx, "__gc");
+    }
   }
 
   pthread_mutex_unlock(&*buffer->lock);

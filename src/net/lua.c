@@ -210,6 +210,9 @@ int l_sendfile(lua_State* L){
     if(!lua_isnil(L, -1)) filename = (char*)lua_tostring(L, -1);
   }
 
+  luaI_assert(L, !access(path, F_OK) /*file not found*/);
+  luaI_assert(L, !access(path, R_OK) /*missing permissions*/);
+
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "client_fd");
   lua_gettable(L, res_idx);
@@ -220,9 +223,6 @@ int l_sendfile(lua_State* L){
   lua_pushstring(L, "header");
   lua_gettable(L, -2);
   int header = lua_gettop(L);
-
-  luaI_assert(L, !access(path, F_OK) /*file not found*/);
-  luaI_assert(L, !access(path, R_OK) /*missing permissions*/);
 
   lua_pushstring(L, "Content-Type");
   lua_gettable(L, header);

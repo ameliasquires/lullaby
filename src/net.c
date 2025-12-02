@@ -843,6 +843,8 @@ void* handle_client(void *_arg){
 
         luaI_tsetv(L, res_idx, "header", header_idx);
 
+        lua_pushcfunction(L, luaI_errtraceback);
+        int errtraceback_idx = lua_gettop(L);
         //get all function that kinda match
         parray_t* owo = (parray_t*)v;
         for(int i = 0; i != owo->len; i++){
@@ -877,7 +879,7 @@ void* handle_client(void *_arg){
               lua_pushvalue(L, req_idx); //push info about the request
 
               //call the function
-              if(lua_pcall(L, 2, 0, 0) != 0){
+              if(lua_pcall(L, 2, 0, errtraceback_idx) != 0){
                 fprintf(stderr, "(net thread) %s\n", lua_tostring(L, -1));
                 //send an error message if send has not been called
                 if(client_fd >= 0) net_error(client_fd, 500);

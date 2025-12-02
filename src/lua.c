@@ -483,3 +483,8 @@ int lua_assign_upvalues(lua_State* L, int fidx){
 
   return 0;
 }
+
+int luaI_errtraceback(lua_State* L){
+  luaL_traceback(L, L, lua_tostring(L, -1), 1);
+  return 1;
+}
