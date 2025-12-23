@@ -12,6 +12,8 @@ endif
 
 CFLAGS := -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' -DMAJOR_VERSION='$(MAJOR_VERSION)' `pkg-config --cflags lua$(version)`
 LFLAGS := -lm -shared -lcrypto -lssl
+HARDENING_CFLAGS := -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fstack-clash-protection
+HARDENING_LFLAGS := -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
 LINKER := $(CC)
 
 TARGET := lullaby.so
@@ -33,6 +35,13 @@ all: $(TARGET)
 
 release: CFLAGS += -O3
 release: all
+
+hardened: CFLAGS += -O2
+ifneq ($(OS),Windows_NT)
+hardened: CFLAGS += $(HARDENING_CFLAGS)
+hardened: LFLAGS += $(HARDENING_LFLAGS)
+endif
+hardened: all
 
 .PHONY: install
 install::

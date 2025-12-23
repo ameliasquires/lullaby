@@ -188,6 +188,7 @@ void http_build(str** _dest, int code, const char* code_det, char* header_vs, ch
   str_pushl(*_dest, content, len);
 
   free(dest);
+  dest=NULL;
 }
 
 /**
@@ -356,6 +357,7 @@ int match_param(char* path, char* match, parray_t* arr){
           memcpy(out, match + start, mi - start);
           parray_set(arr, name, out);
           free(name);
+          name=NULL;
         } else {
           mi++;
         }
@@ -368,6 +370,7 @@ int match_param(char* path, char* match, parray_t* arr){
     memcpy(out, match + start, mi - start);
     parray_set(arr, name, out);
     free(name);
+    name=NULL;
   }
 
   if(path[pi] != 0) for(; path[pi] == '*'; pi++);
@@ -450,6 +453,8 @@ void parse_mimetypes(){
     }
     free(mtype);
     free(type);
+    mtype=NULL;
+    type=NULL;
   }
 
   fclose(fp);
@@ -481,6 +486,7 @@ void _parse_mimetypes(){
     //check if the type has an associated file type
     if(buffer[i + type_len] == '\0' || buffer[i + type_len] == '\n'){
       free(type);
+      type=NULL;
       continue;
     }
     type = realloc(type, (type_len + 1) * sizeof * type);
@@ -511,9 +517,13 @@ void _parse_mimetypes(){
       }
     }
     free(file_type);
+    file_type=NULL;
 
     //printf("e: '%s'\n", type);
-    if(!used)free(type);
+    if(!used){
+      free(type);
+      type=NULL;
+    }
   }
   //printf("done\n");
 

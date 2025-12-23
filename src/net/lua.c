@@ -187,6 +187,7 @@ int l_roll(lua_State* L){
   luaI_tsetv(L, 1, "files", files_idx);
 
   free(buffer);
+  buffer=NULL;
   lua_pushinteger(L, r);
   return 1;
 }
@@ -269,6 +270,7 @@ int l_sendfile(lua_State* L){
   }
 
   free(buffer);
+  buffer=NULL;
   fclose(fp);
 
   return 0;
