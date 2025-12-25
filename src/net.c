@@ -52,7 +52,7 @@ int get_host(char* hostname, char* port){
   struct addrinfo  hints;
 
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
+  hints.ai_family = AF_INET | AF_INET6;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = 0;
   hints.ai_protocol = 0;
@@ -1097,3 +1097,4 @@ int l_listen(lua_State* L){
   start_serv(L, port);
   return 0;
 }
+
