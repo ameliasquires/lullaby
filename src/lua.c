@@ -284,7 +284,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
   int tidx = lua_gettop(dest);
 
   if(modi && !(flags & SKIP_META) && lua_getmetatable(src, -1)){
-    luaI_deepcopy(src, dest, flags | IS_META | SKIP_META);
+    luaI_deepcopy(src, dest, flags | IS_META);
     lua_setmetatable(dest, tidx);
 
     lua_settop(dest, tidx);
@@ -488,3 +488,4 @@ int luaI_errtraceback(lua_State* L){
   luaL_traceback(L, L, lua_tostring(L, -1), 1);
   return 1;
 }
+
