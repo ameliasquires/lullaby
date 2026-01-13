@@ -39,6 +39,8 @@ end, port)
 
 build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
+optionally you can use `make release` or `make hardened` for more optimisation or saftey respectively
+
 windows works through msys2, install `mingw-w64-x86_64-lua` then run `make CC=gcc`
 
 you can install with `doas make install` which will install lullaby.so into /usr/local/lib/lua/5.X
@@ -68,3 +70,4 @@ for working on the code base, i recommend using bear to generate compile_command
 # credits
 
 * [luaproc](https://github.com/askyrme/luaproc) helped wrap my head around multiple lua_State concepts
+
