@@ -12,6 +12,19 @@ the __index metamethod will index any value that is not a buffer.* method on the
 
 every other metamethod will be replaced with a proxy to the metamethod in the copied object
 
+inner functions can be called using the : syntactic sugar
+
+```
+buffer = llby.thread.buffer(llby.crypto.sha1())
+
+buffer:set(buffer:get():update("awa"))
+--or
+buffer:set(buffer.update(buffer:get(), "awa"))
+
+--is the same as
+buffer:set(buffer:update("awa"))
+```
+
 ### buffer:get
 
 buffer:get()
