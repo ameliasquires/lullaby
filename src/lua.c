@@ -257,8 +257,15 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
                      lua_dump(src, writer, (void*)awa, 0);
 
                      luaL_loadbuffer(dest, awa->c, awa->len, "fun");
-                     if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
-                     //lua_remove(dest, -2);
+                     //if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
+                     
+                     int f = lua_gettop(dest);
+                     for(int i = 1; lua_getupvalue(src, -1, i) != NULL; i++){
+                       luaI_deepcopy(src, dest, flags);
+                       lua_setupvalue(dest, f, i);
+                       lua_pop(src, 1);
+                     }
+
                      str_free(awa);
                      break;
     case LUA_TUSERDATA:
