@@ -859,7 +859,10 @@ void* handle_client(void *_arg){
           parray_t* par = params->arr[id].value;
 
           for(int z = 0; z != par->len; z++){
-            luaI_tsets(L, new_param_idx, par->P[z].key->c, (char*)par->P[z].value);
+            char* v = ((char*)par->P[z].value);
+            for(int u = 0; v[u] != '\0'; u++)
+              if(v[u] == '%') v[u] = '/';
+            luaI_tsets(L, new_param_idx, par->P[z].key->c, v);
           }
           parray_clear(par, FREE);
 

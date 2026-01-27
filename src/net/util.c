@@ -546,6 +546,7 @@ int percent_decode(str* input, str** _output){
         return 1;
       }
 
+      if(c == '/') c = '%';
       str_pushl(output, ((char*)&c), 1);
       str_free(hex);
       i += 2;
