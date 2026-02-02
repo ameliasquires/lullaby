@@ -392,12 +392,14 @@ int _buffer_get(lua_State* L){
   return 1;
 }
 
-#warning "how do you handle gc for the new object?"
 int _buffer_set(lua_State* L){
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
+  luaI_deepcopy(buffer->L, L, SKIP_LOCALS | STRIP_GC);
   lua_settop(buffer->L, 0); 
+  lua_pushvalue(L, -2);
   luaI_deepcopy(L, buffer->L, SKIP_LOCALS | STRIP_GC);
+  lua_pop(L, 1);
   pthread_mutex_unlock(&*buffer->lock);
 
   return 1;

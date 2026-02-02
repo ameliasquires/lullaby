@@ -36,6 +36,7 @@ copies the value in the buffer to the current state
 buffer:set(V)
 
 sets the value in the buffer
+returns the old value of the buffer
 
 ### buffer:mod
 

@@ -65,7 +65,7 @@ function buffer.get(T) end
 ---sets the value of the buffer
 ---@param T buffer-table
 ---@param value any
----@return nil
+---@return any prev previous table value
 function buffer.set(T, value) end
 
 ---calls a function with a parameter that is the value of the buffer, return the new value of the buffer
