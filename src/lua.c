@@ -158,6 +158,25 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
   return 0;
 }
 
+enum table_cache {
+  CACHE_HIT, CACHE_MISS
+};
+
+enum table_cache table_cache(lua_State* L, char* key, int index){
+  lua_getfield(L, LUA_REGISTRYINDEX, key);
+  if(lua_type(L, -1) == LUA_TNIL){
+    lua_pushstring(L, key);
+    lua_pushvalue(L, index);
+    lua_settable(L, LUA_REGISTRYINDEX);
+    lua_pop(L, 1);
+    return CACHE_MISS;
+  } else {
+    //lua_pop(dest, 1);
+    lua_remove(L, -2);
+    return CACHE_HIT;
+   }
+}
+
 /**
  * @brief copy top element from src to dest
  *
@@ -200,25 +219,14 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
                      at2 = lua_gettop(src);
                      //printf("before\n"); 
                      char* aauwu = calloc(sizeof * aauwu, 50);
-                     sprintf(aauwu, "%p", lua_topointer(src, at2));
-                     //lua_pushstring(dest, aauwu);
-                     //lua_gettable(dest, LUA_REGISTRYINDEX);
-                     lua_getfield(dest, LUA_REGISTRYINDEX, aauwu);
-                     if(lua_type(dest, -1) == LUA_TNIL){
-                       //printf("new %p\n", lua_topointer(src, at2));
-                       lua_pushstring(dest, aauwu);
-                       lua_pushvalue(dest, at);
-                       lua_settable(dest, LUA_REGISTRYINDEX);
-                       lua_pop(dest, 1);
-                     } else {
-                       //printf("use %p\n", lua_topointer(src, at2));
-                       //lua_pop(dest, 1);
-                       lua_remove(dest, -2);
+                     sprintf(aauwu, "tab-%p", lua_topointer(src, at2));
+
+                     if(table_cache(dest, aauwu, at) == CACHE_HIT){
                        free(aauwu);
                        return;
                      }
+                     
                      free(aauwu);
-                     //printf("after %i:%i\n", at, lua_gettop(dest));
 
                      lua_pushnil(src);
                      for(;lua_next(src, at2) != 0;){
@@ -257,11 +265,21 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
                      lua_dump(src, writer, (void*)awa, 0);
 
                      luaL_loadbuffer(dest, awa->c, awa->len, "fun");
-                     //if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
-                     
                      int f = lua_gettop(dest);
+                     //if(!(flags & SKIP_LOCALS)) lua_assign_upvalues(dest, lua_gettop(dest));
+                     char* poi = calloc(sizeof * poi, 50);
+                     sprintf(poi, "fun-%p", lua_topointer(src, old_top));
+
+                     if(table_cache(dest, poi, f) == CACHE_HIT){
+                       free(poi);
+                       return;
+                     }
+                     free(poi);
+
+                     
                      for(int i = 1; lua_getupvalue(src, -1, i) != NULL; i++){
-                       luaI_deepcopy(src, dest, flags);
+                       luaI_deepcopy(src, dest, flags | IS_UPVALUE);
+                       
                        lua_setupvalue(dest, f, i);
                        lua_pop(src, 1);
                      }
