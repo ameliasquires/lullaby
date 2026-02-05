@@ -272,6 +272,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
 
                      if(table_cache(dest, poi, f) == CACHE_HIT){
                        free(poi);
+                       str_free(awa);
                        return;
                      }
                      free(poi);
