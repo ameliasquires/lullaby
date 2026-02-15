@@ -1,5 +1,7 @@
 # lullaby
 
+> this branch is a bit out of date [state-copy-changes](https://github.com/ameliasquires/lullaby/tree/state-copy-changes) is the most up-to-date in a lot of ways, it will take a little longer for it to be merged
+
 > a large multi-purpose library for lua (primarily 5.4) revolving around threading and cryptography, and including network, math, io, and table functions
 
 heres an example of a webserver to return a [sha0](https://en.wikipedia.org/wiki/SHA-0) hash of an input
@@ -70,4 +72,5 @@ for working on the code base, i recommend using bear to generate compile_command
 # credits
 
 * [luaproc](https://github.com/askyrme/luaproc) helped wrap my head around multiple lua_State concepts
+
 
