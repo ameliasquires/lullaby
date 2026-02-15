@@ -1,5 +1,7 @@
 # lullaby
 
+> yes, i know this branch has far outlived reason for it to exist, there are a lot of large changes here, it will be merged when im more certain about the saftey of these new changes
+
 > a large multi-purpose library for lua (primarily 5.4) revolving around threading and cryptography, and including network, math, io, and table functions
 
 heres an example of a webserver to return a [sha0](https://en.wikipedia.org/wiki/SHA-0) hash of an input
