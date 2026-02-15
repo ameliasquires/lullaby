@@ -19,6 +19,7 @@ str* str_init(const char*);
 void str_free(str*);
 void str_push(str*, const char*);
 void str_pushl(str*, const char*, size_t);
+void str_pushc(str*, char);
 void str_clear(str*);
 void str_popf(str*, int);
 void str_popb(str*, int);

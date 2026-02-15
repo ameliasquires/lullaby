@@ -1,7 +1,8 @@
 #include "common.h"
 #include "util.h"
+#include <ctype.h>
 
-int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
+int64_t recv_header(struct net_data* data, char** _buffer, char** header_eof){
   char* buffer = calloc(sizeof* buffer, BUFFER_SIZE);
   *_buffer = buffer;
   int64_t len = 0;
@@ -9,7 +10,7 @@ int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
   *header_eof = 0;
 
   for(;;){
-    n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
+    n = net_ctx_read(data, buffer + len, BUFFER_SIZE);
 
     if(n <= 0){
       //printf("%s %i\n", strerror(errno), errno);
@@ -34,70 +35,9 @@ int64_t recv_header(int client_fd, char** _buffer, char** header_eof){
   }
 }
 
-/**
- * @brief calls recv into buffer until everything is read
- *
- */
-// deprecated!! replaced by recv_header (above)
-int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state){
-  char* header, *buffer = malloc(BUFFER_SIZE * sizeof * buffer);
-  memset(buffer, 0, BUFFER_SIZE);
-  int64_t len = 0;
-  *header_eof = -1;
-  int n, content_len = -1;
-  uint64_t con_len_full = 0;
-  //printf("&_\n");
-  for(;;){
-    n = recv(client_fd, buffer + len, BUFFER_SIZE, 0);
-    if(n < 0){
-      *_buffer = buffer;
-      printf("%s %i\n",strerror(errno),errno);
-      if(*header_eof == -1) return -2; //dont even try w/ request, no header to read
-      return -1; //well the header is fine atleast
-
-    };
-    if(*header_eof == -1 && (header = strstr(buffer, "\r\n\r\n")) != NULL){
-      *header_eof = header - buffer;
-      char* cont_len_raw = strstr(buffer, "Content-Length: ");
-
-      if(cont_len_raw == NULL) {
-        len += n;
-        *_buffer = buffer;
-        return len;
-      }
-
-      str* cont_len_str = str_init("");
-      if(cont_len_raw == NULL) abort();
-      //i is length of 'Content-Length: '
-      for(int i = 16; cont_len_raw[i] != '\r'; i++) str_pushl(cont_len_str, cont_len_raw + i, 1);
-      con_len_full = strtol(cont_len_str->c, NULL, 10);
-      //if(content_len < 0) p_fatal("idk");
-      str_free(cont_len_str);
-      if(con_len_full > max_content_length) {
-        *_buffer = buffer;
-        *state = (len + n != con_len_full + *header_eof + 4);
-        return len + n;
-      }
-      content_len = 1;
-      buffer = realloc(buffer, con_len_full + *header_eof + 4 + BUFFER_SIZE);
-      if(buffer == NULL) p_fatal("unable to allocate");
-    }
-
-    len += n;
-    if(len >= MAX_HEADER_SIZE){
-      *_buffer = buffer;
-      return -2;//p_fatal("too large");
-    } 
-    if(*header_eof == -1){
-      buffer = realloc(buffer, len + BUFFER_SIZE + 1);
-      memset(buffer + len, 0, n + 1);
-    }
-
-
-    if(content_len != -1 && len - *header_eof - 4 >= con_len_full) break;
-  }
-  *_buffer = buffer;
-  return len;
+void lowercase(char* c, uint64_t len){
+  for(int i = 0; i != len; i++)
+    c[i] = tolower(c[i]);
 }
 
 #define max_uri_len 4096
@@ -116,8 +56,8 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
   for(; oi != header_eof; oi++){
     if(buffer[oi] == ' ' || buffer[oi] == '\n'){
       if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
-      if(item < 3) parray_set(table, item == 0 ? "Request" :
-          item == 1 ? "Path" : "Version", (void*)str_init(current->c));
+      if(item < 3) parray_set(table, item == 0 ? "request" :
+          item == 1 ? "path" : "version", (void*)str_init(current->c));
       str_clear(current);
       item++;
       if(buffer[oi] == '\n') break;
@@ -152,6 +92,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
         //todo: figure out system to handle this
         str* id = (str*)parray_get(table, sw->c);
         if(id != NULL) str_free(id);
+        lowercase(sw->c, sw->len);
         parray_set(table, sw->c, (void*)str_init(current->c));
         str_clear(current);
         str_free(sw);
@@ -159,7 +100,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
         key = 1;
       }
       continue;
-    } else str_pushl(current, buffer + i, 1);
+    } else str_pushc(current, buffer[i]);
   }
   if(sw != NULL){
     parray_set(table, sw->c, (void*)str_init(current->c));
@@ -299,6 +240,7 @@ int content_disposition(str* src, parray_t** _dest){
   return 1;
 }
 
+#warning "leak, last calloc"
 int match_param(char* path, char* match, parray_t* arr){
   int pi, index, imatch, start, mi;
   mi = pi = imatch = start = 0;
@@ -523,10 +465,10 @@ void _parse_mimetypes(){
 
 }
 
-int net_error(int fd, int code){
+int net_error(struct net_data* ctx, int code){
   char out[512] = {0};
   sprintf(out, "HTTP/1.1 %i %s\n\n", code, http_code(code));
-  send(fd, out, strlen(out), MSG_NOSIGNAL);
+  net_ctx_write(ctx, out, strlen(out));
   return 0;
 }
 
@@ -556,4 +498,18 @@ int percent_decode(str* input, str** _output){
   }
   *_output = output; 
   return 0;
+}
+
+int net_ctx_read(struct net_data* data, void* buffer, size_t c){
+  if(data->ssl == NULL){
+    return read(data->sock, buffer, c);
+  }
+  return SSL_read(data->ssl, buffer, c);
+}
+
+int net_ctx_write(struct net_data* data, void* buffer, size_t c){
+  if(data->ssl == NULL){
+    return write(data->sock, buffer, c);
+  }
+  return SSL_write(data->ssl, buffer, c);
 }

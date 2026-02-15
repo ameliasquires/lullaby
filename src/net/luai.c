@@ -11,7 +11,7 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content, si
 
   for(;lua_next(L, header_top) != 0;){
     char* key = (char*)luaL_checklstring(L, -2, NULL);
-    if(strcmp(key, "Code") != 0){
+    if(strcmp(key, "code") != 0){
       str_push(header_vs, key);
       str_push(header_vs, ": ");
       str_push(header_vs, (char*)luaL_checklstring(L, -1, NULL));
@@ -21,7 +21,7 @@ void i_write_header(lua_State* L, int header_top, str** _resp, char* content, si
   }
 
   lua_pushvalue(L, header_top);
-  lua_pushstring(L, "Code");
+  lua_pushstring(L, "code");
   lua_gettable(L, header_top);
   int code = luaL_checkinteger(L, -1);
 

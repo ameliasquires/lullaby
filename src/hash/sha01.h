@@ -20,3 +20,5 @@ int l_sha0(lua_State*);
 int l_sha0_init(lua_State*);
 int l_sha0_update(lua_State*);
 int l_sha0_final(lua_State*);
+
+void sha1(uint8_t* a, size_t len, char* out_stream);

@@ -74,6 +74,10 @@ int luaI_errtraceback(lua_State* L);
     lua_pushstring(L, K);\
     lua_pushnil(L);\
     lua_settable(L, Tidx);
+#define luaI_tsettab(L, Tidx, K)\
+    lua_pushstring(L, K);\
+    lua_newtable(L);\
+    lua_settable(L, Tidx);
 
 #define luaI_treplk(L, Tidx, K, nK){\
   lua_pushstring(L, K);\

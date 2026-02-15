@@ -48,10 +48,8 @@ int de_base64(char* in, char* out){
   }
   return 0;
 }
-int en_base64(char* in, char* out){
-  int len = 0;
-  for(int i = 0; in[i]!='\0'; i++) len++;
 
+int en_base64(char* in, uint64_t len, char* out){
   //char out[(len+1)*3];
   for(int i = 0; i < len; i+=3){
     uint8_t f = i>len?0:in[i];
@@ -63,8 +61,8 @@ int en_base64(char* in, char* out){
     uint8_t i3 = (uint8_t)(s<<4)>>2 | (t>>6);
     uint8_t i4 = t & 0x3f;
 
-    if(t==0)i4 = 64;
-    if(s==0)i3 = 64;
+    if(i+1>=len)i3 = 64;
+    if(i+2>=len)i4 = 64;
     sprintf(out,"%s%c%c%c%c",out,char_index(i1),char_index(i2),
         char_index(i3),char_index(i4));
   }
@@ -78,7 +76,7 @@ int l_base64encode(lua_State* L){
   memcpy(a, _a, len);
 
   char* encode = calloc(len * 3,sizeof * encode);
-  en_base64(a, encode);
+  en_base64(a, len, encode);
   lua_pushstring(L, encode);
 
   free(a);

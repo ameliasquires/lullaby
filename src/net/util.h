@@ -12,8 +12,7 @@
  * @param {int*} pointer to an int, will be where the header ends
  * @return {int64_t} bytes read, -1 if the body was damaged, -2 if the header was
  */
-int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state);
-int64_t recv_header(int client_fd, char** _buffer, char** header_eof);
+int64_t recv_header(struct net_data* ctx, char** _buffer, char** header_eof);
 
 /**
  * @brief converts the request buffer into a parray_t
@@ -55,7 +54,9 @@ int match_param(char* path, char* match, parray_t* arr);
 
 void parse_mimetypes();
 
-int net_error(int fd, int code);
+int net_error(struct net_data* data, int code);
 
 int percent_decode(str* input, str** _output);
 
+int net_ctx_read(struct net_data* data, void* buffer, size_t c);
+int net_ctx_write(struct net_data* data, void* buffer, size_t c);

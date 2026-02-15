@@ -56,6 +56,10 @@ void str_pushl(str* s, const char* insert, size_t l){
   s->c[s->len] = '\0';
 }
 
+void str_pushc(str* s, char insert){
+  str_pushl(s, &insert, 1);
+}
+
 void str_clear(str* s){
   memset(s->c, 0, s->len);
 

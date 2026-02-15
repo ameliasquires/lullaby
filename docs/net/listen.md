@@ -47,6 +47,17 @@ llby.net.listen(function(server)
 end, 80)
 ```
 
+### server.ssl
+
+a table with two keys, expecting a crt and a key file path
+
+```lua
+server.ssl = {
+    key = "server.key",
+    crt = "server.crt"
+}
+```
+
 ### server:close
 
 closes server, will not halt other already accepted requests
@@ -64,7 +75,7 @@ the actual name of the function will change based on what request method you wan
 
 ```lua
 server:all("*", function(res, req) 
-   if(req['Version'] ~= "HTTP/1.1") then 
+   if(req['version'] ~= "HTTP/1.1") then 
       res:stop()
    end
 end)
@@ -126,13 +137,14 @@ prevents all further selected functions from running
 #### res.header
 
 table containing all head information, anything added to it will be used, certain keys will affect other values or have other side effects on res:send, listed below
+values should be in all lowercase
 
 |key|side effect|
 |--|--|
-|Code|Changes response note, ie: (200: OK)|
-|Content-Type|this is changed automatically with res:sendfile|
+|code|Changes response note, ie: (200: OK)|
+|content-type|this is changed automatically with res:sendfile|
 ```lua
-res.header["Code"] = 404
+res.header["code"] = 404
 res.header["test"] = "wowa"
 -- new header will have a code of 404 (at the top duh)
 -- and a new field "test"
@@ -148,19 +160,42 @@ res:sendfile(filepath, options?)
 
 this can return an error if the file is not found or if the user does not have read permissions
 
-res.header["Content-Type"] is set automatically (unless already set) depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
+res.header["content-type"] is set automatically (unless already set) depending on the file extention, using /etc/mime.types, or whatever option was supplied to listen (see listen options)
 
 options table
 
 |key|value|effect|
 |--|--|--|
-|attatchment|boolean, default false|whether or not to add Content-Disposition (if file will be downloaded)|
+|attatchment|boolean, default false|whether or not to add content-disposition (if file will be downloaded)|
 |filename|string, defualts as the first argument|what the client should see as a filename (only when attatchment is true)|
 
 
 ```lua
 res:sendfile("./html/index.html")
 ```
+
+### res:upgrade
+
+res:upgrade()
+
+returns an error if the upgrade is not available
+
+reads the res.header["upgrade"] and updates the connection (for the rest of the routes too!!)
+calling this will update, add or delete some res or req values/functions
+
+#### res:upgrade (websocket)
+
+removes:
+
+req:roll
+
+adds:
+
+res._ws - (data for the websocket)
+res:send - sends data as a full frame
+res:write** - sends data as an incomplete frame
+res:sendfile** - sends file to the client
+res:close** - same function
 
 ### req.parameters 
 
@@ -197,9 +232,9 @@ is no more ready data, -1 if all data has been read, and any other values \< -1 
 
 ```lua
 --when a request contains "hello world"
-req.Body --"hello"
+req.body --"hello"
 req:roll(30) --does not matter if you go over, returns 7 (probably)
-req.Body --"hello world"
+req.body --"hello world"
 req:roll(50) --returns -1, no more to read 
 --req.Body has not been updated
 ```
@@ -217,13 +252,13 @@ can have unique results with files (this example is not perfect, roll could read
 --  --abcd
 
 --when the line 'wowa' has just been read, using roll for less than two will not update the file
-req.Body -- (...)"wowa"
+req.body -- (...)"wowa"
 req:roll(2)
-req.Body -- (...)"wowa" (unchanged)
+req.body -- (...)"wowa" (unchanged)
 --any lines that contain just the boundary and -'s will be put in a seperate buffer until it ends or breaks
 --a previous condition, then it will be added
 req:roll(2)
-req.Body -- (...)"wowa\n--"
+req.body -- (...)"wowa\n--"
 --and now "--" (from the next line) is in the possible boundary buffer, it ends in "ab" so it will be added to the main body
 ```
 

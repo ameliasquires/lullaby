@@ -17,6 +17,7 @@
 #include "../types/str.h"
 #include "../types/parray.h"
 #include "../types/map.h"
+#include "ssl.h"
 
 #define max_con 200
 //2^42
@@ -35,8 +36,16 @@ struct file_parse {
   int dash_count, table_idx;
 };
 
+struct net_data {
+  SSL* ssl;
+  SSL_CTX* ctx;
+  int sock;
+  str* buffer; 
+};
+
 typedef struct {
-  int fd, ser;
+  struct net_data* ctx;
+  int ser;
   int port;
   lua_State* L;
   struct sockaddr_in cli;
@@ -51,6 +60,9 @@ struct lchar {
 
 struct net_server_state {
   int event_fd;
+  int ssl;
+  str* ssl_key;
+  str* ssl_crt;
 };
 
 struct sarray_t {

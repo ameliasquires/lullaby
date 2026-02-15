@@ -35,6 +35,21 @@ function res_table.close(T) end
 ---@param T res-table
 function res_table.stop(T) end
 
+---upgrades the connection, updates some functions
+---@param T res-table
+function res_table.upgrade(T) end
+
+---ssl info, enables ssl
+res_table.ssl = {}
+
+---file location of ssl key
+---@type string
+res_table.ssl.key = ""
+
+---file location of ssl cert
+---@type string
+res_table.ssl.cert = ""
+
 ---key value table containing header values to be sent
 res_table.header = {}
 

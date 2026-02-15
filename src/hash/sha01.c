@@ -136,7 +136,7 @@ void sha01_final(struct sha01_hash* hash, char* out_stream){
     hash->buffer[63 - i] = (uint8_t) (lhhh >> (i * 8) & 0xFF);
   sha01_round(hash);
 
-  sprintf(out_stream,"%02x%02x%02x%02x%02x",hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
+  sprintf(out_stream,"%08x%08x%08x%08x%08x",hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
 
   memcpy(hash, &old_hash, sizeof * hash);
   memcpy(hash->buffer, old, bs);
