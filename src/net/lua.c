@@ -140,9 +140,9 @@ int l_roll(lua_State* L){
   lua_gettable(L, 1);
   struct file_parse* data = (void*)lua_topointer(L, -1); 
 
-  lua_pushvalue(L, 1);
+  lua_getfield(L, 1, "res");
   lua_pushstring(L, "_");
-  lua_gettable(L, 1);
+  lua_gettable(L, -2);
   struct net_data* ctx = lua_touserdata(L, -1);
 
   client_fd_errors(ctx->sock);
