@@ -10,8 +10,8 @@ ifeq ($(version),jit)
 	install_version = 5.1
 endif
 
-CFLAGS := -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' -DMAJOR_VERSION='$(MAJOR_VERSION)' `pkg-config --cflags lua$(version)`
-LFLAGS := -lm -shared -lcrypto -lssl
+override CFLAGS += -D_GNU_SOURCE -Wall -fPIC -DGIT_COMMIT='$(GIT_COMMIT)' -DMAJOR_VERSION='$(MAJOR_VERSION)' `pkg-config --cflags lua$(version)`
+override LFLAGS += -lm -shared -lcrypto -lssl
 LINKER := $(CC)
 
 TARGET := lullaby.so
