@@ -75,6 +75,21 @@ void* parray_get(parray_t* p, char* key){
   return NULL;
 }
 
+//removes key/value pair and returns the value
+void* parray_pop(parray_t* p, char* key){
+  int ind = parray_geti(p, key);
+  if(ind == -1) return NULL;
+
+  str_free(p->P[ind].key);
+  void* v = p->P[ind].value;
+
+  for(int i = ind; i < p->len - 1; i++) p->P[i] = p->P[i+1];
+  p->len--;
+  p->P = realloc(p->P, sizeof * p->P * (p->len + 1));
+
+  return v;
+}
+
 /**
  * @brief gets index with a key
  *

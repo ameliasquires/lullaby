@@ -25,18 +25,23 @@ void __free_(void* p){
   return (free)(p);
 }
 
+int luaI_iserror(lua_State* L){
+  if(lua_gettop(L) < 3) return 0;
+  return lua_type(L, -3) == LUA_TNIL &&
+          lua_type(L, -2) == LUA_TSTRING &&
+          lua_type(L, -1) == LUA_TNUMBER;
+}
+
 int _stream_read(lua_State* L){
   uint64_t len = 0;
   if(lua_gettop(L) > 1){
     len = lua_tointeger(L, 2);
   }
 
-  lua_pushstring(L, "_read");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_read");
   stream_read_function rf = lua_touserdata(L, -1);
 
-  lua_pushstring(L, "_state");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_state");
   void* state = lua_touserdata(L, -1);
 
   str* cont = str_init("");
@@ -55,6 +60,15 @@ int _stream_read(lua_State* L){
   return 1;
 }
 
+int _stream_load(lua_State* L){
+  _stream_read(L);
+  if(luaI_iserror(L)) return 3;
+  int idx = lua_gettop(L);
+  luaI_tsetv(L, 1, "txt", idx);
+
+  return 0;
+}
+
 int _stream_file(lua_State* L){
   const int CHUNK_SIZE = 4096;
   uint64_t maxlen = 0;
@@ -68,12 +82,10 @@ int _stream_file(lua_State* L){
     mode = lua_tostring(L, 4);
   }
 
-  lua_pushstring(L, "_read");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_read");
   stream_read_function rf = lua_touserdata(L, -1);
 
-  lua_pushstring(L, "_state");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_state");
   void* state = lua_touserdata(L, -1);
 
   const char* filename = lua_tostring(L, 2);
@@ -90,6 +102,7 @@ int _stream_file(lua_State* L){
 
     if(ret < 0){
       fclose(f);
+      str_free(cont);
       luaI_error(L, ret, "read error"); 
     }
 
@@ -102,18 +115,17 @@ int _stream_file(lua_State* L){
       break;
     }
   }
+  str_free(cont);
 
   fclose(f); 
   return 0;
 }
 
 int _stream_free(lua_State* L){
-  lua_pushstring(L, "_free");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_free");
   void* rf = lua_touserdata(L, -1);
 
-  lua_pushstring(L, "_state");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_state");
   void* state = lua_touserdata(L, -1);
 
   if(rf != NULL){
@@ -130,9 +142,11 @@ void luaI_newstream(lua_State* L, stream_read_function readf, stream_free_functi
   luaI_tsetlud(L, tidx, "_free", freef);
   luaI_tsetlud(L, tidx, "_state", state);
   luaI_tsetcf(L, tidx, "read", _stream_read); 
+  luaI_tsetcf(L, tidx, "load", _stream_load); 
   luaI_tsetcf(L, tidx, "close", _stream_free); 
   luaI_tsetb(L, tidx, "more", 1);
   luaI_tsetcf(L, tidx, "file", _stream_file);
+  luaI_tsets(L, tidx, "txt", "")
 
   lua_newtable(L);
   int midx = lua_gettop(L);

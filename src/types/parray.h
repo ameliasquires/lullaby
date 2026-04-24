@@ -24,6 +24,7 @@ parray_t* parray_initl(int len);
 void parray_set(parray_t*, char*, void*);
 void parray_push(parray_t*, char*, void*);
 void* parray_get(parray_t* , char*);
+void* parray_pop(parray_t* p, char* key);
 int parray_geti(parray_t* , char*);
 void parray_remove(parray_t* p, char* key, enum free_type free);
 void parray_clear(parray_t*, enum free_type);

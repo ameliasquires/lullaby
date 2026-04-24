@@ -36,6 +36,7 @@ void luaI_copyvars(lua_State* src, lua_State* dest);
 
 void lua_upvalue_key_table(lua_State* L, int fidx);
 int lua_assign_upvalues(lua_State* L, int fidx);
+int lua_iserror(lua_State* L);
 
 typedef int (*stream_read_function)(uint64_t, str**, void**);
 typedef int (*stream_free_function)(void**);

@@ -184,7 +184,7 @@ int l_roll(lua_State* L){
   lua_gettable(L, 1);
   int files_idx = lua_gettop(L);
   //time_start(parse)
-  rolling_file_parse(L, &files_idx, &body_idx, buffer, NULL, r, data);
+  http_body_parse(L, &files_idx, &body_idx, buffer, NULL, r, data);
   //time_end("parse", parse)
   luaI_tsetv(L, 1, "body", body_idx);
   luaI_tsetv(L, 1, "files", files_idx);

@@ -245,7 +245,9 @@ int i_ws_close(lua_State* L){
   return 0;
 }
 
-#define BUFFER_LEN 4096
+//2^14, max ssl frame size or whatever
+#warning "make this a compile time option"
+#define BUFFER_LEN 16384
 
 int l_wss(lua_State* L){  
   uint64_t len = 0;
@@ -373,8 +375,7 @@ int _srequest_read(uint64_t reqlen, str** _output, void** _state){
     state->buffer = NULL;
   }
 
-  char buffer[BUFFER_LEN];
-  memset(buffer, 0, BUFFER_LEN);
+  char *buffer = calloc(BUFFER_LEN, sizeof * buffer);
   uint64_t len;
   for(; (len = _request_read(state, buffer, BUFFER_LEN)) > 0;){
     if(state->state != NULL){
@@ -384,6 +385,7 @@ int _srequest_read(uint64_t reqlen, str** _output, void** _state){
     }
     memset(buffer, 0, BUFFER_LEN);
   }
+  free(buffer);
 
   if(state->state != NULL){
     str_pushl(output, state->state->content->c, state->state->content->len);
@@ -412,7 +414,10 @@ int l_request(lua_State* L){
 
 ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
   if(state->secure){
-    return SSL_read(state->ssl, buffer, count);
+    uint64_t len;
+    if(SSL_read_ex(state->ssl, buffer, count, &len) == 0)
+      return 0;
+    return len;
   } else {
     return read(state->sock, buffer, count);
   }
@@ -420,7 +425,10 @@ ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
 
 ssize_t _request_write(struct request_state* state, const void* buffer, size_t count){
   if(state->secure){
-    return SSL_write(state->ssl, buffer, count);
+    uint64_t len;
+    if(SSL_write_ex(state->ssl, buffer, count, &len) == 0)
+      return 0;
+    return len; 
   } else {
     return write(state->sock, buffer, count);
   }
@@ -699,7 +707,7 @@ void* handle_client(void *_arg){
         v = route_match(args->paths, aa->c, &params);
 
         if(sT != NULL)
-          rolling_file_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
+          http_body_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
       }
 
       str_free(decoded_path);
@@ -718,6 +726,7 @@ void* handle_client(void *_arg){
           parray_t* cookie = parray_init();
           gen_parse(sC->c, sC->len, &cookie);
           for(int i = 0; i != cookie->len; i++){
+            if(cookie->P[i].value == NULL) continue;
             luaI_tsetsl(L, lcookie, cookie->P[i].key->c, ((str*)cookie->P[i].value)->c, ((str*)cookie->P[i].value)->len);
           }
           luaI_tsetv(L, req_idx, "cookies", lcookie);

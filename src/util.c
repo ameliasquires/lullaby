@@ -5,6 +5,14 @@
 #include "lua.h"
 #include "net.h"
 
+/*
+ simple function to parse key=value; strings which are common in http headers
+ values may be null, because these strings can often just be a key such as
+ content-type: multipart/form-data; boundary=awa
+ will set the table to
+ multipart/form-data = (null)
+ boundary = awa
+*/
 int gen_parse(char* inp, int len, parray_t** _table){
   str* current = str_init(""), *last = NULL;
   int state = 0; 
@@ -13,17 +21,18 @@ int gen_parse(char* inp, int len, parray_t** _table){
   for(int i = 0; i < len; i++){
 
     if(state != 1 && inp[i] == ';'){
-      if(last != NULL){
-        parray_set(table, last->c, (void*)current);
-        str_free(last);
-      }
+      //if(last != NULL){
+      if(last == NULL) swap(str*, current, last);
+      parray_set(table, last->c, (void*)current);
+      str_free(last);
+      //}
       last = NULL;
       current = str_init("");
       state = 0;
     } else if(state != 1 && inp[i] == '='){
       last = current;
       current = str_init("");
-      if(inp[i+1] == '"'){
+      if(i + 1 < len && inp[i+1] == '"'){
         state = 1;
         i++;
       }
@@ -32,7 +41,8 @@ int gen_parse(char* inp, int len, parray_t** _table){
     } else if(current->c[0] != '\0' || inp[i] != ' ') str_pushl(current, inp + i, 1);
   }
 
-  if(last != NULL){
+  if(current->len > 0){
+    if(last == NULL) swap(str*, current, last);
     parray_set(table, last->c, (void*)current);
     str_free(last);
   }
