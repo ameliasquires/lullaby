@@ -197,7 +197,7 @@ int i_ws_write(lua_State* L){
   lua_gettable(L, 1);
   struct net_data* data = lua_touserdata(L, -1);
 
-  uint64_t clen;
+  size_t clen;
   const char* content = luaL_tolstring(L, 2, &clen);
   str* send_data = str_init("");
 
