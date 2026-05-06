@@ -48,7 +48,7 @@ static const luaL_Reg net_function_list [] = {
 };
 
 extern char* _mimetypes;
-extern uint64_t _mimetypes_len;
+extern size_t _mimetypes_len;
 
 static struct config net_config[] = {
   {.name = "mimetypes", .type = c_string, .value = {.c_string = &_mimetypes, .len = &_mimetypes_len}},
