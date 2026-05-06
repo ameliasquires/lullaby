@@ -414,7 +414,7 @@ int l_request(lua_State* L){
 
 ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
   if(state->secure){
-    uint64_t len;
+    size_t len;
     if(SSL_read_ex(state->ssl, buffer, count, &len) == 0)
       return 0;
     return len;
@@ -425,7 +425,7 @@ ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
 
 ssize_t _request_write(struct request_state* state, const void* buffer, size_t count){
   if(state->secure){
-    uint64_t len;
+    size_t len;
     if(SSL_write_ex(state->ssl, buffer, count, &len) == 0)
       return 0;
     return len; 
