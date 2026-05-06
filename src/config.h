@@ -25,7 +25,7 @@ struct config {
     //location of table in lua registery
     int* c_table_idx;
     //length used for c_string or c_function
-    size_t* len;
+    uint64_t* len;
   } value;
 };
 
