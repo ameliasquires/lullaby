@@ -49,3 +49,10 @@ waits for the thread to internally call res:testclose or exit
 async:clean()
 
 calls the __gc metamethod, will call async:kill() if it is still running
+
+### async:detach
+
+async:detach()
+
+prevents lua from discarding the thread on its own (removes __gc) and runs the code after the thread has exited instead.
+this has the side effect of not allowing async:await() to be called when the thread is done

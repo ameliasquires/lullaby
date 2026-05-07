@@ -26,6 +26,11 @@ function async.close(T) end
 ---@return nil
 function async.kill(T) end
 
+---removes gc, instead collecting after it has been run
+---@param T async-table
+---@return nil
+function async.kill(T) end
+
 ---contains data for the thread
 ---@deprecated
 ---@type lightuserdata
