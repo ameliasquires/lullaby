@@ -279,7 +279,8 @@ int l_connection_upgrade(lua_State* L){
   int req_idx = 2;
 
   lua_getfield(L, req_idx, "upgrade");
-  uint64_t hash, len;
+  uint64_t hash;
+  size_t len;
   uint8_t* s = (uint8_t*)luaL_checklstring(L, -1, &len);
   hash = fnv_1(s, len, v_1);
 

@@ -453,7 +453,8 @@ int _buffer_func_wrapper(lua_State* L){
 }
 
 int l_buffer_index(lua_State* L){
-  uint64_t len, hash;
+  size_t len;
+  uint64_t hash;
   struct thread_buffer *buffer = lua_touserdata(L, 1);
   const char* str = luaL_tolstring(L, 2, &len);
 

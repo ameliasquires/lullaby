@@ -22,15 +22,6 @@ const uint64_t k[80] = {0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b
   0x113f9804bef90dae, 0x1b710b35131c471b, 0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 
   0x431d67c49c100d4c, 0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817};
 
-void endian_swap128(__uint128_t *x){
-  uint8_t *y = (uint8_t*)x;
-  for (size_t low = 0, high = sizeof(__uint128_t) - 1; high > low; low++, high--){
-    y[low]  ^= y[high];
-    y[high] ^= y[low];
-    y[low]  ^= y[high];
-  }
-}
-
 void endian_swap64(uint64_t *x){
   uint8_t *y = (uint8_t*)x;
   for (size_t low = 0, high = sizeof(uint64_t) - 1; high > low; low++, high--){
@@ -168,9 +159,17 @@ void _sha512_t_final(struct sha512_hash* hash){
     memset(hash->buffer, 0, bs);
   }
 
-  __uint128_t bigL = hash->total*8;
-  endian_swap128(&bigL);
-  memcpy(&hash->buffer[128 - sizeof(__uint128_t)], &bigL, sizeof(__uint128_t));
+  uint64_t total = hash->total;
+  uint64_t bit_len_high = total >> 61;
+  uint64_t bit_len_low  = total << 3;
+  
+  uint64_t be_high = bit_len_high;
+  uint64_t be_low  = bit_len_low;
+  endian_swap64(&be_high);
+  endian_swap64(&be_low);
+  
+  memcpy(&hash->buffer[128 - 16], &be_high, 8);
+  memcpy(&hash->buffer[128 - 8],  &be_low,  8);
 
   sha512_round(hash);
 }

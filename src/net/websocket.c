@@ -158,7 +158,7 @@ int l_ws_write(lua_State* L){
   frame.mask = 0;
   frame.opcode = 0b0001;
 
-  uint64_t len;
+  size_t len;
   const char* s = lua_tolstring(L, 2, &len);
 
   str* f = str_init("");

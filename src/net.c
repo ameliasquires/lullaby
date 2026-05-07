@@ -197,7 +197,7 @@ int i_ws_write(lua_State* L){
   lua_gettable(L, 1);
   struct net_data* data = lua_touserdata(L, -1);
 
-  uint64_t clen;
+  size_t clen;
   const char* content = luaL_tolstring(L, 2, &clen);
   str* send_data = str_init("");
 
@@ -250,7 +250,7 @@ int i_ws_close(lua_State* L){
 #define BUFFER_LEN 16384
 
 int l_wss(lua_State* L){  
-  uint64_t len = 0;
+  size_t len;
   char* request_url = (char*)lua_tolstring(L, 1, &len);
   struct url awa = parse_url(request_url, len);
   if(awa.proto != NULL && strcmp(awa.proto->c, "ws") == 0){
@@ -414,7 +414,7 @@ int l_request(lua_State* L){
 
 ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
   if(state->secure){
-    uint64_t len;
+    size_t len;
     if(SSL_read_ex(state->ssl, buffer, count, &len) == 0)
       return 0;
     return len;
@@ -425,7 +425,7 @@ ssize_t _request_read(struct request_state* state, void* buffer, size_t count){
 
 ssize_t _request_write(struct request_state* state, const void* buffer, size_t count){
   if(state->secure){
-    uint64_t len;
+    size_t len;
     if(SSL_write_ex(state->ssl, buffer, count, &len) == 0)
       return 0;
     return len; 
@@ -437,7 +437,7 @@ ssize_t _request_write(struct request_state* state, const void* buffer, size_t c
 int _request(lua_State* L, struct request_state* state){
   int params = lua_gettop(L);
 
-  uint64_t ilen = 0;
+  size_t ilen;
   char* request_url = (char*)lua_tolstring(L, 1, &ilen);
   struct url awa = parse_url(request_url, ilen);
   if(awa.proto != NULL && strcmp(awa.proto->c, "http") == 0){
