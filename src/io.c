@@ -22,35 +22,46 @@ lua_Debug i_get_debug(lua_State* L){
   return ar;
 }
 
+int print_stack(lua_State* L){
+  int top = lua_gettop(L);
+  for(int i = 1; i <= top; i++){
+    printf("%s", lua_tostring(L, i));
+    if(i < top)
+      printf("    ");
+  }
+  printf("\n");
+  return 0;
+}
+
 int l_debug(lua_State* L){
-  size_t input_len = 0;
-  char* input = (char*)luaL_checklstring(L, 1, &input_len);
   lua_Debug debug = i_get_debug(L);
-  printf(color_gray"[ debug ] (%s:%i) %s\n"color_reset, debug.source, debug.currentline, input);
+  printf(color_gray"[ debug ] (%s:%i) ", debug.source, debug.currentline);
+  print_stack(L);
+  printf(color_reset);
   return 0;
 }
 
 int l_log(lua_State* L){
-  size_t input_len = 0;
-  char* input = (char*)luaL_checklstring(L, 1, &input_len);
   lua_Debug debug = i_get_debug(L);
-  printf(color_green"[ log ] (%s:%i)"color_gray" %s\n"color_reset, debug.source, debug.currentline, input);
+  printf(color_green"[ log ] (%s:%i) "color_gray, debug.source, debug.currentline);
+  print_stack(L);
+  printf(color_reset);
   return 0;
 }
 
 int l_warn(lua_State* L){
-  size_t input_len = 0;
-  char* input = (char*)luaL_checklstring(L, 1, &input_len);
   lua_Debug debug = i_get_debug(L);
-  printf(color_yellow"[ warn ] (%s:%i) %s\n"color_reset, debug.source, debug.currentline, input);
+  printf(color_yellow"[ warn ] (%s:%i) ", debug.source, debug.currentline);
+  print_stack(L);
+  printf(color_reset);
   return 0;
 }
 
 int l_error(lua_State* L){
-  size_t input_len = 0;
-  char* input = (char*)luaL_checklstring(L, 1, &input_len);
   lua_Debug debug = i_get_debug(L);
-  printf(color_red"[ error ] (%s:%i) %s\n"color_reset, debug.source, debug.currentline, input);
+  printf(color_red"[ error ] (%s:%i) ", debug.source, debug.currentline);
+  print_stack(L);
+  printf(color_reset);
   return 0;
 }
 
