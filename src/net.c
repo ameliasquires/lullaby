@@ -1037,8 +1037,8 @@ net_end:
   mime_type = NULL;
   close(server_fd);
   close(efd);
+  if(state->ssl) SSL_CTX_free(server_ctx);
   free(state);
-  SSL_CTX_free(server_ctx);
 
   for(int i = 0; i != paths->len; i++){
     struct sarray_t* path = paths->P[i].value;
