@@ -1,6 +1,6 @@
 ---@meta
 
----to be rewritten
+---to be mostly rewritten
 ---@class lullaby.table
 local table = {}
 
@@ -14,6 +14,23 @@ local table = {}
 ---@param skip boolean? whether or not to skip empty chunks
 ---@return string[]
 function table.split(haystack, search, skip) end
+
+---compares 2 tables recursivley
+---@param A any[]
+---@param B any[]
+---@param depth integer? max depth to search, defaults to -1
+---@return boolean
+function table.equal(A, B, depth) end
+
+---clones table recursivley
+---@param table any[]
+---@return value[]
+function table.dup(table) end
+
+---gets table len, useful for key,value tables
+---@param table any[]
+---@return integer
+function table.len(table) end
 
 ---greatest, least
 ---@deprecated
@@ -39,34 +56,5 @@ function table.bubblesort(array) end
 ---@deprecated
 ---@param array number[]
 function table.heapsort(array) end
-
----least, greatest
----@deprecated
----@param array integer[]
-function table.countintsort(array) end
-
----dont use this lol
----@deprecated
----greatest, least
----@param array number[]
-function table.miraclesort(array) end
-
----dont use this lol
----@deprecated
----greatest, least
----@param array number[]
-function table.stalinsort(array) end
-
----dont use this lol
----@deprecated
----greatest, least
----@param array number[]
-function table.slowsort(array) end
-
----dont use this lol
----@deprecated
----greatest, least
----@param array number[]
-function table.bogosort(array) end
 
 return table

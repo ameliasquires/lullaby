@@ -3,6 +3,99 @@
 #include <string.h>
 #include <stdint.h>
 
+void value_clone_req(lua_State* L){
+  int idx = lua_gettop(L);
+
+  if(lua_type(L, idx) == LUA_TTABLE){
+    char* key = calloc(sizeof* key, 50);
+    sprintf(key, "clone-%p", lua_topointer(L, idx));
+    lua_newtable(L);
+    int nidx = lua_gettop(L);
+
+    if(table_cache(L, key, nidx) == CACHE_HIT){
+      free(key);
+      return;
+    }
+    free(key);
+
+    lua_pushnil(L);
+    for(;lua_next(L, idx);){
+      value_clone_req(L);
+      lua_pushvalue(L, -3);
+      lua_pushvalue(L, -2);
+      lua_settable(L, nidx);
+      lua_pop(L, 2);
+    }
+  } else {
+    lua_pushvalue(L, idx);
+  }
+}
+
+int l_dup(lua_State* L){
+  if(lua_gettop(L) != 1) return 0;
+
+  value_clone_req(L);
+  lua_pushvalue(L, 2);
+  return 1;
+}
+
+int req_equal(lua_State* L, int maxdepth, int currentdepth, parray_t* req_table){
+  if(maxdepth < currentdepth && maxdepth != -1)
+    return 1;
+
+  int t1 = lua_gettop(L);
+  int t2 = lua_gettop(L) - 1;
+  if(i_len(L, t1) != i_len(L, t2))
+    return 0;
+  lua_pushnil(L);
+  for(;lua_next(L, t1) != 0;){ //-3 = key, -2 = t1[key], -1 = t2[key]
+    lua_pushvalue(L, -2);
+    lua_gettable(L, t2);
+
+    if(lua_type(L, -1) != lua_type(L, -2))
+      return 0;
+
+    if(lua_type(L, -1) == LUA_TTABLE){
+      const void* p = lua_topointer(L, -2);
+      char* str = calloc(sizeof* str, 50);
+      sprintf(str, "%p", p);
+      if(parray_geti(req_table, str) == -1){
+        parray_set(req_table, str, req_table);
+        if(!req_equal(L, maxdepth, currentdepth + 1, req_table)){
+          free(str);
+          return 0;
+        }
+      }
+      free(str);
+    } else {
+      if(!lua_equal(L, -2, -1))
+        return 0;
+    }
+
+    lua_pop(L, 2);
+  }
+  return 1;
+}
+
+int l_equal(lua_State* L){
+  if(lua_gettop(L) <= 1){
+    lua_pushboolean(L, 1);
+    return 1;
+  }
+
+  luaL_checktype(L, 1, LUA_TTABLE);
+  luaL_checktype(L, 2, LUA_TTABLE);
+  int64_t depth = -1;
+  if(lua_gettop(L) >= 3) depth = luaL_checknumber(L, 3);
+  lua_settop(L, 2);
+
+  parray_t* p = parray_init();
+  lua_pushboolean(L, req_equal(L, depth, 0, p));
+  parray_lclear(p);
+
+  return 1;
+}
+
 int l_split(lua_State* L){
   size_t str_len = 0;
   size_t search_len = 0;
@@ -59,6 +152,7 @@ uint64_t i_len(lua_State* L, int pos){
   }
   return i;
 }
+
 int l_len(lua_State* L) {
   luaL_checktype(L, 1, LUA_TTABLE);    
   lua_pushnumber(L,i_len(L,1));
@@ -84,7 +178,7 @@ int l_reverse(lua_State* L) {
   return 1;
 }
 
-int l_greatest(lua_State* L) {
+int l_max(lua_State* L) {
   luaL_checktype(L, 1, LUA_TTABLE);
   size_t len = lua_objlen(L,1);
   int touched = 0;
@@ -104,7 +198,7 @@ int l_greatest(lua_State* L) {
   return 1;
 }
 
-int l_least(lua_State* L) {
+int l_min(lua_State* L) {
   luaL_checktype(L, 1, LUA_TTABLE);
   size_t len = lua_objlen(L,1);
   int touched = 0;

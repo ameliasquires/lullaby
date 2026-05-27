@@ -17,14 +17,17 @@ enum deep_copy_flags {
   STRIP_GC = (1 << 5),
   IS_UPVALUE = (1 << 6),
 };
+
+enum table_cache {
+  CACHE_HIT, CACHE_MISS
+};
 #endif 
 
 #ifndef GIT_COMMIT
 #define GIT_COMMIT "unknown"
 #endif
 
-void* __malloc_(size_t);
-void __free_(void*);
+enum table_cache table_cache(lua_State* L, char* key, int index);
 
 void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags);
 void luaI_deepcopy2(lua_State* src, lua_State* dest);
@@ -107,6 +110,10 @@ extern int _print_errors;
     luaI_error(L, -1, err);}}
 
 int writer(lua_State*, const void*, size_t, void*);
+
+#if LUA_VERSION_NUM != 501
+  #define lua_equal(L, A, B) lua_compare(L, A, B, LUA_OPEQ)
+#endif
 
 #if LUA_VERSION_NUM == 504
     #define lua_objlen lua_rawlen

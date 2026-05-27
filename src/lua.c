@@ -13,18 +13,6 @@ int luaI_nothing(lua_State* L){
   return 0;
 }
 
-void* __malloc_(size_t N){
-  printf("hi");
-  malloc_count++;
-  return (malloc)(N);
-}
-
-void __free_(void* p){
-  malloc_count--;
-  printf("%i\n",malloc_count);
-  return (free)(p);
-}
-
 int luaI_iserror(lua_State* L){
   if(lua_gettop(L) < 3) return 0;
   return lua_type(L, -3) == LUA_TNIL &&
@@ -171,10 +159,6 @@ int writer(lua_State *L, const void* p, size_t sz, void* ud){
 
   return 0;
 }
-
-enum table_cache {
-  CACHE_HIT, CACHE_MISS
-};
 
 enum table_cache table_cache(lua_State* L, char* key, int index){
   lua_getfield(L, LUA_REGISTRYINDEX, key);
