@@ -33,28 +33,28 @@ function table.dup(table) end
 function table.len(table) end
 
 ---greatest, least
----@deprecated
 ---@param array number[]
+---@return number[]
 function table.quicksort(array) end
 
 ---greatest, least
----@deprecated
 ---@param array number[]
+---@return number[]
 function table.mergesort(array) end
 
 ---greatest, least
----@deprecated
 ---@param array number[]
+---@return number[]
 function table.shellsort(array) end
 
 ---greatest, least
----@deprecated
 ---@param array number[]
+---@return number[]
 function table.bubblesort(array) end
 
 ---greatest, least
----@deprecated
 ---@param array number[]
+---@return number[]
 function table.heapsort(array) end
 
 return table
