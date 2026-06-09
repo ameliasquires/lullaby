@@ -27,6 +27,9 @@ enum table_cache {
 #define GIT_COMMIT "unknown"
 #endif
 
+int luaI_lowercase_index(lua_State* L);
+int luaI_lowercase_newindex(lua_State* L);
+
 enum table_cache table_cache(lua_State* L, char* key, int index);
 
 void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags);

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "util.h"
+#include "ssl.h"
 #include <ctype.h>
 
 int64_t recv_header(struct net_data* data, char** _buffer, char** header_eof){
@@ -467,7 +468,11 @@ void _parse_mimetypes(){
 
 int net_error(struct net_data* ctx, int code){
   char out[512] = {0};
-  sprintf(out, "HTTP/1.1 %i %s\n\n", code, http_code(code));
+  str* s = str_init(http_code(code));
+  str_lowercase(s);
+
+  sprintf(out, "HTTP/1.1 %i %s\n\n%s", code, http_code(code), s->c);
+  free(s);
   net_ctx_write(ctx, out, strlen(out));
   return 0;
 }
@@ -512,4 +517,19 @@ int net_ctx_write(struct net_data* data, void* buffer, size_t c){
     return write(data->sock, buffer, c);
   }
   return SSL_write(data->ssl, buffer, c);
+}
+
+int net_ctx_close(struct net_data* data){
+  if(data->sock != -1){
+    if(data->ssl != NULL) SSL_shutdown(data->ssl);
+    else {
+      shutdown(data->sock, 2);
+      closesocket(data->sock);
+    }
+  }
+
+  data->sock = -1;
+  free(data);
+
+  return 0;
 }

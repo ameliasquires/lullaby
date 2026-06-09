@@ -22,6 +22,12 @@ function res_table.send(T, value) end
 ---@return error | nil error
 function res_table.sendfile(T, value) end
 
+---sends a status code to the client and closes socket
+---@param T res-table
+---@param code integer
+---@return error | nil error
+function res_table.error(T, code) end
+
 ---sends value to client and doesn't close the socket
 ---@param T res-table
 ---@param value string
@@ -53,6 +59,9 @@ res_table.ssl.cert = ""
 ---key value table containing header values to be sent
 res_table.header = {}
 
+---@type boolean
+res_table.open = true
+
 ---@class req-table
 local req_table = {}
 
@@ -74,7 +83,7 @@ req_table._bytes = 0
 req_table.ip = 0
 
 ---@type string
-req_table.Body = ""
+req_table.body = ""
 
 ---@type string
 req_table.path = ""

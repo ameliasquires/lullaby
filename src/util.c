@@ -50,6 +50,17 @@ int gen_parse(char* inp, int len, parray_t** _table){
   return 1;
 }
 
+int tolower(int i){
+  if('A' <= i && i <= 'Z') i += 32;
+  return i;
+}
+
+void str_lowercase(str* str){
+  for(size_t i = 0; i != str->len; i++){
+    str->c[i] = tolower(str->c[i]);
+  }
+}
+
 char* strnstr(const char *s1, const char *s2, size_t n) {
   // simplistic algorithm with O(n2) worst case, stolen from stack overflow
   size_t i, len;

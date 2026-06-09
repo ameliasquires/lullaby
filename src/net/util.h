@@ -60,3 +60,4 @@ int percent_decode(str* input, str** _output);
 
 int net_ctx_read(struct net_data* data, void* buffer, size_t c);
 int net_ctx_write(struct net_data* data, void* buffer, size_t c);
+int net_ctx_close(struct net_data* data);

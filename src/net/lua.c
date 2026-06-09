@@ -85,8 +85,26 @@ int l_send(lua_State* L){
   else closesocket(ctx->sock);
   ctx->sock = -1;
 
+  lua_pushboolean(L, 0);
+  lua_setfield(L, res_idx, "open");
+
   //printf("%i | %i\n'%s'\n%i\n",client_fd,a,resp->c,resp->len);
   str_free(resp);
+  return 0;
+}
+
+int l_neterror(lua_State* L){
+  int res_idx = 1;
+  lua_getfield(L, res_idx, "_");
+  struct net_data* ctx = lua_touserdata(L, -1);
+
+  client_fd_errors(ctx->sock);
+
+  net_error(ctx, luaL_checkinteger(L, 2));
+
+  lua_pushboolean(L, 0);
+  lua_setfield(L, res_idx, "open");
+
   return 0;
 }
 
@@ -102,6 +120,9 @@ int l_close(lua_State* L){
   if(ctx->ssl != NULL) SSL_shutdown(ctx->ssl);
   else closesocket(ctx->sock);
   ctx->sock = -1;
+
+  lua_pushboolean(L, 0);
+  lua_setfield(L, res_idx, "open");
 
   return 0;
 }
@@ -266,6 +287,9 @@ int l_sendfile(lua_State* L){
     if(net_ctx_write(ctx, buffer, bsize > sz - i ? sz - i : bsize) == -1)
       break;
   }
+
+  lua_pushboolean(L, 0);
+  lua_setfield(L, res_idx, "open");
 
   free(buffer);
   fclose(fp);

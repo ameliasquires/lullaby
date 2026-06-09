@@ -718,6 +718,16 @@ void* handle_client(void *_arg){
         lua_newtable(L);
         int res_idx = lua_gettop(L);
 
+        lua_newtable(L);
+        int shared_metatable = lua_gettop(L);
+        luaI_tsetcf(L, shared_metatable, "__index", luaI_lowercase_index);
+        luaI_tsetcf(L, shared_metatable, "__newindex", luaI_lowercase_newindex);
+
+        lua_pushvalue(L, shared_metatable);
+        lua_setmetatable(L, req_idx);
+        lua_pushvalue(L, shared_metatable);
+        lua_setmetatable(L, res_idx);
+
         //handle cookies
         if(sC != NULL){
           lua_newtable(L);
@@ -779,10 +789,11 @@ void* handle_client(void *_arg){
         luaI_tsetcf(L, res_idx, "close", l_close);
         luaI_tsetcf(L, res_idx, "stop", l_stop);
         luaI_tsetcf(L, res_idx, "upgrade", l_connection_upgrade);
-
+        luaI_tsetcf(L, res_idx, "error", l_neterror)
 
         //values
         //luaI_tseti(L, res_idx, "client_fd", client_fd);
+        luaI_tsetb(L, res_idx, "open", 1);
         luaI_tsetlud(L, res_idx, "_", ctx);
         luaI_tsets(L, res_idx, "_request", sR->c);
 
@@ -872,14 +883,7 @@ net_end:
     parray_clear(table, STR);
   }
 
-  if(args->ctx->sock != -1){
-    if(args->ctx->ssl != NULL) SSL_shutdown(args->ctx->ssl);
-    else {
-      shutdown(args->ctx->sock, 2);
-      closesocket(args->ctx->sock);
-    }
-  }
-
+  net_ctx_close(args->ctx);
   free(args);
   free(buffer);
   lua_close(L);
@@ -990,6 +994,7 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
           fprintf(stderr, "SSL_new fail\n"); 
           close(*client_fd);
           free(client_fd);
+          free(args->ctx);
           free(args);
           continue;
         }
@@ -1001,6 +1006,7 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
           close(*client_fd);
           free(client_fd);
           SSL_free(args->ctx->ssl);
+          free(args->ctx);
           free(args);
           continue;
         }
@@ -1027,7 +1033,6 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
       pthread_create(&thread_id, NULL, handle_client, (void*)args);
       pthread_detach(thread_id);
 
-      //handle_client((void*)args);
       free(client_fd);
     }
   }

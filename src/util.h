@@ -34,6 +34,9 @@
 
 int gen_parse(char*,int, parray_t**);
 
+int tolower(int i);
+void str_lowercase(str* str);
+
 #define p_fatal(M) _p_fatal(M, __LINE__, __FILE__, __func__ );
 void _p_fatal(const char*, int, const char*, const char*);
 void p_error(const char*);

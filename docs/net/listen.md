@@ -118,6 +118,8 @@ res:send("<h1>hello world</h1>")
 
 functionaly identical to res:write and res:close
 
+sets res.open to false
+
 #### res:close
 
 res:close()
@@ -127,6 +129,8 @@ closes connection, sets res.client_fd to -1, any calls that use this value will 
 this will still run any selected functions! 
 
 this is called automatically when there are no more function
+
+sets res.open to false
 
 #### res:stop 
 
@@ -174,6 +178,25 @@ options table
 res:sendfile("./html/index.html")
 ```
 
+sets res.open to false
+
+### res:error
+
+res:error(code)
+
+sends an error message to the client
+
+```lua
+res:error(404)
+
+-- HTTP/1.1 404 Not Found
+-- ...
+-- 
+-- not found
+```
+
+sets res.open to false
+
 ### res:upgrade
 
 res:upgrade()
@@ -196,6 +219,10 @@ res:send - sends data as a full frame
 res:write** - sends data as an incomplete frame
 res:sendfile** - sends file to the client
 res:close** - same function
+
+### res.open
+
+boolean determining if the connection has been closed via res:send or res:close
 
 ### req.parameters 
 
