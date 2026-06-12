@@ -46,41 +46,43 @@ void lowercase(char* c, uint64_t len){
  * @brief converts the request buffer into a parray_t
  *
  */
-int parse_header(char* buffer, int header_eof, parray_t** _table){
-  if(header_eof == -1) return -1;
-
-  parray_t* table = parray_init();
+ssize_t parse_header_head(char* buffer, size_t header_len, parray_t* table){
   str* current = str_init("");
-  int oi = 0;
+  int i = 0;
   int item = 0;
 
-  for(; oi != header_eof; oi++){
-    if(buffer[oi] == ' ' || buffer[oi] == '\n'){
-      if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
+  for(; i != header_len; i++){
+    if(buffer[i] == ' ' || buffer[i] == '\n'){
+      if(buffer[i] == '\n') current->c[current->len - 1] = 0;
       if(item < 3) parray_set(table, item == 0 ? "request" :
           item == 1 ? "path" : "version", (void*)str_init(current->c));
       str_clear(current);
       item++;
-      if(buffer[oi] == '\n') break;
+      if(buffer[i] == '\n') break;
     } else {
-      if(oi >= max_uri_len){
-        *_table = table;
+      if(i >= max_uri_len){
         str_free(current);
         return -2;
       }
-      str_pushl(current, buffer + oi, 1);
+      str_pushl(current, buffer + i, 1);
     }
   }
 
+  str_free(current);
+
   if(item < 3){
-    str_free(current);
-    *_table = table;
     return -1;
   }
 
-  int key = 1;
+  return i;
+}
+
+int parse_header_kv(char* buffer, size_t header_len, parray_t* table){
+  str* current = str_init("");
   str* sw = NULL;
-  for(int i = oi + 1; i != header_eof; i++){
+  int key = 1;
+
+  for(int i = 0; i != header_len; i++){
     if(buffer[i] == ' ' && strcmp(current->c, "") == 0) continue;
     if((key && buffer[i] == ':') || (!key && buffer[i] == '\n')){
       if(key){
@@ -88,7 +90,7 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
         current = str_init("");
         key = 0;
       } else {
-        if(buffer[oi] == '\n') current->c[current->len - 1] = 0;
+        current->c[current->len - 1] = 0;
         //duplicate keys would cause memory leaks, ignore them for now
         //todo: figure out system to handle this
         str* id = (str*)parray_get(table, sw->c);
@@ -103,15 +105,29 @@ int parse_header(char* buffer, int header_eof, parray_t** _table){
       continue;
     } else str_pushc(current, buffer[i]);
   }
+
   if(sw != NULL){
+    lowercase(sw->c, sw->len);
     parray_set(table, sw->c, (void*)str_init(current->c));
     str_free(sw);
   }
-
   str_free(current);
+
+  return 0;
+}
+
+int parse_header(char* buffer, size_t header_len, parray_t** _table){
+  if(header_len == -1) return -1;
+  parray_t* table = parray_init();
+
+  ssize_t used = parse_header_head(buffer, header_len, table);
+  if(used == -1) return -1;
+
+  parse_header_kv(buffer + used + 1, header_len - used, table);
   *_table = table;
   return 0;
 }
+
 
 /**
  * @brief contructs an http request

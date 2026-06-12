@@ -14,6 +14,16 @@ int luaI_nothing(lua_State* L){
   return 0;
 }
 
+void luaI_fromparray(lua_State* L, int table_idx, parray_t* table, int strval){
+  for(int i = 0; i != table->len; i++){
+    if(table->P[i].value == NULL) lua_pushboolean(L, 1);
+    else if(strval) lua_pushlstring(L, ((str*)table->P[i].value)->c, ((str*)table->P[i].value)->len);
+    else lua_pushstring(L, (char*)table->P[i].value);
+
+    lua_setfield(L, table_idx, table->P[i].key->c);
+  }
+}
+
 int luaI_lowercase_index(lua_State* L){
   if(lua_type(L, 2) == LUA_TSTRING){
     str* s = str_init(lua_tostring(L, 2));

@@ -2,6 +2,8 @@
 
 net.listen(function, port)
 
+currently does not work with any transfer-encoding!!
+
 (intentionally styled after expressjs:3)
 the function will be ran on initilization, the argument has info on the server and functions to set it up
 
@@ -210,7 +212,7 @@ calling this will update, add or delete some res or req values/functions
 
 removes:
 
-req:roll
+req:load
 
 adds:
 
@@ -244,48 +246,32 @@ these can, of course be used with wildcards however you want
 
 /*/{user}/id would match /a/b/c/meow/id with req.parameters.user being equal to meow
 
-### req:roll
+### req:load
 
-req:roll(bytes?)
+req:load(bytes?)
 
-> this will be changed to be a stream internally, see common.md
+when no parameters are passed (or bytes is -1) the whole request will be read
 
-when bytes is null it will read as much as possible (may not be the full request)
+otherwise, that many bytes will be read from the client and parsed
+
+when the content has just a body and no files, the bytes will be loaded as they are parsed into req.body
+
+when the content contains files, the files will be added to req.files when the full file is parsed (they will not be partial)
 
 will update req according to how the bytes needed to be parsed, returns the number of bytes read (not necessarily parsed), 0 if there
 is no more ready data, -1 if all data has been read, and any other values \< -1 is a recv error (add 1 to the error code)
+
+returns 1 when there is still more data to parse
+returns 0 when there is not more data to parse
+may return an error
 
 > waiting on a rewrite for this, all that will be changed will be how errors are returned
 
 ```lua
 --when a request contains "hello world"
 req.body --"hello"
-req:roll(30) --does not matter if you go over, returns 7 (probably)
+req:load(30) --does not matter if you go over, returns 7 (probably)
 req.body --"hello world"
-req:roll(50) --returns -1, no more to read 
---req.Body has not been updated
+req:load(50) --returns -1, no more to read 
+--req.body has not been updated
 ```
-
-can have unique results with files (this example is not perfect, roll could read less than 2 bytes, and this does not account for newlines)
-
-```lua
---sent a file ina request to the server, where the boundary is 'abcd':
---  ---abcd
---  (header junk, file name and stuff)
---  
---  wowa
---  --
---  --ab
---  --abcd
-
---when the line 'wowa' has just been read, using roll for less than two will not update the file
-req.body -- (...)"wowa"
-req:roll(2)
-req.body -- (...)"wowa" (unchanged)
---any lines that contain just the boundary and -'s will be put in a seperate buffer until it ends or breaks
---a previous condition, then it will be added
-req:roll(2)
-req.body -- (...)"wowa\n--"
---and now "--" (from the next line) is in the possible boundary buffer, it ends in "ab" so it will be added to the main body
-```
-

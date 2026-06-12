@@ -24,8 +24,6 @@ int l_wss(lua_State*);
 
 int64_t recv_full_buffer(int client_fd, char** _buffer, int* header_eof, int* state);
 
-int parse_header(char* buffer, int header_eof, parray_t** _table);
-
 void i_write_header(lua_State* L, int header_top, str** _resp, char* content, size_t len);
 
 void client_fd_errors(int client_fd);

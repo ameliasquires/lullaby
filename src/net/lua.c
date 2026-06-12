@@ -137,81 +137,75 @@ int l_stop(lua_State* L){
   return 0;
 }
 
-int l_roll(lua_State* L){
-  int64_t alen;
-  if(lua_gettop(L) > 2) {
+int l_load(lua_State* L){
+  ssize_t alen;
+  if(lua_gettop(L) >= 2) {
     alen = luaL_checkinteger(L, 2);
   } else {
     alen = -1;
   }
 
-  lua_pushvalue(L, 1);
-  lua_pushstring(L, "_bytes");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "_bytes");
   int64_t bytes = luaL_checkinteger(L, -1);
 
-  lua_pushstring(L, "content-length");
-  lua_gettable(L, 1);
-  if(lua_type(L, -1) == LUA_TNIL) {
-    lua_pushinteger(L, -1);
+  lua_getfield(L, 1, "content-length");
+  luaI_assert(L, lua_type(L, -1) != LUA_TNIL);
+  uint64_t content_length = strtol(luaL_checkstring(L, -1), NULL, 10);
+
+  if(bytes >= content_length){
+    lua_pushinteger(L, 0);
     return 1;
   }
-  uint64_t content_length = strtol(luaL_checkstring(L, -1), NULL, 10);
-  lua_pushstring(L, "_data");
-  lua_gettable(L, 1);
-  struct file_parse* data = (void*)lua_topointer(L, -1); 
 
   lua_getfield(L, 1, "res");
-  lua_pushstring(L, "_");
-  lua_gettable(L, -2);
+  lua_getfield(L, -1, "_");
   struct net_data* ctx = lua_touserdata(L, -1);
+
+  lua_getfield(L, 1, "_data");
+  struct file_parse* data = lua_touserdata(L, -1);
 
   client_fd_errors(ctx->sock);
 
-  //fd_set rfd;
-  //FD_ZERO(&rfd);
-  //FD_SET(client_fd, &rfd);
-  //printf("* %li / %li\n", bytes, content_length);
-  if(bytes >= content_length){
-    lua_pushinteger(L, -1);
-    return 1;
-  }
-
-  /*if(select(client_fd+1, &rfd, NULL, NULL, &((struct timeval){.tv_sec = 0, .tv_usec = 0})) == 0){
-    lua_pushinteger(L, 0);
-    return 1;
-  }*/
-
-
-  //time_start(recv)
-  if(alen == -1) alen = content_length - bytes;
-  char* buffer = malloc(alen * sizeof * buffer);
-  int r = net_ctx_read(ctx, buffer, alen);
-  if(r <= 0){
-    lua_pushinteger(L, r - 1);
-    return 1;
-  }
-  //time_end("recv", recv)
-
-  lua_pushstring(L, "_bytes");
-  lua_pushinteger(L, bytes + r);
-  lua_settable(L, 1);
-
-  lua_pushstring(L, "body");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "body");
   int body_idx = lua_gettop(L);
-
-  lua_pushstring(L, "files");
-  lua_gettable(L, 1);
+  lua_getfield(L, 1, "files");
   int files_idx = lua_gettop(L);
-  //time_start(parse)
-  http_body_parse(L, &files_idx, &body_idx, buffer, NULL, r, data);
-  //time_end("parse", parse)
-  luaI_tsetv(L, 1, "body", body_idx);
-  luaI_tsetv(L, 1, "files", files_idx);
+
+  if(alen == -1) str_loadatleast(data->current, content_length);
+  char* buffer = malloc(sizeof * buffer * BUFFER_SIZE);
+  ssize_t total = bytes;
+  int over = 1;
+
+  if(alen == -1) alen = content_length - bytes;
+  else alen = bytes + alen;
+
+  for(;total < alen;){
+    ssize_t read = BUFFER_SIZE;
+    if(total + BUFFER_SIZE > alen) read = alen - total;
+
+    memset(buffer, 0, BUFFER_SIZE);
+
+    ssize_t out = net_ctx_read(ctx, buffer, read);
+
+    if(out == 0) {
+      over = 0;
+      break;
+    }
+    if(out == -1) {
+      luaI_error(L, -2, "net read error");
+    }
+
+    total += out;
+
+    http_body_parse(L, &files_idx, &body_idx, buffer, NULL, out, data);
+  }
+
+  lua_pushinteger(L, total);
+  lua_setfield(L, 1, "_bytes");
 
   free(buffer);
-  lua_pushinteger(L, r);
+
+  lua_pushinteger(L, over);
   return 1;
 }
 

@@ -48,14 +48,13 @@ int http_body_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer, s
     parray_t* par = parray_init();
     gen_parse(content_type->c, content_type->len, &par);
     content.boundary = parray_pop(par, "boundary");
-    content.status = content.boundary == NULL?BARRIER_READ:NORMAL;
-    content.dash_count = 0;
+    content.status = content.boundary != NULL?BARRIER_START:NORMAL;
     content.current = str_init("");
-    content.table_idx = lua_gettop(L);
-    content.boundary_id = str_init("");
+    content.line = str_init("");
     parray_clear(par, STR);
 
   }
+
   if(content.status == NORMAL){
     lua_pushvalue(L, *body_idx);
     lua_pushlstring(L, buffer, blen);
@@ -63,82 +62,75 @@ int http_body_parse(lua_State* L, int* files_idx, int* body_idx, char* buffer, s
     *body_idx = lua_gettop(L);
   } else {
 file_start:;
-           if(content.status == BARRIER_READ){
-             for(int i = 0; i != blen; i++){
-               if(*buffer == '\r'){
-                 content.status = FILE_HEADER;
-                 buffer += 2;
-                 blen -= i + 2;
+    if(content.status == BARRIER_START){
+      for(; blen > 0; buffer++, blen--){
+        if(*buffer == '\n'){
+          content.status = BARRIER_END;
+          blen--;
+          buffer++;
+          break;
+        }
+      }
+    }
 
-                 content.table_idx = lua_rawlen(L, *files_idx) + 1;
-                 lua_pushinteger(L, content.table_idx);
-                 lua_newtable(L);
-                 lua_settable(L, *files_idx);
-                 break;
-               }
-               str_pushl(content.boundary_id, buffer, 1);
-               buffer++;
-             }
-           }
-           lua_pushvalue(L, *files_idx);
-           lua_pushinteger(L, content.table_idx);
-           lua_gettable(L, -2);
-           int rfiles_idx = lua_gettop(L);
-           if(content.status == FILE_HEADER){
-             for(int i = 0; i < blen; i++){
+    if(content.status == BARRIER_END){
+      int check = 80;
+      if(content.current->len < check) check = content.current->len;
+      ssize_t backtrack = content.current->len - check;
 
-               if(buffer[i] == ':'){
-                 content.old = content.current;
-                 content.current = str_init("");
-               } else if(buffer[i] == '\n'){
-                 if(content.current->len == 0){
-                   content.status = FILE_BODY;
+      str_pushl(content.current, buffer, blen); 
+      char* end = memmem(content.current->c + backtrack, content.current->len - backtrack, content.boundary->c, content.boundary->len);
 
-                   buffer += i + 1;
-                   blen -= i + 1;
+      if(end != NULL){
+        ssize_t size = content.current->len - (end - content.current->c + 4);
+        str_popb(content.current, content.current->len - (end - content.current->c) + 4); 
+        size_t header_len = (char*)memmem(content.current->c, content.current->len, "\r\n\r\n", 4) - content.current->c;
 
-                   content.old = NULL;
-                   str_free(content.current);
-                   content.current = str_init("");
-                   break;
-                 }
-#warning "error here"
-                 luaI_tsets(L, rfiles_idx, content.old->c, content.current->c);
+        parray_t* header = parray_init();
+        parse_header_kv(content.current->c, header_len, header);
 
-                 str_free(content.old);
-                 content.old = NULL;
-                 str_clear(content.current);
-               } else if(buffer[i] != '\r' && !(buffer[i] == ' ' && content.current->len == 0)) str_pushl(content.current, buffer + i, 1);
-             }
-           } 
+        str* cd = (str*)parray_get(header, "content-disposition");
+        if(cd != NULL){
+          lua_newtable(L);
+          int newfile_idx = lua_gettop(L);
 
-           if(content.status == FILE_BODY){
-             char* barrier_end = memmem(buffer, blen, content.boundary->c, content.boundary->len);
-             if(barrier_end == NULL){
-               str* temp = str_initl(content.current->c, content.current->len);
-               str_pushl(temp, buffer, blen); 
-               barrier_end = memmem(temp->c, temp->len, content.boundary->c, content.boundary->len);
-               if(barrier_end != NULL) abort(); // todo
+          parray_t* cd_parse = parray_init();
+          gen_parse(cd->c, cd->len, &cd_parse);
+          lua_newtable(L);
+          int cdidx = lua_gettop(L);
+          luaI_fromparray(L, cdidx, cd_parse, 1);
 
-               str* temp2 = content.current;
-               content.current = temp;
-               str_free(temp2);
+          luaI_fromparray(L, newfile_idx, header, 1);
+          luaI_tsetv(L, newfile_idx, "content-disposition", cdidx);
 
-             } else {
-               char* start = barrier_end, *end = barrier_end;
-               for(; *start != '\n'; start--);
-               for(; *end != '\n'; end++);
-               int clen = start - buffer;
-               str_pushl(content.current, buffer, clen);
-               luaI_tsetsl(L, rfiles_idx, "content", content.current->c, content.current->len - 1);
-               str_clear(content.current);
-               blen-= end - buffer;
-               buffer = end;
-               content.status = BARRIER_READ;
-               goto file_start;
-             }
+          str* name = (str*)parray_get(cd_parse, "name");
+          if(name == NULL) name = (str*)parray_get(cd_parse, "filename");
 
-           }
+          if(name == NULL){
+            int ind = lua_objlen(L, *files_idx) + 1;
+            lua_pushinteger(L, ind);
+            lua_pushvalue(L, newfile_idx);
+            lua_settable(L, *files_idx);
+          }
+          else {
+            luaI_tsetv(L, *files_idx, name->c, newfile_idx);
+          }
+          parray_clear(cd_parse, STR);
+
+          lua_pushlstring(L, content.current->c + header_len + 4, content.current->len - header_len - 4);
+          lua_setfield(L, newfile_idx, "body");
+        }
+
+        str_clear(content.current);
+        parray_clear(header, STR);
+        content.status = BARRIER_START;
+
+        ssize_t oblen = blen;
+        blen = oblen - (oblen - size);
+        buffer += oblen - blen;
+        goto file_start;
+      }
+    }
   }
 
   *_content = content;

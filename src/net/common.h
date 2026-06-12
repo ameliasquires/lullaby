@@ -22,18 +22,19 @@
 #define max_con 200
 //2^42
 #define MAX_HEADER_SIZE (1<<20)
-#define BUFFER_SIZE 20000
+#define BUFFER_SIZE 210000
+//00
 #define HTTP_BUFFER_SIZE 4098
 #define max_content_length 200000
 
 enum file_status {
-  _ignore, BARRIER_READ, FILE_HEADER, FILE_BODY, NORMAL
+  //_ignore, BARRIER_READ, FILE_HEADER, FILE_BODY, NORMAL
+  _ignore, BARRIER_START, BARRIER_END, NORMAL
 };
 
 struct file_parse {
   enum file_status status;
-  str *current, *old, *boundary, *boundary_id;
-  int dash_count, table_idx;
+  str *current, *old, *boundary, *line;
 };
 
 struct net_data {

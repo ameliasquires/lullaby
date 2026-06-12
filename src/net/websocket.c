@@ -212,7 +212,7 @@ int l_websocket_upgrade(lua_State* L){
   data->ctx = ctx->ctx;
   data->buffer = str_init("");
 
-  luaI_tsetnil(L, req_idx, "roll");
+  luaI_tsetnil(L, req_idx, "load");
   luaI_tsetlud(L, res_idx, "_ws", data);
 #warning "missing ws commands"
   luaI_tsetcf(L, res_idx, "send", l_ws_write);

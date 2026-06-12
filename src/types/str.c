@@ -38,6 +38,15 @@ void str_free(str* s){
   free(s);
 }
 
+void str_loadatleast(str* s, size_t bytes){
+  if(s->_bytes < bytes)
+    s->c = realloc(s->c, s->_bytes = bytes);
+}
+
+void str_loadex(str* s, size_t bytes){
+  s->c = realloc(s->c, s->_bytes = s->len + 1 + bytes);
+}
+
 void str_push(str* s, const char* insert){
   s->len += strlen(insert);
   if(s->len + 1 >= s->_bytes)

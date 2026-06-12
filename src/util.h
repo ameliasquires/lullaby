@@ -32,7 +32,7 @@
   clock_t _end##name = clock();\
   printf("%s took %f\n",desc, (double)(_end##name - _begin##name) / CLOCKS_PER_SEC);
 
-int gen_parse(char*,int, parray_t**);
+int gen_parse(char*,ssize_t, parray_t**);
 
 int tolower(int i);
 void str_lowercase(str* str);

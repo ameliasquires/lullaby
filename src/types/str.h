@@ -23,4 +23,6 @@ void str_pushc(str*, char);
 void str_clear(str*);
 void str_popf(str*, int);
 void str_popb(str*, int);
+void str_loadatleast(str* s, size_t bytes);
+void str_loadex(str* s, size_t bytes);
 #endif //__STR_H

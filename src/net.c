@@ -777,7 +777,7 @@ void* handle_client(void *_arg){
 
         luaI_tseti(L, req_idx, "_bytes", bite - header_eof - 4);
         //luaI_tseti(L, req_idx, "client_fd", client_fd);
-        luaI_tsetcf(L, req_idx, "roll", l_roll);
+        luaI_tsetcf(L, req_idx, "load", l_load);
 
         luaI_tsetv(L, res_idx, "req", req_idx);
         luaI_tsetv(L, req_idx, "res", res_idx);
@@ -874,9 +874,10 @@ net_end:
       str_free(parsed_path.path);
       parray_clear(parsed_path.query, STR);
 
-      if(file_cont->boundary != NULL) str_free(file_cont->current);
+      if(file_cont->current != NULL) str_free(file_cont->current);
       if(file_cont->boundary != NULL) str_free(file_cont->boundary);
-      if(file_cont->boundary_id != NULL) str_free(file_cont->boundary_id);
+      if(file_cont->line != NULL) str_free(file_cont->line);
+      //if(file_cont->boundary_id != NULL) str_free(file_cont->boundary_id);
 
       free(file_cont);
     }

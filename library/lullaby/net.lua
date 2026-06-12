@@ -65,10 +65,10 @@ res_table.open = true
 ---@class req-table
 local req_table = {}
 
----"roll" the request forward
+---loads the request body/files
 ---@param T req-table
 ---@param bytes integer | nil
-function req_table.roll(T, bytes) end
+function req_table.load(T, bytes) end
 
 ---list of parameters in route 
 req_table.parameters = {}

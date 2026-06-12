@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "types/str.h"
+#include "types/parray.h"
 
 #ifndef __lua_h
 #define __lua_h
@@ -26,6 +27,8 @@ enum table_cache {
 #ifndef GIT_COMMIT
 #define GIT_COMMIT "unknown"
 #endif
+
+void luaI_fromparray(lua_State* L, int table_idx, parray_t* table, int strval);
 
 int luaI_lowercase_index(lua_State* L);
 int luaI_lowercase_newindex(lua_State* L);

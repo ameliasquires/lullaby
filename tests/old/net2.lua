@@ -1,8 +1,7 @@
---(this is in tests/net2.lua)
+--(this is in tests/old/net2.lua)
 net = require "lullaby.net"
 local crypto = require "lullaby.crypto"
 local port = 8080
-MAX_LENGTH = 2048
 
 net.listen(function(server)
 
@@ -10,8 +9,8 @@ net.listen(function(server)
   server:POST("/", function(res, req)
     --creates a sha0 hash object
     local hash = crypto.sha0()
-    --loads an extra 2048 characters from the request body (the body is not guaranteed to be >= 2048 characters, reasoning in docs)
-    req:roll(MAX_LENGTH)
+
+    req:load()
 
     --incremental hashes allow updating via addition, in this case adding the body and getting a string from it
     hash = (hash + req.Body):final()
@@ -21,4 +20,3 @@ net.listen(function(server)
   end)
 
 end, port)
-

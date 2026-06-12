@@ -13,7 +13,7 @@
  multipart/form-data = (null)
  boundary = awa
 */
-int gen_parse(char* inp, int len, parray_t** _table){
+int gen_parse(char* inp, ssize_t len, parray_t** _table){
   str* current = str_init(""), *last = NULL;
   int state = 0; 
 

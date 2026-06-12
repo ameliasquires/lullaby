@@ -22,7 +22,10 @@ int64_t recv_header(struct net_data* ctx, char** _buffer, char** header_eof);
  * @param {parray_t**} pointer to a unallocated parray_t
  * @return {int} returns 0 or -1 on failure
  */
-int parse_header(char* buffer, int header_eof, parray_t** _table);
+int parse_header(char* buffer, size_t header_len, parray_t** _table);
+ssize_t parse_header_head(char* buffer, size_t header_len, parray_t* table);
+int parse_header_kv(char* buffer, size_t header_len, parray_t* table);
+
 
 /**
  * @brief contructs an http request
