@@ -15,6 +15,8 @@ end
 #include "math.h"
 #include "stdint.h"
 #include <stdlib.h>
+#include <threads.h>
+#include <pthread.h>
 
 uint64_t gcd(uint64_t a, uint64_t b){
   if(b == 0) return a;
@@ -47,18 +49,30 @@ int l_lcm(lua_State* L){
   return 1;
 }
 
+thread_local uint16_t seedv[3] = {0, 0, 0};
+
 int l_random(lua_State* L){
+  if(seedv[0] + seedv[1] + seedv[2] == 0){
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    uint64_t seed = (ts.tv_sec << 32) | ts.tv_nsec;
+
+    seedv[0] = seed;
+    seedv[1] = seed >> 16;
+    seedv[2] = seed >> 32;
+  }
+
   size_t min = 1;
   switch(lua_gettop(L)){
     case 2:
       min = lua_tointeger(L, 1);
       lua_remove(L, 1);
     case 1:
-      lua_pushinteger(L, (rand() % (lua_tointeger(L, 1) - min + 1)) + min);
+      lua_pushinteger(L, (erand48(seedv) * (lua_tointeger(L, 1) - min + 1)) + min);
       break;
     case 0:
     default:
-      lua_pushnumber(L, (double)rand() / (double)RAND_MAX);
+      lua_pushnumber(L, erand48(seedv));
   }
 
   return 1;

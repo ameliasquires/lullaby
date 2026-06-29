@@ -8,7 +8,6 @@
 #include "test.h"
 #include "config.h"
 #include "lullaby.h"
-#include <time.h>
 
 #define open_common(name, config)\
   int luaopen_lullaby_##name (lua_State* L){\
@@ -39,7 +38,6 @@ lua_settable(L, T);
 
 
 int luaopen_lullaby(lua_State* L) { 
-  srand(time(NULL));
   lua_newtable(L);
   int top = lua_gettop(L);
 
