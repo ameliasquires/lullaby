@@ -2,6 +2,10 @@
 
 > all files besides this and the content of net/ are out of date! ill be working on them later
 
+# dont use lua builtin random!!!!!!
+
+> lullaby provides its own random function llby.math.random(M?, N?). for now atleast you may run into issues using the builtin math.random when multithreading, this may affect some other lua utils
+
 (name subject to change)
 
 with the library in the same directory [(or one of the other valid search locations)](https://www.lua.org/pil/8.1.html)

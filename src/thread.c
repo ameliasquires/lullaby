@@ -213,7 +213,7 @@ int _thread_detach(lua_State* L){
   lua_pushstring(L, "_");
   lua_gettable(L, 1);
   struct thread_info* info = lua_touserdata(L, -1);
-  lua_getmetatable(L, -1);
+  lua_getmetatable(L, 1);
   int idx = lua_gettop(L);
 
   luaI_tsetnil(L, idx, "__gc");
