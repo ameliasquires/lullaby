@@ -15,6 +15,12 @@ local table = {}
 ---@return string[]
 function table.split(haystack, search, skip) end
 
+---returns the index that N is located at, or nil
+---@param t any[]
+---@param N any
+---@return any
+function table.contains(t, N) end
+
 ---compares 2 tables recursivley
 ---@param A any[]
 ---@param B any[]

@@ -3,6 +3,23 @@
 #include <string.h>
 #include <stdint.h>
 
+int l_contains(lua_State* L){
+  luaI_assert2(L, lua_gettop(L) >= 2);
+  luaL_checktype(L, 1, LUA_TTABLE);
+
+  lua_pushnil(L);
+  for(;lua_next(L, 1);){
+    if(lua_rawequal(L, -1, 2)){
+      lua_pushvalue(L, -2);
+      return 1;
+    }
+    lua_pop(L, 1);
+  }
+
+  lua_pushnil(L);
+  return 1;
+}
+
 void value_clone_req(lua_State* L){
   int idx = lua_gettop(L);
 
@@ -32,7 +49,7 @@ void value_clone_req(lua_State* L){
 }
 
 int l_dup(lua_State* L){
-  if(lua_gettop(L) != 1) return 0;
+  luaI_assert2(L, lua_gettop(L) == 1);
 
   value_clone_req(L);
   lua_pushvalue(L, 2);

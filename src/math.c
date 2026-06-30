@@ -65,10 +65,10 @@ int l_random(lua_State* L){
   size_t min = 1;
   switch(lua_gettop(L)){
     case 2:
-      min = lua_tointeger(L, 1);
+      min = luaL_checkinteger(L, 1);
       lua_remove(L, 1);
     case 1:
-      lua_pushinteger(L, (erand48(seedv) * (lua_tointeger(L, 1) - min + 1)) + min);
+      lua_pushinteger(L, (erand48(seedv) * (luaL_checkinteger(L, 1) - min + 1)) + min);
       break;
     case 0:
     default:

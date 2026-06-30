@@ -7,6 +7,7 @@
 void i_shuffle(double*, size_t);
 uint64_t i_len(lua_State*,int);
 
+int l_contains(lua_State*);
 int l_len(lua_State*);          //[double+int] -> i
 int l_reverse(lua_State*);      //[double+int] -> arr[N]
 int l_max(lua_State*);     //[double+int] -> i
@@ -28,6 +29,7 @@ int l_dup(lua_State*);
 
 #warning "docs needed here"
 static const luaL_Reg table_function_list [] = {
+  {"contains",l_contains},
   {"len",l_len},
   {"reverse",l_reverse}, //no docs
   {"max",l_max}, //no docs

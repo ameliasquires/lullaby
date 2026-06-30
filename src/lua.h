@@ -115,6 +115,13 @@ extern int _print_errors;
     sprintf(err, "(%s:%i) %s assertion failed", file, line, #eq);\
     luaI_error(L, -1, err);}}
 
+#define luaI_assert2(L, eq){_helperluaI_assert2(L, eq, __FILE__, __LINE__);}
+#define _helperluaI_assert2(L, eq, file, line){\
+  if(!(eq)){\
+    char err[1024] = {0};\
+    sprintf(err, "(%s:%i) %s assertion failed", file, line, #eq);\
+    luaL_error(L, err);}}
+
 int writer(lua_State*, const void*, size_t, void*);
 
 #if LUA_VERSION_NUM != 501
