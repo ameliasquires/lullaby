@@ -7,6 +7,7 @@ local t1 = llby.thread.async(function(res)
 
     local t3 = llby.thread.async(function(res)
       mutex:lock()
+      mutex:unlock()
 
       res(254)
     end)

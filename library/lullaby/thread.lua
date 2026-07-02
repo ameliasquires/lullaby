@@ -29,7 +29,13 @@ function async.kill(T) end
 ---removes gc, instead collecting after it has been run
 ---@param T async-table
 ---@return nil
-function async.kill(T) end
+function async.detatch(T) end
+
+---waits for the thread to stop running and sets the thread to run a new function
+---@param T async-table
+---@param fun fun(res: async-res-table): nil function to call, parameter will set a return value for the thread, also contains methods for thread managment
+---@return nil
+function async.loadf(T) end
 
 ---contains data for the thread
 ---@deprecated
@@ -66,6 +72,11 @@ local buffer = {}
 ---@param T buffer-table
 ---@return any
 function buffer.get(T) end
+
+---gets the value of the buffer, with __gc, thread takes 'ownership' of the object ie. removing __gc from the buffer
+---@param T buffer-table
+---@return any
+function buffer.own(T) end
 
 ---sets the value of the buffer
 ---@param T buffer-table

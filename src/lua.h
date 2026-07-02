@@ -35,7 +35,7 @@ int luaI_lowercase_newindex(lua_State* L);
 
 enum table_cache table_cache(lua_State* L, char* key, int index);
 
-void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags);
+int luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags);
 void luaI_deepcopy2(lua_State* src, lua_State* dest);
 
 void lua_set_global_table(lua_State*);
@@ -120,7 +120,8 @@ extern int _print_errors;
   if(!(eq)){\
     char err[1024] = {0};\
     sprintf(err, "(%s:%i) %s assertion failed", file, line, #eq);\
-    luaL_error(L, err);}}
+    luaL_error(L, err);\
+    return 0;}}
 
 int writer(lua_State*, const void*, size_t, void*);
 

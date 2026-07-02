@@ -220,7 +220,11 @@ enum table_cache table_cache(lua_State* L, char* key, int index){
  * @param {void*} items already visited, use NULL
  * @param {int} whether or not to skip meta data
  */
-void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
+int luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
+#warning "ensure enough space, cheap fix, should rewrite this function"
+  luaI_assert2(src, lua_checkstack(src, 10));
+  luaI_assert2(src, lua_checkstack(dest, 10));
+
   //printf("%i\n",seen->len);
   int at, at2;
   //int *sp = malloc(1);
@@ -258,7 +262,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
 
                      if(table_cache(dest, aauwu, at) == CACHE_HIT){
                        free(aauwu);
-                       return;
+                       return 0;
                      }
                      
                      free(aauwu);
@@ -277,9 +281,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
                          lua_pop(src, 1);
                          continue;
                        }
-                       lua_pushvalue(src, first);
-                       //l_pprint(src);
-                       //lua_pop(src, 1);
+                       lua_pushvalue(src, first); 
                        luaI_deepcopy(src, dest, flags);
 
                        lua_pushvalue(src, second);
@@ -308,7 +310,7 @@ void luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
                      if(table_cache(dest, poi, f) == CACHE_HIT){
                        free(poi);
                        str_free(awa);
-                       return;
+                       return 0;
                      }
                      free(poi);
 

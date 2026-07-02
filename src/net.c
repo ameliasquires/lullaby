@@ -898,6 +898,7 @@ int clean_lullaby_net(lua_State* L){
 }
 
 int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state* state){
+#warning "mimetypes should be thread local"
   parse_mimetypes();
   if(state->ssl) ssl_init();
   //need these on windows for sockets (stupid)
@@ -1019,13 +1020,11 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
       args->paths = paths;
 
       int old_top = lua_gettop(L);
-      lua_getglobal(L, "_G");
 
       luaL_openlibs(args->L);
       luaI_copyvars(L, args->L); 
       luaL_openlibs(args->L);
       lua_settop(L, old_top);
-      lua_set_global_table(args->L);
 
       threads++;
 
@@ -1045,6 +1044,9 @@ net_end:
   close(efd);
   if(state->ssl) SSL_CTX_free(server_ctx);
   free(state);
+
+#warning "expensive data race fix"
+  for(; threads != 0;);
 
   for(int i = 0; i != paths->len; i++){
     struct sarray_t* path = paths->P[i].value;

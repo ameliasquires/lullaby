@@ -12,6 +12,8 @@ the res function also provides some child methods for thread managment
 
 though variables are copied, some may not be able to clone perfectly (complex userdata, lightuserdata, etc..) and the __gc call from the main thread may effect the copy on the new thread. this issue wont be permanent, but it may require a workaround for now.
 
+the thread will stay open (asleep) for a loadf, close, or kill command
+
 ### res:testclose
 
 res:testclose()
@@ -31,6 +33,12 @@ calls res:testclose() every lua line, using a debug hook
 async:await()
 
 pauses the current thread until the selected thread exits, or calls res(), the return value is whatever the thread passed to res
+
+### async:loadf
+
+async:loadf(function)
+
+sets a new function for the thread to run, waits for thread to stop if it is still running
 
 ### async:kill
 

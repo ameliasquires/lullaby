@@ -3,8 +3,8 @@ local h2 = llby.thread.buffer(llby.crypto.sha256())
 local h3 = llby.thread.buffer(llby.crypto.sha1())
 
 local tthread = llby.thread.async(function(res)
-  h1:set(h1:get():update("mrrp"))
-  h2:set(h2:get():update("mrrp"))
+  h1:set(h1:own():update("mrrp"))
+  h2:set(h2:own():update("mrrp"))
 
   h3:mod(function(M)
     return M:update("mrrp")

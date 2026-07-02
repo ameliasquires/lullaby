@@ -12,16 +12,16 @@ the __index metamethod will index any value that is not a buffer.* method on the
 
 every other metamethod will be replaced with a proxy to the metamethod in the copied object
 
-inner functions can be called using the : syntactic sugar
+inner functions can be called using the : syntactic sugar, though ownership may be needed to take into consideration
 
 ```
 buffer = llby.thread.buffer(llby.crypto.sha1())
 
-buffer:set(buffer:get():update("awa"))
+buffer:set(buffer:own():update("awa"))
 --or
-buffer:set(buffer.update(buffer:get(), "awa"))
+buffer:set(buffer.update(buffer:own(), "awa"))
 
---is the same as
+--is almost the same as
 buffer:set(buffer:update("awa"))
 ```
 
@@ -29,7 +29,13 @@ buffer:set(buffer:update("awa"))
 
 buffer:get()
 
-copies the value in the buffer to the current state
+copies the value in the buffer to the current state, buffer maintains ownership (__gc)
+
+### buffer:own
+
+buffer:own()
+
+the same as :get(), but the buffer transfers ownership (__gc) to the recieving state
 
 ### buffer:set
 
