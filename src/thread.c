@@ -228,7 +228,7 @@ void* thread_start(void* _args){
     if(args->type == THREAD_TDETATCHED){
       pthread_mutex_unlock(&*args->lock);
       _thread_state_clean(args);
-      break;
+      return NULL;
     }
 
     for(;args->function == NULL && args->state == THREAD_SIDLE && args->event == THREAD_ENONE;)

@@ -29,13 +29,13 @@ function async.kill(T) end
 ---removes gc, instead collecting after it has been run
 ---@param T async-table
 ---@return nil
-function async.detatch(T) end
+function async.detach(T) end
 
 ---waits for the thread to stop running and sets the thread to run a new function
 ---@param T async-table
 ---@param fun fun(res: async-res-table): nil function to call, parameter will set a return value for the thread, also contains methods for thread managment
 ---@return nil
-function async.loadf(T) end
+function async.loadf(T, fun) end
 
 ---contains data for the thread
 ---@deprecated
