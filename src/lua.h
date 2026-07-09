@@ -102,7 +102,7 @@ int luaI_errtraceback(lua_State* L);
 //in lullaby.h
 extern int _print_errors;
 
-#define luaI_error(L, en, str){\
+/*#define luaI_error(L, en, str){\
   lua_pushnil(L);\
   lua_pushstring(L, str);\
   if(_print_errors) printf("%s\n",str);\
@@ -113,7 +113,7 @@ extern int _print_errors;
   if(!(eq)){\
     char err[1024] = {0};\
     sprintf(err, "(%s:%i) %s assertion failed", file, line, #eq);\
-    luaI_error(L, -1, err);}}
+    luaI_error(L, -1, err);}}*/
 
 #define luaI_assert2(L, eq){_helperluaI_assert2(L, eq, __FILE__, __LINE__);}
 #define _helperluaI_assert2(L, eq, file, line){\

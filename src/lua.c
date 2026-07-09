@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "util.h"
 #include "types/parray.h"
+#include "error.h"
 
 static int malloc_count = 0;
 
@@ -73,7 +74,7 @@ int _stream_read(lua_State* L){
   int ret = rf(len, &cont, &state);
 
   if(ret < 0){
-    luaI_error(L, ret, "read error");
+    return luaI_error(L, "read error");
   }
 
   if(ret == 0){
@@ -117,7 +118,7 @@ int _stream_file(lua_State* L){
   FILE *f;
   f = fopen(filename, mode);
   if(f == NULL){
-    luaI_error(L, -1, "unable to open file");
+    return luaI_error(L, "unable to open file");
   }
 
   str* cont = str_init("");
@@ -128,7 +129,7 @@ int _stream_file(lua_State* L){
     if(ret < 0){
       fclose(f);
       str_free(cont);
-      luaI_error(L, ret, "read error"); 
+      return luaI_error(L, "read error"); 
     }
 
     fwrite(cont->c, sizeof * cont->c, cont->len, f);

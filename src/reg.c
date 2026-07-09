@@ -8,6 +8,7 @@
 #include "test.h"
 #include "config.h"
 #include "lullaby.h"
+#include "error.h"
 
 #define open_common(name, config)\
   int luaopen_lullaby_##name (lua_State* L){\
@@ -30,6 +31,7 @@ open_common(math, math_config);
 open_common(net, net_config);
 open_common(thread, thread_config);
 open_common(test, test_config);
+open_common(error, error_config);
 
 #define push(T, name)\
   lua_pushstring(L, #name);\
@@ -48,9 +50,10 @@ int luaopen_lullaby(lua_State* L) {
   push(top, net);
   push(top, thread);
   push(top, test);
+  push(top, error);
   luaI_tsets(L, top, "version", GIT_COMMIT);
 
-  lua_pushvalue(L, top);
+  luaL_register(L, "lullaby.base", lullaby_function_list);
 
   lua_settop(L, top); 
   return 1;

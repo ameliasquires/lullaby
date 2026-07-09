@@ -162,10 +162,19 @@ local function listen_callback(server) end
 function net.listen(callback, port) end
 
 ---@class request-return
----@field content stream
----@field code integer response code
----@field code-name string response message
----@field version string http version
+local request_return = {}
+
+---@type stream
+request_return.content = nil
+
+---@type integer response code
+request_return.code = 0
+
+---@type integer response message
+request_return.code_name = 0
+
+---@type string http version
+request_return.version = ""
 
 ---creates an https request
 ---@param url string

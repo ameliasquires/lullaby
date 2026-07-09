@@ -4,6 +4,7 @@
 #include "common.h"
 #include "../hash/fnv.h"
 #include "websocket.h"
+#include "../error.h"
 
 int l_write(lua_State* L){
   int res_idx = 1;
@@ -192,7 +193,7 @@ int l_load(lua_State* L){
       break;
     }
     if(out == -1) {
-      luaI_error(L, -2, "net read error");
+      return luaI_error(L, "net read error");
     }
 
     total += out;
@@ -307,7 +308,7 @@ int l_connection_upgrade(lua_State* L){
         l_websocket_upgrade(L);
       break;
     default:
-      luaI_error(L, -1, "can't upgrade");
+      return luaI_error(L, "can't upgrade");
       break;
   }
 

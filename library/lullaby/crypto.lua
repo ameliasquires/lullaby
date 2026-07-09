@@ -7,12 +7,10 @@ local crypto = {}
 ---@operator add(string): hash 
 local hash = {}
 
----@param T hash
 ---@param value string
-function hash.update(T, value) end
+function hash:update(value) end
 
----@param T hash
-function hash.final(T) end
+function hash:final() end
 
 ---@return hash
 ---@overload fun(value: string): string

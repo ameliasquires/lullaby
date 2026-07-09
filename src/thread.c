@@ -11,6 +11,7 @@
 #include "types/larray.h"
 #include "hash/fnv.h"
 #include "table.h"
+#include "error.h"
 
 enum thread_type {
   THREAD_TNORMAL,
@@ -82,7 +83,7 @@ int l_mutex(lua_State* L){
   pthread_mutex_t *lock = malloc(sizeof * lock);
 
   if(pthread_mutex_init(&*lock, NULL) != 0)
-    luaI_error(L, -1, "mutex init failed");
+    return luaI_error(L, "mutex init failed");
 
   lua_newtable(L);
   int idx = lua_gettop(L);
@@ -255,8 +256,8 @@ int _thread_detach(lua_State* L){
 int _thread_await(lua_State* L){
   lua_getfield(L, 1, "_");
   struct thread_info* info = lua_touserdata(L, -1);
-  if(info->L == NULL) luaI_error(L, -1, "thread was already closed")
-  if(info->tid == 0) luaI_error(L, -2, "thread was killed early")
+  if(info->L == NULL) return luaI_error(L, "thread was already closed");
+  if(info->tid == 0) return luaI_error(L, "thread was killed early");
 
   pthread_mutex_lock(&*info->lock);
 

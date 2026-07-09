@@ -4,6 +4,7 @@
 #include "net/luai.h"
 #include "types/str.h"
 #include "net/websocket.h"
+#include "error.h"
 
 #include <fcntl.h>
 
@@ -179,7 +180,7 @@ int i_ws_read(lua_State* L){
   struct net_data* data = lua_touserdata(L, -1);
   struct ws_frame_info frame = {};
   if(ws_read(data, &frame) == -1){
-    luaI_error(L, -1, "SSL_read error");
+    return luaI_error(L, "SSL_read error");
     str_clear(data->buffer);
   }
 
@@ -215,7 +216,7 @@ int i_ws_write(lua_State* L){
   int s = SSL_write(data->ssl, send_data->c, send_data->len);
   str_free(send_data);
 
-  if(s <= 0) luaI_error(L, s, "SSL_write error");
+  if(s <= 0) return luaI_error(L, "SSL_write error");
   lua_pushinteger(L, 1);
 
   return 1;
@@ -276,7 +277,7 @@ int l_wss(lua_State* L){
   free(request);
 
   if(s <= 0){
-    luaI_error(L, s, "SSL_write error");
+    return luaI_error(L, "SSL_write error");
   }
 
   char buffer[BUFFER_LEN];
@@ -291,10 +292,10 @@ int l_wss(lua_State* L){
     memset(buffer, 0, BUFFER_LEN);
   }
 
-  if(len < 0) luaI_error(L, len, "SSL_read error");
+  if(len < 0) return luaI_error(L, "SSL_read error");
 
   if(header_eof == NULL){
-    luaI_error(L, -1, "error with header formating");
+    return luaI_error(L, "error with header formating");
   }
 
   struct net_data *data = malloc(sizeof * data);
@@ -454,14 +455,14 @@ int _request(lua_State* L, struct request_state* state){
 
   state->sock = get_host((char*)host, (char*)port);
   if(state->sock == -1){
-    luaI_error(L, -1, "error resolving address");
+    return luaI_error(L, "error resolving address");
   }
 
   if(state->secure){
     ssl_init();
     state->ctx = SSL_CTX_new(SSLv23_client_method());
     state->ssl = ssl_connect(state->ctx, state->sock, host);
-    if(state->ssl == NULL) luaI_error(L, -1, "ssl_connect error");
+    if(state->ssl == NULL) return luaI_error(L, "ssl_connect error");
   }
 
   char* cont = "";
@@ -519,7 +520,7 @@ int _request(lua_State* L, struct request_state* state){
   int s = _request_write(state, request, strlen(request));
   free(request);
 
-  if(s <= 0) luaI_error(L, s, "_request_write error");
+  if(s <= 0) return luaI_error(L, "_request_write error");
 
   str* a = str_init("");
   char buffer[BUFFER_LEN];
@@ -538,7 +539,7 @@ int _request(lua_State* L, struct request_state* state){
     memset(buffer, 0, BUFFER_LEN);
   }
 
-  if(len < 0) luaI_error(L, len, "read error");
+  if(len < 0) return luaI_error(L, "read error");
 
   if(header_eof != NULL){
     lua_newtable(L);
@@ -555,7 +556,7 @@ int _request(lua_State* L, struct request_state* state){
     //done out of pure laziness, parse_header was meant for requests but works fine for responses, change this later
     luaI_treplk(L, idx, "path", "code");
     luaI_treplk(L, idx, "request", "version");
-    luaI_treplk(L, idx, "version", "code-name");
+    luaI_treplk(L, idx, "version", "code_name");
 
     lua_pushstring(L, "code");
     lua_gettable(L, idx);
@@ -591,7 +592,7 @@ int _request(lua_State* L, struct request_state* state){
     luaI_tsetv(L, idx, "content", v);
     lua_pushvalue(L, idx);
   } else {
-    luaI_error(L, -1, "error with header");
+    return luaI_error(L, "error with header");
   }
   str_free(a);
 
@@ -910,11 +911,11 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
   SSL_CTX* server_ctx;
   if(state->ssl){
     if(!(server_ctx = SSL_CTX_new(TLS_server_method())))
-      luaI_error(L, -7, "SSL_CTX_new error");
+      return luaI_error(L, "SSL_CTX_new error");
     luaI_assert(L, SSL_CTX_use_certificate_file(server_ctx, state->ssl_crt->c, SSL_FILETYPE_PEM) > 0)
     luaI_assert(L, SSL_CTX_use_PrivateKey_file(server_ctx, state->ssl_key->c, SSL_FILETYPE_PEM) > 0)
     if (SSL_CTX_check_private_key(server_ctx) == -1)
-      luaI_error(L, -8, "key does not match crt");
+      return luaI_error(L, "key does not match crt");
   }
 
   int server_fd;
@@ -923,7 +924,7 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
 
   //open the socket
   if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-    luaI_error(L, -2, "error opening socket\n");
+    return luaI_error(L, "error opening socket");
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -931,14 +932,14 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
 
 
   if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&(int){1}, sizeof(int)) < 0)
-    luaI_error(L, -3, "SO_REUSEADDR refused\n");
+    return luaI_error(L, "SO_REUSEADDR refused");
 
   //bind to port
   if(bind(server_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0)
-    luaI_error(L, -4, "failed to bind to port\n");
+    return luaI_error(L, "failed to bind to port");
 
   if(listen(server_fd, max_con) < 0)
-    luaI_error(L, -5, "failed to listen\n");
+    return luaI_error(L, "failed to listen");
 
   int efd = eventfd(NETEV_DEFAULT, 0);
   state->event_fd = efd;
@@ -1187,7 +1188,7 @@ int l_listen(lua_State* L){
 
   lua_pcall(L, 1, 0, 0);
 
-  if(state->event_fd == -2) luaI_error(L, -2, "closed"); 
+  if(state->event_fd == -2) return luaI_error(L, "closed"); 
 
   lua_getfield(L, mt, "ssl");
   int ssl = lua_gettop(L);

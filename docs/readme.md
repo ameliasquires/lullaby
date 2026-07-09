@@ -58,16 +58,7 @@ some streams may not support the bytes param, and may just ignore it. if it is i
 
 ### errors
 
-errors will typically be created and propogated using luaI_error (in c) but will always retain a common style (unless mentioned otherwise)
-
-it will return 3 values, in order
-
-* nil (just always a nil value first, useful to do a quick check for errors on functions with a return value)
-* string (an error message)
-* integer (an error code)
-
-similarily, when luaI_assert is called, the string will be the expression and the integer will be -1
-
+some functions can return non-fatal errors, which should be checked and handled through the llby.error table
 
 ---
 

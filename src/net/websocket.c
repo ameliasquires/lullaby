@@ -6,6 +6,7 @@
 #include "../encode/base64.h"
 #include <limits.h>
 #include <ctype.h>
+#include "../error.h"
 
 //why?????
 const char* magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -136,8 +137,8 @@ int l_ws_read(lua_State* L){
   struct ws_frame_info frame = {};
   int c = ws_read(data, &frame);
   if(c == -1){
-    luaI_error(L, -1, "SSL_read error");
     str_clear(data->buffer);
+    return luaI_error(L, "SSL_read error");
   }
 
   lua_newtable(L);
