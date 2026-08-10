@@ -9,27 +9,25 @@ heres an example of a webserver to return a [sha0](https://en.wikipedia.org/wiki
 <blockquote>
 
 ```lua
---(this is in tests/old/net2.lua)
+--(this is in tests/old/net3.lua)
 net = require "lullaby.net"
 crypto = require "lullaby.crypto"
-local port = 8080
 
-net.listen(function(server)
+local server = net.server()
 
-  --listen to post requests at localhost:8080 (root directory)
-  server:POST("/", function(res, req)
-    --creates a sha0 hash object
-    local hash = crypto.sha0()
+server:POST("/", function(res, req)
+  --creates a sha0 hash object
+  local hash = crypto.sha0()
 
-    req:load()
+  req:load()
 
-    --incremental hashes allow updating via addition, in this case adding the body and getting a string from it
-    hash = (hash + req.Body):final()
-    --send the hash to the client, closes connection, but thread is live until it ends
-    res:send(hash)
-  end)
+  --incremental hashes allow updating via addition, in this case adding the body and getting a string from it
+  hash = (hash + req.body):final()
+  --send the hash to the client, closes connection, but thread is live until it ends
+  res:send(hash)
+end)
 
-end, port)
+server:listen(8080)
 ```
 
 </blockquote>

@@ -19,7 +19,7 @@ int _error_gc(lua_State* L){
 int luaI_error(lua_State* L, const char* error){
   struct error_data* e = lua_newuserdata(L, sizeof * e);
   int idx = lua_gettop(L);
-  e->name = calloc(sizeof * e->name, strlen(error));
+  e->name = calloc(sizeof * e->name, strlen(error) + 1);
   memcpy(e->name, error, strlen(error));
 
   luaL_traceback(L, L, error, 0);

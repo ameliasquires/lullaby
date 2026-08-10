@@ -154,12 +154,21 @@ function server_table.all(T, route, callback) end
 ---@param T server-table
 function server_table.close(T) end
 
+---starts server
+---@param port integer
+function server_table:listen(port) end
+
 ---@param server server-table
 local function listen_callback(server) end
 
+---@deprecated
 ---@param callback fun(server: server-table)
 ---@param port integer
 function net.listen(callback, port) end
+
+---creates an http(s) server
+---@return server-table
+function net.server() end
 
 ---@class request-return
 local request_return = {}

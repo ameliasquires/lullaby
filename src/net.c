@@ -690,7 +690,6 @@ void* handle_client(void *_arg){
       char portc[10] = {0};
       sprintf(portc, "%i", args->port);
 
-      str* aa = str_init(portc);
       struct net_path_t parsed_path;
       path_parse(&parsed_path, path);
 
@@ -702,17 +701,15 @@ void* handle_client(void *_arg){
       if(decoded_err == 1 || args->paths == NULL){
         net_error(ctx, 400);
       } else {
-        str_push(aa, decoded_path->c);
 
         params = larray_init();
-        v = route_match(args->paths, aa->c, &params);
+        v = route_match(args->paths, decoded_path->c, &params);
 
         if(sT != NULL)
           http_body_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
       }
 
       str_free(decoded_path);
-      str_free(aa);
       if(v != NULL){
         lua_newtable(L);
         int req_idx = lua_gettop(L);
@@ -1073,14 +1070,7 @@ int l_req_com(lua_State* L, char* req){
   lua_gettable(L, 1);
   parray_t* paths = lua_touserdata(L, -1);
 
-  lua_pushstring(L, "port");
-  lua_gettable(L, 1);
-  int port = luaL_checkinteger(L, -1);
-
-  char portc[10] = {0};
-  sprintf(portc, "%i", port);//, lua_tostring(L, 2));
-  str* portss = str_init(portc);
-  str_push(portss, (char*)lua_tostring(L, 2));
+  str* portss = str_init((char*)lua_tostring(L, 2));
 
   struct lchar* awa;
   str* uwu = str_init("");
@@ -1177,7 +1167,6 @@ int l_listen(lua_State* L){
   luaI_tsettab(L, mt, "ssl");
 
   luaI_tsetcf(L, mt, "close", l_net_close);
-  luaI_tsetv(L, mt, "port", 2);
 
   parray_t* paths = parray_init();
   luaI_tsetlud(L, mt, "paths", paths);
@@ -1208,4 +1197,63 @@ int l_listen(lua_State* L){
 
   return start_serv(L, port, paths, state);
   ;
+}
+
+int _server_listen(lua_State* L){
+  int port = luaL_checkinteger(L, 2);
+  lua_getfield(L, 1, "_");
+  struct net_server_state *state = lua_touserdata(L, -1);
+  lua_getfield(L, 1, "paths");
+  parray_t *paths = lua_touserdata(L, -1);
+
+  lua_getfield(L, 1, "ssl");
+  int ssl = lua_gettop(L);
+  if(!lua_isnil(L, -1)){
+    printf("ssl check\n");
+    luaI_assert2(L, lua_type(L, ssl) == LUA_TTABLE);
+    lua_getfield(L, ssl, "key");
+    lua_getfield(L, ssl, "crt");
+    if(!lua_isnil(L, -1) && !lua_isnil(L, -2)){
+      str_push(state->ssl_key, luaL_checkstring(L, -1));
+      str_push(state->ssl_crt, luaL_checkstring(L, -1));
+      state->ssl = 1;
+      lua_pop(L, 2);
+    }
+  }
+  lua_pop(L, 1);
+
+  return start_serv(L, port, paths, state);
+}
+
+int l_server(lua_State* L) {
+  struct net_server_state *state = malloc(sizeof * state);
+  state->event_fd = -1;
+  state->ssl = 0;
+  state->ssl_crt = str_init("");
+  state->ssl_key = str_init("");
+
+  lua_newtable(L);
+  int mt = lua_gettop(L);
+  luaI_tsetcf(L, mt, "GET", l_GETq);
+  luaI_tsetcf(L, mt, "HEAD", l_HEADq);
+  luaI_tsetcf(L, mt, "POST", l_POSTq);
+  luaI_tsetcf(L, mt, "PUT", l_PUTq);
+  luaI_tsetcf(L, mt, "DELETE", l_DELETEq);
+  luaI_tsetcf(L, mt, "CONNECT", l_CONNECTq);
+  luaI_tsetcf(L, mt, "OPTIONS", l_OPTIONSq);
+  luaI_tsetcf(L, mt, "TRACE", l_TRACEq);
+  luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
+  luaI_tsetcf(L, mt, "all", l_allq);
+
+  luaI_tsettab(L, mt, "ssl");
+
+  luaI_tsetcf(L, mt, "close", l_net_close);
+  luaI_tsetcf(L, mt, "listen", _server_listen);
+
+  parray_t* paths = parray_init();
+  luaI_tsetlud(L, mt, "paths", paths);
+  luaI_tsetlud(L, mt, "_", state);
+
+  lua_pushvalue(L, mt);
+  return 1;
 }

@@ -16,6 +16,7 @@ typedef int socklen_t;
 #include <stdint.h>
 
 int l_listen(lua_State*);
+int l_server(lua_State*);
 
 int l_request(lua_State*);
 int l_srequest(lua_State*);
@@ -38,6 +39,7 @@ int clean_lullaby_net(lua_State* L);
 
 static const luaL_Reg net_function_list [] = {
   {"listen",l_listen},
+  {"server",l_server},
   {"request",l_request},
   {"srequest",l_srequest},
   {"wss",l_wss},

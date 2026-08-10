@@ -1,30 +1,20 @@
-## listen (mostly IMPLEMENTED)
+## server (mostly IMPLEMENTED)
 
-net.listen(function, port)
+net.server()
 
 currently does not work with any transfer-encoding!!
 
-(intentionally styled after expressjs:3)
+(intentionally styled after expressjs & python:3)
 the function will be ran on initilization, the argument has info on the server and functions to set it up
 
-if the 'server' upvalue needs to be accessible inside of the network threads, you will need to make the value global or redefine it. the upvalue itself (as a argument to the listen function) will simply not exist when the route functions are called, despite it looking like they would be.
-because the route functions (GET, POST, etc..) are just assigning functions to these paths, and not running them, they will just not see the server value.
-this also explains another weird behaviour where routes can read locals before they've been defined. (the upvalues of the functions are defined when the listen function is complete)
-
 ```lua
-llby.net.listen(function(server)
-  _G.server = server
+local server = llby.net.server()
 
-  server:GET("/", function(res, req)
-    --first will always be null, second will be null without the second line
-    print(server, _G.server)
-
-    --will be valid despite being defined later
-    print(awa)
-  end)
-
-  local awa = 22
+s:GET("/", function(res, req)
+  res:send("meow")
 end)
+
+s:listen(5005)
 ```
 
 |name|default value|extra info|
@@ -43,12 +33,6 @@ the server will send these codes for these reasons
 |431|header is larger than max header size, more than header_size|
 |414|request uri is longer than max_uri|
 
-```lua
-llby.net.listen(function(server)
-    ...
-end, 80)
-```
-
 ### server.ssl
 
 a table with two keys, expecting a crt and a key file path
@@ -63,6 +47,10 @@ server.ssl = {
 ### server:close
 
 closes server, will not halt other already accepted requests
+
+### server:listen
+
+server will listen on port
 
 ### server:GET/POST/...
 
