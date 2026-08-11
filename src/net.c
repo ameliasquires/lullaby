@@ -1209,7 +1209,6 @@ int _server_listen(lua_State* L){
   lua_getfield(L, 1, "ssl");
   int ssl = lua_gettop(L);
   if(!lua_isnil(L, -1)){
-    printf("ssl check\n");
     luaI_assert2(L, lua_type(L, ssl) == LUA_TTABLE);
     lua_getfield(L, ssl, "key");
     lua_getfield(L, ssl, "crt");

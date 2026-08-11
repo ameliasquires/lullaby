@@ -68,7 +68,6 @@ int luaI_errtraceback(lua_State* L);
 #define luaI_tsetb(L, Tidx, K, V)\
   _tset_b(L, Tidx, K, V, lua_pushboolean)
 #define luaI_tsetsl(L, Tidx, K, V, len)\
-    lua_pushvalue(L, Tidx);\
     lua_pushstring(L, K);\
     lua_pushlstring(L, V, len);\
     lua_settable(L, Tidx);
