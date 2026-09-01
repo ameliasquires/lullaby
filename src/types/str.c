@@ -33,6 +33,12 @@ str* str_init(const char* init){
   return str_initl(init, strlen(init));
 }
 
+char* str_tochar(str* s){
+  char* a = calloc(s->len + 1, sizeof * a);
+  strcpy(a, s->c);
+  return a;
+}
+
 void str_free(str* s){
   free(s->c);
   free(s);

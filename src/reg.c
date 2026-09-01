@@ -12,7 +12,7 @@
 
 #define open_common(name, config)\
   int luaopen_lullaby_##name (lua_State* L){\
-    luaL_register(L, #name, name##_function_list);\
+    luaL_register(L, "lullaby-"#name, name##_function_list);\
     int tidx = lua_gettop(L);\
     int idx = i_config_metatable(L, config);\
     lua_pushvalue(L, idx);\

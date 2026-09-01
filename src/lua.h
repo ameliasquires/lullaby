@@ -30,6 +30,8 @@ enum table_cache {
 
 void luaI_fromparray(lua_State* L, int table_idx, parray_t* table, int strval);
 
+str* luaI_traceback(lua_State* L, const char* error, int level);
+
 int luaI_lowercase_index(lua_State* L);
 int luaI_lowercase_newindex(lua_State* L);
 
@@ -129,29 +131,30 @@ int writer(lua_State*, const void*, size_t, void*);
 #endif
 
 #if LUA_VERSION_NUM == 504
-    #define lua_objlen lua_rawlen
 
-    #define luaL_register(L, M, F) luaL_newlib(L, F);
+  #define lua_objlen lua_rawlen
+
+  #define luaL_register(L, M, F) luaL_newlib(L, F);
 
 #elif LUA_VERSION_NUM == 503
-  #define lua_objlen lua_rawlen
 
   #define luaL_register(L, M, F) luaL_newlib(L, F);
 
   #define lua_gc(A, B) lua_gc(A, B, 0)
 
 #elif LUA_VERSION_NUM == 501
-    #define LUA_OK 0
 
-    #define luaL_tolstring lua_tolstring
-    
-    #define lua_dump(A, B, C, D) lua_dump(A, B, C)
-    
-    #define lua_rawlen lua_objlen
+  #define lua_rawlen lua_objlen
 
-    #define lua_gc(A, B) lua_gc(A, B, 0)
+  #define LUA_OK 0
 
-    #define lua_pushglobaltable(L) {lua_getglobal(L, "_G");if(lua_isnil(L, -1)){lua_newtable(L);lua_setglobal(L, "_G");lua_getglobal(L, "_G");}}
+  #define luaL_tolstring lua_tolstring
+  
+  #define lua_dump(A, B, C, D) lua_dump(A, B, C)
+  
+  #define lua_gc(A, B) lua_gc(A, B, 0)
+
+  #define lua_pushglobaltable(L) {lua_getglobal(L, "_G");if(lua_isnil(L, -1)){lua_newtable(L);lua_setglobal(L, "_G");lua_getglobal(L, "_G");}}
 #endif
 
 

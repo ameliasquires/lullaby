@@ -9,10 +9,41 @@
 #include "types/parray.h"
 #include "error.h"
 
-static int malloc_count = 0;
-
 int luaI_nothing(lua_State* L){
   return 0;
+}
+
+str* luaI_traceback(lua_State* L, const char* error, int level){
+  str* ret = str_init("\n");
+
+  lua_pushnil(L);
+  for(int l = 0;; l++){
+    lua_Debug ar;
+    if(lua_getstack(L, l, &ar) == 0) break;
+    lua_getinfo(L, "nSl", &ar);
+
+    if(ar.name == NULL){
+      if(strcmp(ar.what, "main") == 0){
+        str_pushfmt(ret, "\t%s:%i: in main chunk\n", ar.short_src, ar.currentline);
+      } else {
+        str_pushfmt(ret, "\t%s: in ?\n", ar.short_src);
+      }
+    } else if(strcmp(ar.what, "C") == 0){
+      str_pushfmt(ret, "\t%s: in cfunction '%s'\n", ar.short_src, ar.name);
+    } else {
+      str_pushfmt(ret, "\t%s:%i: in function '%s'\n", ar.short_src, ar.currentline, ar.name);
+    }
+  }
+
+  return ret;
+}
+
+int luaI_errtraceback(lua_State* L){
+  //luaL_traceback(L, L, lua_tostring(L, -1), 1);
+  str* a = luaI_traceback(L, lua_tostring(L, -1), 1); 
+  lua_pushstring(L, a->c);
+  str_free(a);
+  return 1;
 }
 
 void luaI_fromparray(lua_State* L, int table_idx, parray_t* table, int strval){
@@ -492,9 +523,3 @@ int lua_assign_upvalues(lua_State* L, int fidx){
 
   return 0;
 }
-
-int luaI_errtraceback(lua_State* L){
-  luaL_traceback(L, L, lua_tostring(L, -1), 1);
-  return 1;
-}
-

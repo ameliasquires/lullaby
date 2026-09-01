@@ -22,11 +22,9 @@ int luaI_error(lua_State* L, const char* error){
   e->name = calloc(sizeof * e->name, strlen(error) + 1);
   memcpy(e->name, error, strlen(error));
 
-  luaL_traceback(L, L, error, 0);
-  size_t len;
-  const char* traceback = lua_tolstring(L, -1, &len);
-  e->traceback = calloc(sizeof * e->traceback, len + 1);
-  memcpy(e->traceback, traceback, len);
+  str* traceback = luaI_traceback(L, error, 0);
+  e->traceback = str_tochar(traceback);
+  str_free(traceback);
 
  
   lua_newtable(L);

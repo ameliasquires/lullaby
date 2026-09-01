@@ -11,11 +11,20 @@ typedef struct {
   char* c; 
 } str;
 
+#define str_pushfmt(s, fmt, ...) {\
+  size_t len = snprintf(NULL, 0, fmt, __VA_ARGS__);\
+  char* tmp = calloc(len + 1, sizeof * tmp);\
+  sprintf(tmp, fmt, __VA_ARGS__);\
+  str_push(s, tmp);\
+  free(tmp);\
+}
+
 str* str_initl(const char*, size_t len);
 //str_initfl has the 'correct' behaviour where it forces the len and doesnt read extra bytes
 //plan to switch everything to str_initfl, when everything will work with it
 str* str_initfl(const char*, size_t len);
 str* str_init(const char*);
+char* str_tochar(str* s);
 void str_free(str*);
 void str_push(str*, const char*);
 void str_pushl(str*, const char*, size_t);
