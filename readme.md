@@ -2,6 +2,8 @@
 
 > yes, i know this branch has far outlived reason for it to exist, there are a lot of large changes here, it will be merged when im more certain about the saftey of these new changes
 
+> version 5.5 does work but will not be the primary target until it gets better distro support (and/or i feel like it)
+
 > a large multi-purpose library for lua (primarily 5.4) revolving around threading and cryptography, and including network, math, io, and table functions
 
 heres an example of a webserver to return a [sha0](https://en.wikipedia.org/wiki/SHA-0) hash of an input
@@ -36,6 +38,8 @@ server:listen(8080)
 
 ## building
 
+> im planning on making this better at somepoint!! along with better documention
+
 build with `make`, output is `./lullaby.so` or (win)`./lullaby.dll`
 
 windows may work through msys2, install `mingw-w64-x86_64-lua` then run `make CC=gcc` it is not tested enough currently
@@ -44,7 +48,7 @@ you can install with `doas make install` which will install lullaby.so into /usr
 
 install directory can be configured with `INSTALL=...` which defaults to /usr/local/lib/lua/, but may be wanted in /usr/lib64/lua/
 
-lua version can be specified with `version=...`, similar to 5.1, 5.3, jit, the default it 5.4
+lua version can be specified with `version=...`, similar to 5.1, 5.2, 5.3, jit, or 5.5, the default it 5.4
 
 for working on the code base, i recommend using bear to generate compile_commands.json [(as outlined here)](https://clangd.llvm.org/installation#compile_commandsjson) which should probably let your ide find the headers
 
@@ -59,6 +63,8 @@ for working on the code base, i recommend using bear to generate compile_command
 * rewrite docs
     
 * portability (memmem)
+
+* like a ton of other stuff i have planned, meow
 
 ----
 

@@ -130,20 +130,20 @@ int writer(lua_State*, const void*, size_t, void*);
   #define lua_equal(L, A, B) lua_compare(L, A, B, LUA_OPEQ)
 #endif
 
-#if LUA_VERSION_NUM == 504
-
+#warning should define new functions for older versions instead of vice versa
+#if LUA_VERSION_NUM == 505
   #define lua_objlen lua_rawlen
 
   #define luaL_register(L, M, F) luaL_newlib(L, F);
+#elif LUA_VERSION_NUM == 504
+  #define lua_objlen lua_rawlen
 
+  #define luaL_register(L, M, F) luaL_newlib(L, F);
 #elif LUA_VERSION_NUM == 503
-
   #define luaL_register(L, M, F) luaL_newlib(L, F);
 
   #define lua_gc(A, B) lua_gc(A, B, 0)
-
 #elif LUA_VERSION_NUM == 501
-
   #define lua_rawlen lua_objlen
 
   #define LUA_OK 0
