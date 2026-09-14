@@ -65,27 +65,27 @@ function asyncres.autoclose(T) end
 ---@return async-table
 function thread.async(fun) end
 
----@class buffer-table
+---@class atomic-table
 local buffer = {}
 
 ---gets the value of the buffer
----@param T buffer-table
+---@param T atomic-table
 ---@return any
 function buffer.get(T) end
 
 ---gets the value of the buffer, with __gc, thread takes 'ownership' of the object ie. removing __gc from the buffer
----@param T buffer-table
+---@param T atomic-table
 ---@return any
 function buffer.own(T) end
 
 ---sets the value of the buffer
----@param T buffer-table
+---@param T atomic-table
 ---@param value any
 ---@return any prev previous table value
 function buffer.set(T, value) end
 
 ---calls a function with a parameter that is the value of the buffer, return the new value of the buffer
----@param T buffer-table
+---@param T atomic-table
 ---@param fun fun(any): nil
 ---@return nil
 function buffer.mod(T, fun) end
@@ -93,8 +93,8 @@ function buffer.mod(T, fun) end
 ---@nodiscard
 ---puts a value into a atomic thread-safe buffer
 ---@param value any
----@return buffer-table
-function thread.buffer(value) end
+---@return atomic-table
+function thread.atomic(value) end
 
 ---@deprecated
 function thread.testcopy() end

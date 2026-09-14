@@ -1,4 +1,4 @@
-local bserver = llby.thread.buffer(nil)
+local bserver = llby.thread.atomic(nil)
 
 local net = llby.thread.async(function(tres)
   llby.net.listen(function(server)

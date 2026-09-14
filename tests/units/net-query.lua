@@ -1,4 +1,4 @@
-local bserver = llby.thread.buffer(nil)
+local bserver = llby.thread.atomic(nil)
 
 local a = 255
 local b = 992

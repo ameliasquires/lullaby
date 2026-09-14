@@ -2,7 +2,7 @@
 #include "config.h"
 
 int l_async(lua_State*);
-int l_buffer(lua_State*);
+int l_atomic(lua_State*);
 int l_testcopy(lua_State*);
 int l_mutex(lua_State*);
 int l_usleep(lua_State*);
@@ -14,7 +14,9 @@ void lib_thread_clean();
 
 static const luaL_Reg thread_function_list [] = {
   {"async",l_async},
-  {"buffer",l_buffer},
+  {"atomic",l_atomic},
+  //deprecated (same thing)
+  {"buffer",l_atomic},
   {"testcopy",l_testcopy},
   {"mutex", l_mutex},
   {"usleep", l_usleep},

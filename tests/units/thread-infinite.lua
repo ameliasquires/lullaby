@@ -1,4 +1,4 @@
-local pass = llby.thread.buffer(true)
+local pass = llby.thread.atomic(true)
 
 local th = llby.thread.async(function(res)
   while true do
@@ -7,7 +7,7 @@ local th = llby.thread.async(function(res)
   end
 end)
 
-local readyb = llby.thread.buffer(false)
+local readyb = llby.thread.atomic(false)
 
 local th2 = llby.thread.async(function(res)
   llby.thread.usleep(1000 * 1000)

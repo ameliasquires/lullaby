@@ -1,4 +1,5 @@
 #include "thread.h"
+#include "lua.h"
 #include "stdint.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -435,29 +436,29 @@ int l_async(lua_State* oL){
   return 1;
 }
 
-struct thread_buffer {
+struct thread_atomic {
   lua_State* L;
   pthread_mutex_t* lock;
 };
 
-int _buffer_get(lua_State* L){
-  struct thread_buffer *buffer = lua_touserdata(L, -1);
+int _atomic_get(lua_State* L){
+  struct thread_atomic *buffer = lua_touserdata(L, -1);
   pthread_mutex_lock(&*buffer->lock);
   luaI_deepcopy(buffer->L, L, SKIP_GC | SKIP_LOCALS);
   pthread_mutex_unlock(&*buffer->lock);
   return 1;
 }
 
-int _buffer_own(lua_State* L){
-  struct thread_buffer *buffer = lua_touserdata(L, -1);
+int _atomic_own(lua_State* L){
+  struct thread_atomic *buffer = lua_touserdata(L, -1);
   pthread_mutex_lock(&*buffer->lock);
   luaI_deepcopy(buffer->L, L, STRIP_GC | SKIP_LOCALS);
   pthread_mutex_unlock(&*buffer->lock);
   return 1;
 }
 
-int _buffer_set(lua_State* L){
-  struct thread_buffer *buffer = lua_touserdata(L, 1);
+int _atomic_set(lua_State* L){
+  struct thread_atomic *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
   luaI_deepcopy(buffer->L, L, SKIP_LOCALS | STRIP_GC);
   lua_settop(buffer->L, 0); 
@@ -469,8 +470,8 @@ int _buffer_set(lua_State* L){
   return 1;
 }
 
-int _buffer_mod(lua_State* L){
-  struct thread_buffer *buffer = lua_touserdata(L, 1);
+int _atomic_mod(lua_State* L){
+  struct thread_atomic *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
 
   luaI_deepcopy(buffer->L, L, SKIP_GC | SKIP_LOCALS);
@@ -495,13 +496,13 @@ int _buffer_mod(lua_State* L){
   return 1;
 }
 
-int _buffer_func_wrapper(lua_State* L){
+int _atomic_func_wrapper(lua_State* L){
   int argc = lua_gettop(L);
 
   if(argc > 0 && lua_type(L, 1) == LUA_TUSERDATA 
       && lua_touserdata(L, 1) == lua_touserdata(L, lua_upvalueindex(2))){
     lua_pushvalue(L, lua_upvalueindex(2));
-    _buffer_get(L);
+    _atomic_get(L);
     lua_replace(L, 1);
     lua_settop(L, argc);
   }
@@ -516,27 +517,28 @@ int _buffer_func_wrapper(lua_State* L){
   return lua_gettop(L) - 1;
 }
 
-int l_buffer_index(lua_State* L){
+int l_atomic_index(lua_State* L){
   size_t len;
   uint64_t hash;
-  struct thread_buffer *buffer = lua_touserdata(L, 1);
+  struct thread_atomic *buffer = lua_touserdata(L, 1);
   const char* str = luaL_tolstring(L, 2, &len);
 
   hash = fnv_1((uint8_t*)str, len, v_1);
 
+#warning "this is stupid, this can just be a table"
   //maybe strcmp after the hash has been verified?
   switch(hash){
     case 0xd8c8ad186b9ed323: //get
-      lua_pushcfunction(L, _buffer_get);
+      lua_pushcfunction(L, _atomic_get);
       break;
     case 0xd89f9d186b7bb367: //set
-      lua_pushcfunction(L, _buffer_set);
+      lua_pushcfunction(L, _atomic_set);
       break;
     case 0xd8b3c7186b8ca31f: //mod
-      lua_pushcfunction(L, _buffer_mod);
+      lua_pushcfunction(L, _atomic_mod);
       break;
     case 0xd8adaf186b880f6b: //own
-      lua_pushcfunction(L, _buffer_own);
+      lua_pushcfunction(L, _atomic_own);
       break;
     default:
       lua_pushstring(buffer->L, str);
@@ -550,7 +552,7 @@ int l_buffer_index(lua_State* L){
       lua_pop(buffer->L, 1);
       if(lua_type(L, -1) == LUA_TFUNCTION){
         lua_pushvalue(L, 1);
-        lua_pushcclosure(L, _buffer_func_wrapper, 2);
+        lua_pushcclosure(L, _atomic_func_wrapper, 2);
       }
       break;
   }
@@ -564,7 +566,7 @@ int hi(lua_State* L){
 
 int meta_proxy(lua_State* L){
   int argc = lua_gettop(L);
-  struct thread_buffer *buffer = lua_touserdata(L, 1);
+  struct thread_atomic *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
 
   lua_getmetatable(buffer->L, 1);
@@ -594,7 +596,7 @@ int meta_proxy(lua_State* L){
 }
 
 #warning "make this reapply for new objects!"
-void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, int new_meta_idx){  
+void meta_proxy_gen(lua_State* L, struct thread_atomic *buffer, int meta_idx, int new_meta_idx){  
 
   lua_pushcfunction(L, meta_proxy); 
   lua_setglobal(L, "__proxy_call");
@@ -630,8 +632,8 @@ void meta_proxy_gen(lua_State* L, struct thread_buffer *buffer, int meta_idx, in
   }
 }
 
-int l_buffer_gc(lua_State* L){
-  struct thread_buffer *buffer = lua_touserdata(L, 1);
+int l_atomic_gc(lua_State* L){
+  struct thread_atomic *buffer = lua_touserdata(L, 1);
   pthread_mutex_lock(&*buffer->lock);
   pthread_mutex_unlock(&*buffer->lock);
   //race condition here, if something can manage to lock the thread between these two lines
@@ -639,18 +641,19 @@ int l_buffer_gc(lua_State* L){
   pthread_mutex_destroy(&*buffer->lock);
   free(buffer->lock);
 
-  lua_close(buffer->L);
+  //lua_close(buffer->L);
   return 0;
 }
 
-int l_buffer(lua_State* L){ 
+int l_atomic(lua_State* L){ 
   int use = lua_getmetatable(L, 1);
   int old_meta_idx = lua_gettop(L);
 
-  struct thread_buffer *buffer = lua_newuserdata(L, sizeof * buffer);
+  struct thread_atomic *buffer = lua_newuserdata(L, sizeof * buffer);
   int buffer_idx = lua_gettop(L);
 
-  buffer->L = luaL_newstate();
+  buffer->L = lua_newthread(L);
+  //dont know if this does anything actually
   lua_gc(buffer->L, LUA_GCSTOP);
   buffer->lock = malloc(sizeof * buffer->lock);
   if(pthread_mutex_init(&*buffer->lock, NULL) != 0) p_fatal("pthread_mutex_init failed");
@@ -660,8 +663,8 @@ int l_buffer(lua_State* L){
   lua_newtable(L);
   int meta_idx = lua_gettop(L);
   if(use!=0) meta_proxy_gen(L, buffer, old_meta_idx, meta_idx);
-  luaI_tsetcf(L, meta_idx, "__index", l_buffer_index);
-  luaI_tsetcf(L, meta_idx, "__gc", l_buffer_gc);
+  luaI_tsetcf(L, meta_idx, "__index", l_atomic_index);
+  luaI_tsetcf(L, meta_idx, "__gc", l_atomic_gc);
 
   if(use != 0){
     lua_getmetatable(L, 1);
