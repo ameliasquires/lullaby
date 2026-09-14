@@ -577,11 +577,6 @@ int lua_assign_upvalues(lua_State* L, int fidx){
   return 0;
 }
 
-int luaI_errtraceback(lua_State* L){
-  luaL_traceback(L, L, lua_tostring(L, -1), 1);
-  return 1;
-}
-
 void luaI_pushcclosure(lua_State* L, lua_CFunction cfun){
   lua_getglobal(L, LULLABY_LOCAL_TABLE);
   if(lua_isnil(L, -1)) return lua_pushcfunction(L, cfun);
