@@ -334,8 +334,7 @@ int match_param(char* path, char* match, parray_t* arr){
   return path[pi] == 0 && match[mi] == 0;
 }
 
-parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
-  larray_t* params = *_params;
+parray_t* route_match(parray_t* paths, char* request, array_t* params){
   parray_t* out = parray_initl(paths->len * 2);
   parray_t* temp;
   out->len = 0;
@@ -350,7 +349,7 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
 
     if(match_param(paths->P[i].key->c, request, temp)){
       out->P[out->len] = paths->P[i];
-      larray_set(&params, out->len, (void*)temp);
+      array_push(params, temp);
       out->len++;
     } else {
       parray_clear(temp, FREE);
@@ -359,7 +358,6 @@ parray_t* route_match(parray_t* paths, char* request, larray_t** _params){
     //}
   }
 
-  *_params = params;
   return out;
 }
 

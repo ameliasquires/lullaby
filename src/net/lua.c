@@ -218,7 +218,7 @@ int l_sendfile(lua_State* L){
 
   char* path = (char*)luaL_checkstring(L, 2);
   char* filename = path;
-
+  
   if(lua_gettop(L) > 2 && lua_type(L, 3) == LUA_TTABLE){
     lua_pushstring(L, "attachment");
     lua_gettable(L, 3);
@@ -229,14 +229,21 @@ int l_sendfile(lua_State* L){
     if(!lua_isnil(L, -1)) filename = (char*)lua_tostring(L, -1);
   }
 
-  luaI_assert(L, !access(path, F_OK) /*file not found*/);
-  luaI_assert(L, !access(path, R_OK) /*missing permissions*/);
-
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "_");
   lua_gettable(L, res_idx);
   struct net_data* ctx = lua_touserdata(L, -1);
   client_fd_errors(ctx->sock);
+
+  if(access(path, F_OK)){
+    net_error(ctx, 404);
+    return 0;
+  }
+
+  if(access(path, R_OK)){
+    net_error(ctx, 403);
+    return 0;
+  }
 
   lua_pushvalue(L, res_idx);
   lua_pushstring(L, "header");

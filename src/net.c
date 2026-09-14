@@ -4,6 +4,7 @@
 #include "net/luai.h"
 #include "types/str.h"
 #include "net/websocket.h"
+#include "types/array.h"
 #include "error.h"
 
 #include <fcntl.h>
@@ -695,15 +696,15 @@ void* handle_client(void *_arg){
 
       str* decoded_path;
       int decoded_err = percent_decode(parsed_path.path, &decoded_path);
-      larray_t* params = NULL;
+      array_t* params = NULL;
       parray_t* v = NULL;
 
       if(decoded_err == 1 || args->paths == NULL){
         net_error(ctx, 400);
       } else {
 
-        params = larray_init();
-        v = route_match(args->paths, decoded_path->c, &params);
+        params = array_init();
+        v = route_match(args->paths, decoded_path->c, params);
 
         if(sT != NULL)
           http_body_parse(L, &files_idx, &body_idx, header + 4, sT, bite - header_eof - 4, file_cont);
@@ -808,14 +809,15 @@ void* handle_client(void *_arg){
         parray_t* owo = (parray_t*)v;
         for(int i = 0; i != owo->len; i++){
           //though these are arrays of arrays we have to iterate *again*
-          struct sarray_t* awa = (struct sarray_t*)owo->P[i].value;
+          array_t* awa = (array_t*)owo->P[i].value;
 
           //push url params 
           lua_newtable(L);
           int new_param_idx = lua_gettop(L);
 
-          int id = larray_geti(params, i);
-          parray_t* par = params->arr[id].value;
+          //int id = larray_geti(params, i);
+          //parray_t* par = params->arr[id].value;
+          parray_t* par = params->arr[i];
 
           for(int z = 0; z != par->len; z++){
             char* v = ((char*)par->P[z].value);
@@ -828,12 +830,13 @@ void* handle_client(void *_arg){
           luaI_tsetv(L, req_idx, "parameters", new_param_idx);
 
           for(int z = 0; z != awa->len; z++){
-            struct lchar* wowa = awa->cs[z];
+            struct route_data* route = awa->arr[z];
             //if request is HEAD, it is valid for GET and HEAD listeners 
-            if(strcmp(wowa->req, "all") == 0 || strcmp(wowa->req, sR->c) == 0 ||
-                (strcmp(sR->c, "HEAD") == 0 && strcmp(wowa->req, "GET") == 0)){
+            if(strcmp(route->req, "all") == 0 || strcmp(route->req, sR->c) == 0 ||
+                (strcmp(sR->c, "HEAD") == 0 && strcmp(route->req, "GET") == 0)){
 
-              luaL_loadbuffer(L, wowa->c, wowa->len, "fun");
+              if(route->type == ROUTE_CFN) luaI_pushcclosure(L, route->c);
+              else if(route->type == ROUTE_LUAFN) luaL_loadbuffer(L, route->lua->c, route->lua->len, "fun");
               int func = lua_gettop(L);
               lua_assign_upvalues(L, func);
 
@@ -860,7 +863,7 @@ void* handle_client(void *_arg){
         }
 
 net_end:
-        larray_clear(params);
+        array_free(params);
         parray_lclear(owo); //dont free the rest
 
         //lua_pushstring(L, "client_fd");
@@ -879,7 +882,7 @@ net_end:
 
       free(file_cont);
     }
-    parray_clear(table, STR);
+    if(table != NULL) parray_clear(table, STR);
   }
 
   net_ctx_close(args->ctx);
@@ -1065,38 +1068,42 @@ net_end:
 //TODO reformat all of this code and the structs (use more common/generic ones)
 //
 //this may have a memory leak (net-nested.lua) when called inside of a net thread. look into fixing when rewritten
-int l_req_com(lua_State* L, char* req){
+int l_req_com(lua_State* L, const char* req){
+  if(strcmp(req, "custom") == 0){
+    size_t reqlen;
+    req = luaL_checklstring(L, 2, &reqlen);
+    luaI_assert2(L, reqlen < 20); 
+    lua_remove(L, 2);
+  }
   lua_pushstring(L, "paths");
   lua_gettable(L, 1);
   parray_t* paths = lua_touserdata(L, -1);
 
-  str* portss = str_init((char*)lua_tostring(L, 2));
+  str* portss = str_init((char*)luaL_checkstring(L, 2));
 
-  struct lchar* awa;
-  str* uwu = str_init("");
-  lua_pushvalue(L, 3);
-  lua_dump(L, writer, (void*)uwu, 0);
+  struct route_data* route = calloc(1, sizeof * route);
+  route->lua = str_init("");
+  luaI_assert2(L, lua_type(L, 3) == LUA_TFUNCTION);
 
-  awa = malloc(sizeof * awa);
-  awa->c = uwu->c;
-  awa->len = uwu->len;
-  strcpy(awa->req, req);
-  free(uwu); //yes this *should* be str_free but awa kinda owns it now:p 
+  if(lua_iscfunction(L, 3)){
+    route->type = ROUTE_CFN;
+    route->c = lua_tocfunction(L, 3);
+    lua_storecfun_upvalues(L, route->c, 3);
+  } else {
+    route->type = ROUTE_LUAFN;
+    lua_pushvalue(L, 3);
+    lua_dump(L, writer, (void*)route->lua, 0);
+  }
 
-  //please free this
-  void* v_old_paths = parray_get(paths, portss->c);
-  struct sarray_t* old_paths;
-  if(v_old_paths == NULL){
-    old_paths = malloc(sizeof * old_paths);
-    old_paths->len = 0;
-    old_paths->cs = malloc(sizeof old_paths->cs);
-  } else old_paths = (struct sarray_t*)v_old_paths;
+  strcpy(route->req, req);
 
-  old_paths->len++;
-  old_paths->cs = realloc(old_paths->cs, sizeof old_paths->cs * old_paths->len);
-  old_paths->cs[old_paths->len - 1] = awa;
+  array_t* routes = parray_get(paths, portss->c);
+  if(routes == NULL){
+    routes = array_init();
+    parray_set(paths, portss->c, routes);
+  }
+  array_push(routes, route);
 
-  parray_set(paths, portss->c, (void*)old_paths);
   str_free(portss);
   return 1;
 }
@@ -1116,6 +1123,7 @@ gen_reqs(OPTIONS);
 gen_reqs(TRACE);
 gen_reqs(PATCH);
 gen_reqs(all); //non standard lol, like expressjs 'use' keyword :3
+gen_reqs(custom); //also non standard, allows custom requests or preset routes
 
 //https://stackoverflow.com/questions/12050072/how-to-wake-up-a-thread-being-blocked-by-select-poll-poll-function-from-anothe
 //something like this would make closeing safer
@@ -1163,6 +1171,7 @@ int l_listen(lua_State* L){
   luaI_tsetcf(L, mt, "TRACE", l_TRACEq);
   luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
   luaI_tsetcf(L, mt, "all", l_allq);
+  luaI_tsetcf(L, mt, "custom", l_customq);
 
   luaI_tsettab(L, mt, "ssl");
 
@@ -1243,6 +1252,7 @@ int l_server(lua_State* L) {
   luaI_tsetcf(L, mt, "TRACE", l_TRACEq);
   luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
   luaI_tsetcf(L, mt, "all", l_allq);
+  luaI_tsetcf(L, mt, "custom", l_customq);
 
   luaI_tsettab(L, mt, "ssl");
 

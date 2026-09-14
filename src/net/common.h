@@ -59,6 +59,16 @@ struct lchar {
   char req[20];
 };
 
+struct route_data {
+  str* lua;
+  lua_CFunction c;
+  enum {
+    ROUTE_LUAFN,
+    ROUTE_CFN
+  } type;
+  char req[20];
+};
+
 struct net_server_state {
   int event_fd;
   int ssl;

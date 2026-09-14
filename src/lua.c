@@ -326,7 +326,13 @@ int luaI_deepcopy(lua_State* src, lua_State* dest, enum deep_copy_flags flags){
     case LUA_TFUNCTION:
                      if(lua_iscfunction(src, old_top)){
                        //kinda silly
-                       lua_pushcfunction(dest, lua_tocfunction(src, -1));
+                       int count = 0;
+                       for(; lua_getupvalue(src, old_top, count + 1) != NULL; count++){
+                         luaI_deepcopy(src, dest, flags | IS_UPVALUE);
+                         lua_pop(src, 1);
+                       }
+                       
+                       lua_pushcclosure(dest, lua_tocfunction(src, old_top), count);
                        break;
                      }
 
@@ -443,7 +449,7 @@ void luaI_jointable(lua_State* L){
 //copys all variables from state A to B, including locals (stored in _locals)
 //populates _ENV the same as _G
 void luaI_copyvars(lua_State* from, lua_State* to){
-  lua_getglobal(from, "_locals");
+  lua_getglobal(from, LULLABY_LOCAL_TABLE);
   int x = lua_gettop(from);
 
   if(lua_isnil(from, x)){
@@ -459,14 +465,14 @@ void luaI_copyvars(lua_State* from, lua_State* to){
   int tidx = lua_gettop(to);
 
   luaI_tsetv(to, idx, "_ENV", tidx);
-  luaI_tsetv(to, tidx, "_locals", idx);
+  luaI_tsetv(to, tidx, LULLABY_LOCAL_TABLE, idx);
 
   lua_getglobal(from, "_G");
   luaI_deepcopy(from, to, SKIP_GC | SKIP__G);
   lua_set_global_table(to);
 
   lua_pushvalue(to, idx);
-  lua_setglobal(to, "_locals");
+  lua_setglobal(to, LULLABY_LOCAL_TABLE);
 }
 
 /**
@@ -502,10 +508,57 @@ void lua_upvalue_key_table(lua_State* L, int fidx){
   lua_pushvalue(L, tidx);
 }
 
+void lua_storecfun_upvalues(lua_State* L, lua_CFunction fun, int funid){
+  lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  if(lua_isnil(L, -1)){
+    lua_newtable(L);
+    lua_setglobal(L, LULLABY_LOCAL_TABLE);
+    lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  }
+  int table = lua_gettop(L);
+
+  lua_newtable(L);
+  int upvalues = lua_gettop(L);
+
+  for(int i = 1; i <= 255 && lua_getupvalue(L, funid, i) != NULL; i++){
+    lua_pushinteger(L, i);
+    lua_pushvalue(L, -2);
+    lua_settable(L, upvalues);
+    //lua_pop(L, 1);
+  }
+
+  char key[50] = {0};
+  sprintf(key, "__cupvalues_%p", fun);
+  lua_pushvalue(L, upvalues);
+  lua_setfield(L, table, key);
+}
+
+int lua_assign_upvalues_cfun(lua_State* L, int fidx){
+  lua_getglobal(L, LULLABY_LOCAL_TABLE);
+
+  char key[50] = {0};
+  sprintf(key, "__cupvalues_%p", lua_tocfunction(L, fidx));
+  lua_getfield(L, -1, key);
+  if(lua_isnil(L, -1)) return 0;
+  int upidx = lua_gettop(L);
+
+  lua_pushnil(L);
+  for(; lua_next(L, upidx) != 0;){
+    if(lua_setupvalue(L, fidx, lua_tointeger(L, -2)) == NULL) break;
+  }
+
+  lua_settop(L, fidx);
+
+  return 0;
+}
+
+
 //sets each upvalue where the name exists in _locals table.
 //if function was dumped it wont work if debug values are stripped
 int lua_assign_upvalues(lua_State* L, int fidx){
-  lua_getglobal(L, "_locals");
+  if(lua_iscfunction(L, fidx)) return lua_assign_upvalues_cfun(L, fidx);
+
+  lua_getglobal(L, LULLABY_LOCAL_TABLE);
   int lidx = lua_gettop(L);
 
   lua_upvalue_key_table(L, fidx);
@@ -522,4 +575,26 @@ int lua_assign_upvalues(lua_State* L, int fidx){
   lua_settop(L, fidx);
 
   return 0;
+}
+
+int luaI_errtraceback(lua_State* L){
+  luaL_traceback(L, L, lua_tostring(L, -1), 1);
+  return 1;
+}
+
+void luaI_pushcclosure(lua_State* L, lua_CFunction cfun){
+  lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  if(lua_isnil(L, -1)) return lua_pushcfunction(L, cfun);
+
+  char key[50] = {0};
+  sprintf(key, "__cupvalues_%p", cfun);
+  lua_getfield(L, -1, key);
+  if(lua_isnil(L, -1)) return lua_pushcfunction(L, cfun);
+  int upvalues = lua_objlen(L, -1);
+  lua_checkstack(L, upvalues);
+
+  for(int i = 0; i < upvalues; i++) lua_pushnil(L);
+  lua_pushcclosure(L, cfun, upvalues);
+  int idx = lua_gettop(L);
+  lua_assign_upvalues_cfun(L, idx);
 }

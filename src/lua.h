@@ -28,9 +28,14 @@ enum table_cache {
 #define GIT_COMMIT "unknown"
 #endif
 
+#define LULLABY_LOCAL_TABLE "_locals"
+
 void luaI_fromparray(lua_State* L, int table_idx, parray_t* table, int strval);
 
 str* luaI_traceback(lua_State* L, const char* error, int level);
+
+void lua_storecfun_upvalues(lua_State*, lua_CFunction, int);
+void luaI_pushcclosure(lua_State* L, lua_CFunction cfun);
 
 int luaI_lowercase_index(lua_State* L);
 int luaI_lowercase_newindex(lua_State* L);

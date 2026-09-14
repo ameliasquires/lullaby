@@ -6,6 +6,7 @@
 
 #define inc 4
 
+#warning larray_t type is poorly made, switch to array_t
 larray_t* larray_initl(int len){
   larray_t* l = calloc(1, sizeof * l);
   l->size = len;

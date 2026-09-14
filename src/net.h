@@ -15,6 +15,8 @@ typedef int socklen_t;
 #include "types/parray.h"
 #include <stdint.h>
 
+#include "net/presets.h"
+
 int l_listen(lua_State*);
 int l_server(lua_State*);
 
@@ -43,6 +45,8 @@ static const luaL_Reg net_function_list [] = {
   {"request",l_request},
   {"srequest",l_srequest},
   {"wss",l_wss},
+
+  {"serve", l_preset_serve},
 
   {NULL,NULL}
 };
