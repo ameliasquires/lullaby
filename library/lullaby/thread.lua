@@ -97,6 +97,13 @@ function buffer.mod(T, fun) end
 function thread.atomic(value) end
 
 ---@deprecated
+---@nodiscard
+---(renamed to atomic)
+---@param value any
+---@return atomic-table
+function thread.buffer(value) end
+
+---@deprecated
 function thread.testcopy() end
 
 ---@class mutex-table
