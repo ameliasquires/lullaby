@@ -1,3 +1,4 @@
+#include "lua.h"
 #include "net/common.h"
 #include "net/util.h"
 #include "net/lua.h"
@@ -661,7 +662,7 @@ void* handle_client(void *_arg){
   char* buffer;
   int header_eof = -1;
   lua_State* L = args->L;
-  luaL_openlibs(L);
+  //luaL_openlibs(L);
 
   char* header = NULL;  
 
@@ -835,10 +836,12 @@ void* handle_client(void *_arg){
             if(strcmp(route->req, "all") == 0 || strcmp(route->req, sR->c) == 0 ||
                 (strcmp(sR->c, "HEAD") == 0 && strcmp(route->req, "GET") == 0)){
 
-              if(route->type == ROUTE_CFN) luaI_pushcclosure(L, route->c);
-              else if(route->type == ROUTE_LUAFN) luaL_loadbuffer(L, route->lua->c, route->lua->len, "fun");
-              int func = lua_gettop(L);
-              lua_assign_upvalues(L, func);
+              char key[64];
+              sprintf(key, "_rf%p", route->req);
+
+              lua_getglobal(L, LULLABY_LOCAL_TABLE);
+              int t = lua_gettop(L);
+              lua_getfield(L, t, key);
 
               lua_pushvalue(L, res_idx); //push methods related to dealing with the request
               lua_pushvalue(L, req_idx); //push info about the request
@@ -886,11 +889,10 @@ net_end:
   }
 
   net_ctx_close(args->ctx);
-  free(args);
   free(buffer);
-  lua_close(L);
+  //lua_close(L);
 
-  threads--;
+  //threads--;
   return NULL;
 }
 
@@ -898,7 +900,47 @@ int clean_lullaby_net(lua_State* L){
   return 0;
 }
 
-int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state* state){
+int server_run_backend(lua_State* L){
+  int idx = lua_upvalueindex(1);
+  thread_arg_struct* args = lua_touserdata(L, idx);
+  args->L = L;
+
+  handle_client(args);
+  free(args);
+
+  return 0;
+}
+
+#include "thread.h"
+
+int l_server_backend_multithread(lua_State* L){
+  l_async(L);
+  int idx = lua_gettop(L);
+
+  lua_getfield(L, -1, "detach");
+  lua_pushvalue(L, idx);
+  lua_call(L, 1, 0);
+
+  return 0;
+}
+
+int l_server_backend_single(lua_State* L){
+  lua_call(L, 0, 0);
+  return 0;
+}
+
+int l_server_backend_isolated(lua_State* L){
+  l_async(L);
+  int idx = lua_gettop(L);
+
+  lua_getfield(L, -1, "await");
+  lua_pushvalue(L, idx);
+  lua_call(L, 1, 0);
+
+  return 0;
+}
+
+int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state* state, int lua_server_idx){
 #warning "mimetypes should be thread local"
   parse_mimetypes();
   if(state->ssl) ssl_init();
@@ -1017,22 +1059,19 @@ int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*
       args->ctx->sock = *client_fd;
       args->port = port;
       args->cli = client_addr;
-      args->L = luaL_newstate();
+      //args->L = luaL_newstate();
       args->paths = paths;
+      
+      int restore = lua_gettop(L);
 
-      int old_top = lua_gettop(L);
+      lua_getfield(L, lua_server_idx, "backend");
 
-      luaL_openlibs(args->L);
-      luaI_copyvars(L, args->L); 
-      luaL_openlibs(args->L);
-      lua_settop(L, old_top);
+      //not sure if this should be protected yet
+      lua_pushlightuserdata(L, args);
+      lua_pushcclosure(L, server_run_backend, 1);
+      lua_call(L, 1, 1);
 
-      threads++;
-
-      //send request to handle_client()
-      pthread_t thread_id;
-      pthread_create(&thread_id, NULL, handle_client, (void*)args);
-      pthread_detach(thread_id);
+      lua_settop(L, restore);
 
       free(client_fd);
     }
@@ -1085,17 +1124,21 @@ int l_req_com(lua_State* L, const char* req){
   route->lua = str_init("");
   luaI_assert2(L, lua_type(L, 3) == LUA_TFUNCTION);
 
-  if(lua_iscfunction(L, 3)){
-    route->type = ROUTE_CFN;
-    route->c = lua_tocfunction(L, 3);
-    lua_storecfun_upvalues(L, route->c, 3);
-  } else {
-    route->type = ROUTE_LUAFN;
-    lua_pushvalue(L, 3);
-    lua_dump(L, writer, (void*)route->lua, 0);
-  }
-
   strcpy(route->req, req);
+
+  char key[64];
+  sprintf(key, "_rf%p", route->req);
+
+  lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  if(lua_isnil(L, -1)){
+    lua_newtable(L);
+    lua_setglobal(L, LULLABY_LOCAL_TABLE);
+    lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  }
+  int table = lua_gettop(L);
+
+  lua_pushvalue(L, 3);
+  lua_setfield(L, table, key);
 
   array_t* routes = parray_get(paths, portss->c);
   if(routes == NULL){
@@ -1173,6 +1216,8 @@ int l_listen(lua_State* L){
   luaI_tsetcf(L, mt, "all", l_allq);
   luaI_tsetcf(L, mt, "custom", l_customq);
 
+  luaI_tsetcf(L, mt, "backend", l_server_backend_single);
+
   luaI_tsettab(L, mt, "ssl");
 
   luaI_tsetcf(L, mt, "close", l_net_close);
@@ -1204,7 +1249,7 @@ int l_listen(lua_State* L){
   }
   lua_pop(L, 1);
 
-  return start_serv(L, port, paths, state);
+  return start_serv(L, port, paths, state, mt);
   ;
 }
 
@@ -1230,7 +1275,7 @@ int _server_listen(lua_State* L){
   }
   lua_pop(L, 1);
 
-  return start_serv(L, port, paths, state);
+  return start_serv(L, port, paths, state, 1);
 }
 
 int l_server(lua_State* L) {
@@ -1253,6 +1298,8 @@ int l_server(lua_State* L) {
   luaI_tsetcf(L, mt, "PATCH", l_PATCHq);
   luaI_tsetcf(L, mt, "all", l_allq);
   luaI_tsetcf(L, mt, "custom", l_customq);
+
+  luaI_tsetcf(L, mt, "backend", l_server_backend_single);
 
   luaI_tsettab(L, mt, "ssl");
 

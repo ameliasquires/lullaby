@@ -32,7 +32,8 @@ enum thread_event {
 };
 
 struct thread_info {
-  str* function;
+  //str* function;
+  struct lua_function_store* function;
   lua_State* L;
   int return_count;
   enum thread_type type;
@@ -196,12 +197,10 @@ void handle_thread(struct thread_info* args){
   lua_pushvalue(L, meta_idx);
   lua_setmetatable(L, res_idx);
 
-  luaL_loadbuffer(L, args->function->c, args->function->len, "thread");
-  int x = lua_gettop(L);
-  str_free(args->function);
+  luaI_pushfunction(L, args->function);
+  free_function_store(args->function);
   args->function = NULL;
 
-  lua_assign_upvalues(L, x);
   lua_pushvalue(L, res_idx);
   if(lua_pcall(L, 1, 0, 0) != LUA_OK){
     if(!(lua_type(L, -1) == LUA_TSTRING && strcmp("res():cleanexit", lua_tostring(L, -1)) == 0)){
@@ -348,9 +347,8 @@ int _thread_loadf(lua_State* L){
 
   pthread_mutex_lock(&*info->lock);
 
-  info->function = str_init("");
   lua_pushvalue(L, 2);
-  lua_dump(L, writer, (void*)info->function, 0);
+  info->function = luaI_getfunction(L);
 
   pthread_cond_signal(&*info->cond);
 
@@ -380,6 +378,12 @@ int l_async(lua_State* oL){
   lua_State* L = luaL_newstate(); 
   lua_gc(L, LUA_GCSTOP);
 
+  struct thread_info* args = calloc(1, sizeof * args);
+
+  //must be before copyvars so the upvalues can be copied
+  lua_pushvalue(oL, 1);
+  args->function = luaI_getfunction(oL);
+
   luaL_openlibs(L);
   luaI_copyvars(oL, L);
   luaL_openlibs(L);
@@ -387,7 +391,6 @@ int l_async(lua_State* oL){
   lua_getglobal(L, "_locals");
   lua_setglobal(L, "_stored_locals");
 
-  struct thread_info* args = calloc(1, sizeof * args);
   args->L = L;
   args->state = THREAD_SSTARTING;
   args->type = THREAD_TNORMAL;
@@ -403,10 +406,6 @@ int l_async(lua_State* oL){
   pthread_cond_init(&*args->cond, NULL);
   args->ack = malloc(sizeof * args->ack);
   pthread_cond_init(&*args->ack, NULL);
-
-  args->function = str_init("");
-  lua_pushvalue(oL, 1);
-  lua_dump(oL, writer, (void*)args->function, 0);
 
   pthread_mutex_lock(&*args->start);
 

@@ -452,26 +452,31 @@ void luaI_copyvars(lua_State* from, lua_State* to){
   lua_getglobal(from, LULLABY_LOCAL_TABLE);
   int x = lua_gettop(from);
 
-  if(lua_isnil(from, x)){
-    lua_pop(from, 1);
-    x = 0;
-  }
-
-  env_table(from, x != 0);
-  luaI_deepcopy(from, to, SKIP_GC | SKIP_LOCALS);
-  lua_pop(from, 1);
-  int idx = lua_gettop(to);
   lua_pushglobaltable(to);
   int tidx = lua_gettop(to);
 
-  luaI_tsetv(to, idx, "_ENV", tidx);
-  luaI_tsetv(to, tidx, LULLABY_LOCAL_TABLE, idx);
+  env_table(from, 0);
+  luaI_deepcopy(from, to, SKIP_GC | SKIP_LOCALS);
+  lua_pop(from, 1);
+  int nidx = lua_gettop(to);
+
+  if(!lua_isnil(from, x)){
+    lua_pushvalue(from, x);
+    luaI_deepcopy(from, to, SKIP_GC | SKIP_LOCALS);
+    lua_pop(from, 1);
+    lua_pushvalue(to, nidx);
+    luaI_jointable(to);
+    nidx = lua_gettop(to);
+  }
+
+  luaI_tsetv(to, nidx, "_ENV", tidx);
+  luaI_tsetv(to, tidx, LULLABY_LOCAL_TABLE, nidx);
 
   lua_getglobal(from, "_G");
   luaI_deepcopy(from, to, SKIP_GC | SKIP__G);
   lua_set_global_table(to);
 
-  lua_pushvalue(to, idx);
+  lua_pushvalue(to, nidx);
   lua_setglobal(to, LULLABY_LOCAL_TABLE);
 }
 
@@ -506,6 +511,23 @@ void lua_upvalue_key_table(lua_State* L, int fidx){
   }
 
   lua_pushvalue(L, tidx);
+}
+
+void lua_storefun_upvalues(lua_State* L, int funidx){
+  lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  if(lua_isnil(L, -1)){
+    lua_newtable(L);
+    lua_setglobal(L, LULLABY_LOCAL_TABLE);
+    lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  }
+  int table = lua_gettop(L);
+
+  const char* key;
+  for(int i = 1; i <= 255 && (key = lua_getupvalue(L, funidx, i)) != NULL; i++){
+    lua_pushvalue(L, -1);
+    lua_setfield(L, table, key);
+    //lua_pop(L, 1);
+  }
 }
 
 void lua_storecfun_upvalues(lua_State* L, lua_CFunction fun, int funid){
@@ -559,6 +581,7 @@ int lua_assign_upvalues(lua_State* L, int fidx){
   if(lua_iscfunction(L, fidx)) return lua_assign_upvalues_cfun(L, fidx);
 
   lua_getglobal(L, LULLABY_LOCAL_TABLE);
+  if(lua_isnil(L, -1)) return -1;
   int lidx = lua_gettop(L);
 
   lua_upvalue_key_table(L, fidx);
@@ -592,4 +615,38 @@ void luaI_pushcclosure(lua_State* L, lua_CFunction cfun){
   lua_pushcclosure(L, cfun, upvalues);
   int idx = lua_gettop(L);
   lua_assign_upvalues_cfun(L, idx);
+}
+
+void free_function_store(struct lua_function_store *store){
+  if(store == NULL) return;
+  if(!store->cfun) str_free(store->lua);
+  free(store);
+}
+
+void luaI_pushfunction(lua_State* L, struct lua_function_store *store){
+  if(store->cfun){
+    luaI_pushcclosure(L, store->c);
+  } else {
+    luaL_loadbuffer(L, store->lua->c, store->lua->len, "(llby push)");
+    int f = lua_gettop(L);
+    lua_assign_upvalues(L, f);
+  }
+}
+
+struct lua_function_store* luaI_getfunction(lua_State* L){
+  struct lua_function_store *store = calloc(sizeof* store, 1);
+  int top = lua_gettop(L);
+
+  if(lua_iscfunction(L, top)){
+    store->cfun = 1;
+    store->c = lua_tocfunction(L, top);
+    lua_storecfun_upvalues(L, store->c, top);
+    luaI_pushcclosure(L, store->c);
+    lua_pop(L, 1);
+  } else {
+    store->lua = str_init("");
+    lua_dump(L, writer, store->lua, 0);
+  }
+
+  return store;
 }

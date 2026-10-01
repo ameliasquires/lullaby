@@ -83,7 +83,7 @@ struct sarray_t {
 
 extern map_t* mime_type;
 
-int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*);
+//int start_serv(lua_State* L, int port, parray_t* paths, struct net_server_state*);
 
 enum {
   NETEV_NULL = 0,
