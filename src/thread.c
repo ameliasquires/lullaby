@@ -545,6 +545,7 @@ int l_atomic_index(lua_State* L){
       lua_gettable(buffer->L, 1);
       if(lua_isnil(buffer->L, -1)){
         lua_pushnil(L);
+        lua_pop(buffer->L, 1);
         return 1;
       }
 

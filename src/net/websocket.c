@@ -80,6 +80,8 @@ int ws_read(struct net_data* data, struct ws_frame_info* frame_info){
   memset(buffer, 0, total_len);
   total_len = 0;
 
+  //printf("op:%i fin:%i mask:%i pay:%i r1:%i r2:%i r3:%i\n", frame_info->opcode, frame_info->fin, frame_info->mask, frame_info->payload, frame_info->rsv1, frame_info->rsv2, frame_info->rsv3);
+
   if(frame_info->payload <= 125) payload = frame_info->payload;
   else if(frame_info->payload == 126) {
     for(; (len = net_ctx_read(data, buffer + total_len, 2 - total_len)) > 0;){ 
@@ -101,6 +103,8 @@ int ws_read(struct net_data* data, struct ws_frame_info* frame_info){
     payload = ((uint64_t)buffer[0] & 0xff) << 56 | ((uint64_t)buffer[1] & 0xff) << 48 | ((uint64_t)buffer[2] & 0xff) << 40 |
       ((uint64_t)buffer[3] & 0xff) << 32 | (buffer[4] & 0xff) << 24 | (buffer[5] & 0xff) << 16 | (buffer[6] & 0xff) << 8 | (buffer[7] & 0xff);
   }
+
+  //printf("payload %li\n", payload);
 
   total_len = 0;
   uint8_t mask[4] = {0};
@@ -131,6 +135,16 @@ int ws_read(struct net_data* data, struct ws_frame_info* frame_info){
   return 1;
 }
 
+int ws_send_frame(struct net_data* data, struct ws_frame_info frame, const char* payload, size_t payload_len){
+  str* f = str_init("");
+  ws_frame_build(frame, payload_len, NULL, f);
+  str_pushl(f, payload, payload_len);
+  int a = write(data->sock, f->c, f->len);
+  str_free(f);
+
+  return a;
+}
+
 int l_ws_read(lua_State* L){
   lua_getfield(L, 1, "_ws");
   struct net_data* data = lua_touserdata(L, -1);
@@ -139,6 +153,18 @@ int l_ws_read(lua_State* L){
   if(c == -1){
     str_clear(data->buffer);
     return luaI_error(L, "SSL_read error");
+  }
+
+  if(frame.opcode == 0x9){
+    struct ws_frame_info frame = {
+      .rsv1 = 0,
+      .fin = 1,
+      .mask = 0,
+      .opcode = 0xa
+    };
+
+    ws_send_frame(data, frame, "pong", 4);
+    return l_ws_read(L);
   }
 
   lua_newtable(L);
@@ -162,11 +188,7 @@ int l_ws_write(lua_State* L){
   size_t len;
   const char* s = lua_tolstring(L, 2, &len);
 
-  str* f = str_init("");
-  ws_frame_build(frame, len, NULL, f);
-  str_pushl(f, s, len);
-  write(data->sock, f->c, f->len);
-  str_free(f);
+  ws_send_frame(data, frame, s, len);
 
   return 0;
 }
@@ -178,14 +200,16 @@ int l_websocket_upgrade(lua_State* L){
   lua_getfield(L, res_idx, "_");
   struct net_data* ctx = lua_touserdata(L, -1);
 
+  //this should be done better
   lua_getfield(L, req_idx, "sec-websocket-key");
   const char* wskey = luaL_checklstring(L, -1, NULL);
   str* newkey = str_init(wskey);
   str_push(newkey, magic);
   char* sha = calloc(1512, sizeof * sha);
-  printf("%s\n", newkey->c);
+  //printf("%s\n", newkey->c);
+  //printf("'%s' : %li\n", newkey->c, newkey->len);
   sha1((uint8_t*)newkey->c, newkey->len, sha);
-  printf("%s\n", sha);
+  //printf("%s\n", sha);
   char* bin = calloc(512, sizeof * bin);
   uint64_t len;
   hex_decode(sha, bin, &len);
@@ -199,7 +223,7 @@ int l_websocket_upgrade(lua_State* L){
                    "sec-websocket-accept: %s\r\n"
                    "\r\n", b64);
 
-  printf("%s\n", upgrade);
+  //printf("%s\n", upgrade);
   net_ctx_write(ctx, upgrade, strlen(upgrade));
   free(upgrade);
   free(sha);

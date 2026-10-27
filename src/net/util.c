@@ -82,7 +82,7 @@ int parse_header_kv(char* buffer, size_t header_len, parray_t* table){
   str* sw = NULL;
   int key = 1;
 
-  for(int i = 0; i != header_len; i++){
+  for(size_t i = 0; i != header_len; i++){
     if(buffer[i] == ' ' && strcmp(current->c, "") == 0) continue;
     if((key && buffer[i] == ':') || (!key && buffer[i] == '\n')){
       if(key){

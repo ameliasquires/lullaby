@@ -230,6 +230,7 @@ int i_ws_close(lua_State* L){
 
   if(data != NULL && data->buffer != NULL){
     str_free(data->buffer);
+    data->buffer = NULL;
 
     SSL_set_shutdown(data->ssl, SSL_RECEIVED_SHUTDOWN | SSL_SENT_SHUTDOWN);
     SSL_shutdown(data->ssl);
