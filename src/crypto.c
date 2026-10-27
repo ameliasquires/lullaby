@@ -23,3 +23,10 @@ uint64_t rotl64(uint64_t y, uint64_t offset){
 uint64_t rotr64(uint64_t x, uint64_t n) {
   return (x >> n) | (x << (64-n));
 }
+
+uint32_t swap32(uint32_t v){
+  return ((v >> 24) & 0xff) |
+    ((v >> 8) & 0xff00)     |
+    ((v << 8) & 0xff0000)   |
+    ((v << 24) & 0xff000000);
+}

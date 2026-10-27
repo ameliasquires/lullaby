@@ -1,24 +1,28 @@
-#include "../lua.h"
+#include "lua.h"
+#include <stdlib.h>
+#include <string.h>
 #include <stdint.h>
 
-/**
- * calculates a sha1 (or 0) of bytes
- *  
- * @param {uint8_t} version (1 or 0)
- * @param {char*} output stream
- * @param {const char*} input bytes
- * @return {void}
- */
-void i_sha01(uint8_t, char*, int, const char*);
+#define sha01_bs 64
+#define sha01_digest_len 20
 
-int l_sha1(lua_State*);
-int l_sha1_init(lua_State*);
-int l_sha1_update(lua_State*);
-int l_sha1_final(lua_State*);
+struct sha01_hash {
+  uint8_t* buffer;
+  uint32_t h0, h1, h2, h3, h4;
+  size_t bufflen;
+  size_t total;
+  uint8_t version;
+};
 
-int l_sha0(lua_State*);
-int l_sha0_init(lua_State*);
-int l_sha0_update(lua_State*);
-int l_sha0_final(lua_State*);
+struct sha01_hash* sha01_init(uint8_t ver);
+struct sha01_hash* sha01_clone(struct sha01_hash* hash);
+int sha01_free(struct sha01_hash* hash);
+void sha01_round(struct sha01_hash* hash);
+void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash);
+void sha01_digest(struct sha01_hash* hash, uint8_t* out);
 
-void sha1(uint8_t* a, size_t len, char* out_stream);
+// lua ---
+
+int l_sha01_obj(lua_State* L, struct sha01_hash* hash);
+int l_sha1(lua_State* L);
+int l_sha0(lua_State* L);

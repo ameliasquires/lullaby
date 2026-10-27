@@ -205,14 +205,18 @@ int l_websocket_upgrade(lua_State* L){
   const char* wskey = luaL_checklstring(L, -1, NULL);
   str* newkey = str_init(wskey);
   str_push(newkey, magic);
-  char* sha = calloc(1512, sizeof * sha);
-  //printf("%s\n", newkey->c);
-  //printf("'%s' : %li\n", newkey->c, newkey->len);
-  sha1((uint8_t*)newkey->c, newkey->len, sha);
-  //printf("%s\n", sha);
+
+  struct sha01_hash* hash = sha01_init(1);
+  sha01_update((uint8_t*)newkey->c, newkey->len, hash);
+  uint8_t digest[sha01_digest_len];
+  sha01_digest(hash, digest);
+  str* raw = str_initfl((const char*)digest, sha01_digest_len);
+  str* hex = str_tohex(raw);
+
   char* bin = calloc(512, sizeof * bin);
   uint64_t len;
-  hex_decode(sha, bin, &len);
+  //replace this call with a better one
+  hex_decode(hex->c, bin, &len);
   char* b64 = calloc(512 * 3, sizeof * b64);
   en_base64(bin, len, b64);
 
@@ -223,13 +227,15 @@ int l_websocket_upgrade(lua_State* L){
                    "sec-websocket-accept: %s\r\n"
                    "\r\n", b64);
 
-  //printf("%s\n", upgrade);
   net_ctx_write(ctx, upgrade, strlen(upgrade));
   free(upgrade);
-  free(sha);
   free(bin);
   free(b64);
   str_free(newkey);
+
+  sha01_free(hash);
+  str_free(raw);
+  str_free(hex);
 
   struct net_data *data = calloc(1, sizeof * data);
   data->sock = ctx->sock;

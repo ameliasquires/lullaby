@@ -89,6 +89,36 @@ int luaI_iserror(lua_State* L){
           lua_type(L, -1) == LUA_TNUMBER;
 }
 
+//upper/lower support
+int _bytes_tohex(lua_State* L){
+  lua_getfield(L, 1, "bytes");
+  size_t len = 0;
+  uint8_t* bytes = (uint8_t*)luaL_checklstring(L, -1, &len);
+  str* in = str_initfl((const char*)bytes, len);
+  
+  str* out = str_tohex(in);
+  
+  lua_pushlstring(L, out->c, out->len);
+  str_free(in);
+  str_free(out);
+
+  return 1;
+}
+
+int luaI_newbytes(lua_State* L, const uint8_t* bytes, size_t len){
+  lua_newtable(L);
+  int idx = lua_gettop(L);
+
+  lua_pushlstring(L, (const char*)bytes, len);
+  lua_setfield(L, idx, "bytes");
+
+  luaI_tsetcf(L, idx, "hex", _bytes_tohex);
+  //add base64
+
+  lua_settop(L, idx);
+  return 1;
+}
+
 int _stream_read(lua_State* L){
   uint64_t len = 0;
   if(lua_gettop(L) > 1){

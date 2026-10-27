@@ -33,6 +33,15 @@ str* str_init(const char* init){
   return str_initl(init, strlen(init));
 }
 
+str* str_tohex(str* s){
+  str* hex = str_init("");
+  for(size_t i = 0; i != s->len; i++){
+    str_pushfmt(hex, "%02x", s->c[i]&0xff); 
+  }
+
+  return hex;
+}
+
 char* str_tochar(str* s){
   char* a = calloc(s->len + 1, sizeof * a);
   strcpy(a, s->c);

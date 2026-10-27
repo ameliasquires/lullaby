@@ -70,6 +70,8 @@ typedef int (*stream_read_function)(uint64_t, str**, void**);
 typedef int (*stream_free_function)(void**);
 void luaI_newstream(lua_State* L, stream_read_function, stream_free_function, void*);
 
+int luaI_newbytes(lua_State* L, const uint8_t* bytes, size_t len);
+
 int luaI_nothing(lua_State*);
 int env_table(lua_State* L, int provide_table);
 void luaI_jointable(lua_State* L);

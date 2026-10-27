@@ -1,40 +1,29 @@
 #include "../crypto.h"
+#include "lua.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 
-#define bs 64
-
-struct sha01_hash {
-  uint8_t* buffer;
-  uint32_t h0, h1, h2, h3, h4;
-  size_t bufflen;
-  size_t total;
-  uint8_t version;
-};
-
-#define sha0_hash sha01_hash 
-#define sha1_hash sha01_hash
-
-struct sha01_hash sha01_init(uint8_t ver){
-  struct sha01_hash a = {.h0 = 0x67452301, .h1 = 0xEFCDAB89, .h2 = 0x98BADCFE, .h3 = 0x10325476, .h4 = 0xC3D2E1F0,
+struct sha01_hash* sha01_init(uint8_t ver){
+  struct sha01_hash* a = calloc(1, sizeof * a);
+  *a = (struct sha01_hash){.h0 = 0x67452301, .h1 = 0xEFCDAB89, .h2 = 0x98BADCFE, .h3 = 0x10325476, .h4 = 0xC3D2E1F0,
     .total = 0, .bufflen = 0, .version = ver};
-  a.buffer = calloc(sizeof * a.buffer, bs);
+  a->buffer = calloc(sizeof * a->buffer, sha01_bs);
   return a;
 }
 
-int sha01_free_l(lua_State* L){
-  struct sha01_hash* h = lua_touserdata(L, -1);
-  free(h->buffer);
+struct sha01_hash* sha01_clone(struct sha01_hash* hash){
+  struct sha01_hash* clone = calloc(1, sizeof * clone);
+  memcpy(clone, hash, sizeof * clone);
+  clone->buffer = calloc(sizeof * clone->buffer, sha01_bs);
+  memcpy(clone->buffer, hash->buffer, sha01_bs);
+  return clone;
+}
+
+int sha01_free(struct sha01_hash* hash){
+  free(hash->buffer);
+  free(hash);
   return 0;
-}
-
-struct sha01_hash sha01_init_l(uint8_t ver, lua_State* L){
-  struct sha01_hash a = {.h0 = 0x67452301, .h1 = 0xEFCDAB89, .h2 = 0x98BADCFE, .h3 = 0x10325476, .h4 = 0xC3D2E1F0,
-    .total = 0, .bufflen = 0, .version = ver};
-  a.buffer = calloc(sizeof * a.buffer, bs);
-  memset(a.buffer, 0, bs);
-  return a;
 }
 
 void sha01_round(struct sha01_hash* hash){
@@ -94,21 +83,21 @@ void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash){
   hash->total += len;
   size_t total_add = len + hash->bufflen;
   size_t read = 0;
-  if(total_add < bs){
+  if(total_add < sha01_bs){
     memcpy(hash->buffer + hash->bufflen, input, len);
     hash->bufflen += len;
     return;
   }
 
-  for(; total_add >= bs;){
-    memcpy(hash->buffer + hash->bufflen, input + read, bs - hash->bufflen);
-    total_add -= bs;
+  for(; total_add >= sha01_bs;){
+    memcpy(hash->buffer + hash->bufflen, input + read, sha01_bs - hash->bufflen);
+    total_add -= sha01_bs;
     hash->bufflen = 0;
-    read += bs;
+    read += sha01_bs;
     sha01_round(hash);
   }
 
-  memset(hash->buffer, 0, bs);
+  memset(hash->buffer, 0, sha01_bs);
 
   if(0 != total_add){
     memcpy(hash->buffer, input + read, total_add);
@@ -116,11 +105,11 @@ void sha01_update(uint8_t* input, size_t len, struct sha01_hash* hash){
   }
 }
 
-void sha01_final(struct sha01_hash* hash, char* out_stream){
-  uint8_t old[bs];
+void sha01_digest(struct sha01_hash* hash, uint8_t* out){
+  uint8_t old[sha01_bs];
   struct sha01_hash old_hash;
   memcpy(&old_hash, hash, sizeof * hash);
-  memcpy(old, hash->buffer, bs);
+  memcpy(old, hash->buffer, sha01_bs);
 
   hash->buffer[hash->bufflen] = 0x80;
 
@@ -136,107 +125,100 @@ void sha01_final(struct sha01_hash* hash, char* out_stream){
     hash->buffer[63 - i] = (uint8_t) (lhhh >> (i * 8) & 0xFF);
   sha01_round(hash);
 
-  sprintf(out_stream,"%08x%08x%08x%08x%08x",hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
+  //sprintf(out, "%08x%08x%08x%08x%08x", hash->h0,hash->h1,hash->h2,hash->h3,hash->h4);
+  ((uint32_t*)out)[0] = swap32(hash->h0); 
+  ((uint32_t*)out)[1] = swap32(hash->h1);
+  ((uint32_t*)out)[2] = swap32(hash->h2);
+  ((uint32_t*)out)[3] = swap32(hash->h3);
+  ((uint32_t*)out)[4] = swap32(hash->h4); 
 
   memcpy(hash, &old_hash, sizeof * hash);
-  memcpy(hash->buffer, old, bs);
+  memcpy(hash->buffer, old, sha01_bs);
 }
 
-struct sha01_hash sha0_init(){
-  return sha01_init(0);
-}
+// lua ---
 
-struct sha01_hash sha1_init(){
-  return sha01_init(1);
-}
+int l_sha01_update(lua_State* L){
+  lua_getfield(L, 1, "_");
+  struct sha01_hash* hash = lua_touserdata(L, -1);
+  struct sha01_hash* clone = sha01_clone(hash);
 
-void sha0_update(uint8_t* input, size_t len, struct sha01_hash* hash){
-  sha01_update(input, len, hash);
-}
+  size_t len;
+  uint8_t* input = (uint8_t*)luaL_checklstring(L, 2, &len);
 
-void sha1_update(uint8_t* input, size_t len, struct sha01_hash* hash){
-  sha01_update(input, len, hash);
-}
+  sha01_update(input, len, clone);
+  l_sha01_obj(L, clone);
 
-void sha0_final(struct sha01_hash* hash, char* out_stream){
-  sha01_final(hash, out_stream);
-}
-
-void sha1_final(struct sha01_hash* hash, char* out_stream){
-  sha01_final(hash, out_stream);
-}
-
-void sha0(uint8_t* a, size_t len, char* out_stream){
-  struct sha01_hash aa = sha0_init();
-  sha0_update(a, len, &aa);
-  sha0_final(&aa, out_stream);
-  free(aa.buffer);
-}
-
-void sha1(uint8_t* a, size_t len, char* out_stream){
-  struct sha01_hash aa = sha1_init();
-  sha1_update(a, len, &aa);
-  sha1_final(&aa, out_stream);
-  free(aa.buffer);
-}
-
-//common_hash_clone(sha1);
-lua_common_hash_clone_oargs(sha1, sha1, l_sha1_init(L), {
-    uint8_t* old = b->buffer;
-    *b = *a;
-    b->buffer = old;
-    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
-    });
-
-lua_common_hash_init_ni(sha1, sha1, sha01_init_l(1, L), sha01_free_l);
-lua_common_hash_update(sha1, sha1);
-
-//common_hash_clone(sha0);
-lua_common_hash_clone_oargs(sha0, sha0, l_sha0_init(L), {
-    uint8_t* old = b->buffer;
-    *b = *a;
-    b->buffer = old;
-    memcpy(b->buffer, a->buffer, bs * sizeof * b->buffer);
-    });
-lua_common_hash_init_ni(sha0, sha0, sha01_init_l(0, L), sha01_free_l);
-lua_common_hash_update(sha0, sha0);
-
-int l_sha1_final(lua_State* L){
-  struct sha01_hash* a = (struct sha01_hash*)lua_touserdata(L, 1);
-
-  char digest[160];
-  sha1_final(a, digest);
-
-  lua_pushstring(L, digest);
   return 1;
 }
 
-int l_sha0_final(lua_State* L){
-  return l_sha1_final(L);
+int l_sha01_digest(lua_State* L){
+  lua_getfield(L, 1, "_");
+  struct sha01_hash* hash = lua_touserdata(L, -1);
+
+  uint8_t digest[20];
+  sha01_digest(hash, digest);
+
+  luaI_newbytes(L, (const uint8_t*)digest, sha01_digest_len);
+  return 1;
+}
+
+int l_sha01_free(lua_State* L){
+  lua_getfield(L, 1, "_");
+  struct sha01_hash* hash = lua_touserdata(L, -1);
+
+  sha01_free(hash);
+
+  return 0;
+}
+
+int l_sha01_obj(lua_State* L, struct sha01_hash* hash){
+  lua_newtable(L);
+  int idx = lua_gettop(L);
+
+  lua_newtable(L);
+  int mt = lua_gettop(L);
+
+  luaI_tsetcf(L, mt, "__gc", l_sha01_free);
+  luaI_tsetcf(L, mt, "__add", l_sha01_update);
+
+  luaI_tsetlud(L, idx, "_", hash);
+  luaI_tsetcf(L, idx, "update", l_sha01_update);
+  luaI_tsetcf(L, idx, "digest", l_sha01_digest);
+
+  lua_pushvalue(L, mt);
+  lua_setmetatable(L, idx);
+
+  lua_settop(L, idx);
+  return 1;
 }
 
 int l_sha1(lua_State* L){
-  if(lua_gettop(L) == 0) return l_sha1_init(L);
+  if(lua_gettop(L) == 0) return l_sha01_obj(L, sha01_init(1));
   size_t len = 0;
-  char* a = (char*)luaL_checklstring(L, 1, &len);
+  char* in = (char*)luaL_checklstring(L, 1, &len);
 
-  char digest[160];
+  uint8_t digest[sha01_digest_len];
+  struct sha01_hash* hash = sha01_init(1);
+  sha01_update((uint8_t*)in, len, hash);
+  sha01_digest(hash, digest);
 
-  sha1((uint8_t*)a, len, digest);
-  lua_pushstring(L, digest);
-
+  luaI_newbytes(L, (const uint8_t*)digest, sha01_digest_len);
+  sha01_free(hash);
   return 1;
-};
+}
 
 int l_sha0(lua_State* L){
-  if(lua_gettop(L) == 0) return l_sha0_init(L);
+  if(lua_gettop(L) == 0) return l_sha01_obj(L, sha01_init(0));
   size_t len = 0;
-  char* a = (char*)luaL_checklstring(L, 1, &len);
+  char* in = (char*)luaL_checklstring(L, 1, &len);
 
-  char digest[160];
+  uint8_t digest[sha01_digest_len];
+  struct sha01_hash* hash = sha01_init(0);
+  sha01_update((uint8_t*)in, len, hash);
+  sha01_digest(hash, digest);
 
-  sha0((uint8_t*)a, len, digest);
-  lua_pushstring(L, digest);
-
+  luaI_newbytes(L, (const uint8_t*)digest, sha01_digest_len);
+  sha01_free(hash);
   return 1;
-};
+}

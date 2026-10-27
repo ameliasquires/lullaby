@@ -3,21 +3,10 @@
 #include "hash/md5.h"
 #include "hash/sha01.h"
 #include "hash/sha2xx.h"
-#include "hash/pearson.h"
-#include "hash/adler.h"
-#include "hash/bsdchecksum.h"
 #include "hash/crc.h"
-#include "hash/fletcher.h"
-#include "hash/sysvchecksum.h"
 #include "hash/xor.h"
-#include "hash/buzhash.h"
-#include "hash/djb2.h"
 #include "hash/fnv.h"
-#include "hash/jenkins.h"
-#include "hash/loselose.h"
 #include "hash/murmur.h"
-#include "hash/pjw.h"
-#include "hash/sdbm.h"
 #include "hash/sha2-256.h"
 #include "hash/blake2.h"
 #include "hash/blake.h"
@@ -34,6 +23,8 @@ unsigned rotl32(unsigned, unsigned);
 unsigned rotr32(unsigned, unsigned);
 uint64_t rotl64(uint64_t, uint64_t);
 uint64_t rotr64(uint64_t, uint64_t);
+
+uint32_t swap32(uint32_t);
 
 int tp(lua_State*);
 
@@ -108,35 +99,18 @@ int l_##luaname##_init(lua_State* L){\
 #define clean_lullaby_crypto luaI_nothing
 
 static const luaL_Reg crypto_function_list [] = {
-  {"setpearson",l_setpearson}, {"fletcher8",l_fletcher8},
-  {"fletcher16",l_fletcher16}, {"fletcher32",l_fletcher32},
-  {"setbuzhash",l_setbuzhash},
-  {"loselose", l_loselose},
   {"murmur1_32", l_murmur1_32}, {"murmur2_32", l_murmur2_32}, 
 
-  {"adler32",l_adler32}, {"adler32_init",l_adler32_init}, {"adler32_update",l_adler32_update}, {"adler32_final",l_adler32_final},
-  {"bsdchecksum",l_bsdchecksum}, {"bsdchecksum_init",l_bsdchecksum_init}, {"bsdchecksum_update",l_bsdchecksum_update}, {"bsdchecksum_final",l_bsdchecksum_final},
-  {"buzhash8",l_buzhash8}, {"buzhash16",l_buzhash16},
   {"crc8",l_crc8}, {"crc8_init",l_crc8_init}, {"crc8_update",l_crc8_update}, {"crc8_final",l_crc8_final},
   {"crc16",l_crc16}, {"crc16_init",l_crc16_init}, {"crc16_update",l_crc16_update}, {"crc16_final",l_crc16_final},
   {"crc32",l_crc32}, {"crc32_init",l_crc32_init}, {"crc32_update",l_crc32_update}, {"crc32_final",l_crc32_final},
-  {"djb2", l_djb2}, {"djb2_init", l_djb2_init}, {"djb2_update", l_djb2_update}, {"djb2_final", l_djb2_final},
-  {"fletcher8",l_fletcher8}, {"fletcher8_init",l_fletcher8_init}, {"fletcher8_update",l_fletcher8_update}, {"fletcher8_final",l_fletcher8_final},
-  {"fletcher16",l_fletcher16}, {"fletcher16_init",l_fletcher16_init}, {"fletcher16_update",l_fletcher16_update}, {"fletcher16_final",l_fletcher16_final},
-  {"fletcher32",l_fletcher32}, {"fletcher32_init",l_fletcher32_init}, {"fletcher32_update",l_fletcher32_update}, {"fletcher32_final",l_fletcher32_final},
   {"fnv_0", l_fnv_0}, {"fnv_0_init", l_fnv_0_init}, {"fnv_0_update", l_fnv_0_update}, {"fnv_0_final", l_fnv_0_final},
   {"fnv_1", l_fnv_1}, {"fnv_1_init", l_fnv_1_init}, {"fnv_1_update", l_fnv_1_update}, {"fnv_1_final", l_fnv_1_final},
   {"fnv_a", l_fnv_a}, {"fnv_a_init", l_fnv_a_init}, {"fnv_a_update", l_fnv_a_update}, {"fnv_a_final", l_fnv_a_final},
-  {"oaat", l_oaat}, {"oaat_init", l_oaat_init}, {"oaat_update", l_oaat_update}, {"oaat_final", l_oaat_final},
-  {"loselose", l_loselose}, {"loselose_init", l_loselose_init}, {"loselose_update", l_loselose_update}, {"loselose_final", l_loselose_final},
-  {"pearson",l_pearson}, {"pearson_init",l_pearson_init}, {"pearson_update",l_pearson_update}, {"pearson_final",l_pearson_final},
-  {"pjw", l_pjw}, {"pjw_init", l_pjw_init}, {"pjw_update", l_pjw_update}, {"pjw_final", l_pjw_final},
-  {"sdbm", l_sdbm}, {"sdbm_init", l_sdbm_init}, {"sdbm_update", l_sdbm_update}, {"sdbm_final", l_sdbm_final},
-  {"sysvchecksum",l_sysvchecksum}, {"sysvchecksum_init",l_sysvchecksum_init}, {"sysvchecksum_update",l_sysvchecksum_update}, {"sysvchecksum_final",l_sysvchecksum_final},
   {"xor8",l_xor8}, {"xor8_init",l_xor8_init}, {"xor8_update",l_xor8_update}, {"xor8_final",l_xor8_final},
   {"md5",l_md5}, {"md5_init",l_md5_init}, {"md5_update",l_md5_update}, {"md5_final",l_md5_final},
-  {"sha0",l_sha0}, {"sha0_init",l_sha0_init}, {"sha0_update",l_sha0_update}, {"sha0_final",l_sha0_final},
-  {"sha1",l_sha1}, {"sha1_init",l_sha1_init}, {"sha1_update",l_sha1_update}, {"sha1_final",l_sha1_final},
+  {"sha0",l_sha0},
+  {"sha1",l_sha1},
   {"sha512", l_sha512}, {"sha512_init", l_sha512_init}, {"sha512_update", l_sha512_update}, {"sha512_final", l_sha512_final},
   {"sha384", l_sha384}, {"sha384_init", l_sha384_init}, {"sha384_update", l_sha384_update}, {"sha384_final", l_sha384_final},
   {"sha512_t", l_sha512_t}, {"sha512_t_init", l_sha512_t_init}, {"sha512_t_update", l_sha512_t_update}, {"sha512_t_final", l_sha512_t_final},

@@ -24,6 +24,7 @@ str* str_initl(const char*, size_t len);
 //plan to switch everything to str_initfl, when everything will work with it
 str* str_initfl(const char*, size_t len);
 str* str_init(const char*);
+str* str_tohex(str* s);
 char* str_tochar(str* s);
 void str_free(str*);
 void str_push(str*, const char*);
