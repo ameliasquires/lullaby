@@ -22,6 +22,13 @@ enum deep_copy_flags {
 enum table_cache {
   CACHE_HIT, CACHE_MISS
 };
+
+struct lua_function_store {
+  int cfun;
+  str* lua;
+  lua_CFunction c;
+};
+
 #endif 
 
 #ifndef GIT_COMMIT
@@ -30,10 +37,15 @@ enum table_cache {
 
 #define LULLABY_LOCAL_TABLE "_locals"
 
+void free_function_store(struct lua_function_store *store);
+void luaI_pushfunction(lua_State* L, struct lua_function_store *store);
+struct lua_function_store *luaI_getfunction(lua_State* L);
+
 void luaI_fromparray(lua_State* L, int table_idx, parray_t* table, int strval);
 
 str* luaI_traceback(lua_State* L, const char* error, int level);
 
+void lua_storefun_upvalues(lua_State*, int);
 void lua_storecfun_upvalues(lua_State*, lua_CFunction, int);
 void luaI_pushcclosure(lua_State* L, lua_CFunction cfun);
 

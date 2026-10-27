@@ -39,6 +39,10 @@ void* handle_client(void *_arg);
 
 int clean_lullaby_net(lua_State* L);
 
+int l_server_backend_multithread(lua_State* L);
+int l_server_backend_single(lua_State* L);
+int l_server_backend_isolated(lua_State* L);
+
 static const luaL_Reg net_function_list [] = {
   {"listen",l_listen},
   {"server",l_server},
@@ -47,6 +51,10 @@ static const luaL_Reg net_function_list [] = {
   {"wss",l_wss},
 
   {"serve", l_preset_serve},
+
+  {"multithreaded", l_server_backend_multithread},
+  {"singlethreaded", l_server_backend_single},
+  {"isolated", l_server_backend_isolated},
 
   {NULL,NULL}
 };

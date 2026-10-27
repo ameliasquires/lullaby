@@ -150,6 +150,19 @@ function server_table.PATCH(T, route, callback) end
 ---@param callback fun(res: res-table, req: req-table)
 function server_table.all(T, route, callback) end
 
+---server backend right after a request, defaults to net.multithreaded
+---other premade backends include, singlethreaded, and isolated
+---custom backends can be made, just call the callback provided in the function
+---
+---```lua
+---server.backend = function(run)
+---  run()
+---end
+---```
+---@param T server-table
+---@param callback fun()
+function server_table.backend(T, callback) end
+
 ---sends a signal to stop accepting requests, server will shutdown, but already accepted ones will still continue
 ---@param T server-table
 function server_table.close(T) end
@@ -160,6 +173,26 @@ function server_table:listen(port) end
 
 ---@param server server-table
 local function listen_callback(server) end
+
+---server backend, creates a thread for each new request
+---@param callback fun()
+function net.multithreaded(callback) end
+
+---server backend, runs everything on the main thread
+---@param callback fun()
+function net.singlethreaded(callback) end
+
+---server backend, creates a seperate state for each request, runs on the same thread
+---@param callback fun()
+function net.isolated(callback) end
+
+---preset route, use with server:custom
+---
+---```lua
+---server:custom(net.serve("/static")
+---```
+---@param dir string directory to serve
+function net.serve(dir) end
 
 ---@deprecated
 ---@param callback fun(server: server-table)
