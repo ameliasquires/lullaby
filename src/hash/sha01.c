@@ -126,7 +126,7 @@ void sha01_final(struct sha01_hash* hash, char* out_stream){
 
   if(hash->bufflen > 55) {
     //too large, needs another buffer
-    memset(hash->buffer + hash->bufflen + 1, 0, 64 - hash->bufflen);
+    memset(hash->buffer + hash->bufflen + 1, 0, 64 - hash->bufflen - 1);
     sha01_round(hash);
     memset(hash->buffer, 0, 64);
   }
