@@ -24,9 +24,9 @@ server:POST("/", function(res, req)
   req:load()
 
   --incremental hashes allow updating via addition, in this case adding the body and getting a string from it
-  hash = (hash + req.body):final()
+  hash = (hash + req.body):digest()
   --send the hash to the client, closes connection, but thread is live until it ends
-  res:send(hash)
+  res:send(hash:hex())
 end)
 
 server:listen(8080)
